@@ -35,3 +35,45 @@ Load in the package from the script where `run_reopt()` is called:
 ```julia
 using GhpGhx
 ```
+
+## Required Packages
+### Core Required Packages 
+REopt.jl has three essential packages that must be installed index.md:7-11 :
+
+REopt - The main optimization framework
+JuMP - The optimization modeling layer
+HiGHS - An open-source solver (or another compatible solver)
+Full Dependency List 
+The complete list of required packages is declared in Project.toml Project.toml:6-24 :
+
+Core Dependencies:
+
+JuMP - Optimization modeling Project.toml:16
+MathOptInterface - Solver interface Project.toml:20
+LinearAlgebra - Matrix operations Project.toml:18
+Data Processing:
+
+JSON - Input/output handling Project.toml:15
+CSV - Data file handling Project.toml:8
+DataFrames - Tabular data Project.toml:10
+JLD - Julia data serialization Project.toml:14
+External APIs:
+
+HTTP - API calls to NREL services Project.toml:13
+ArchGDAL - Geospatial operations for emissions lookups Project.toml:7
+Specialized Features:
+
+LinDistFlow - Multi-site power flow constraints Project.toml:17
+CoolProp - Thermodynamic properties Project.toml:9
+Roots - Root-finding for IRR calculations Project.toml:22
+Requires - Conditional package loading Project.toml:21
+Standard Library:
+
+Dates, DelimitedFiles, Logging, Statistics Project.toml:11-23
+These packages are imported in the main module file REopt.jl:34-57 .
+
+### Optional Packages 
+GhpGhx - Required only for ground-source heat pump (GHP) analysis index.md:24-26 . This is loaded conditionally REopt.jl:59-61 and must be installed separately from GitHub index.md:29-32 .
+
+### Notes 
+All dependencies are automatically installed when you run add REopt in Julia's package manager. The Manifest.toml file locks specific versions of all transitive dependencies for reproducibility Manifest.toml:121-210 . Version compatibility constraints are specified in the [compat] section Project.toml:26-45 .
