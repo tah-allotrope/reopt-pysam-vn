@@ -36,6 +36,24 @@ Load in the package from the script where `run_reopt()` is called:
 using GhpGhx
 ```
 
+### Local smoke test (repo)
+Use the repo-provided smoke script and input to validate your local REopt setup:
+
+```sh
+& "C:\Users\tukum\.julia\juliaup\julia-1.10.10+0.x64.w64.mingw32\bin\julia.exe" run_reopt_smoke.jl
+```
+
+Inputs and scripts:
+- `test/pv.json` (sample PV scenario with current schema fields)
+- `run_reopt_smoke.jl` (executes REopt with HiGHS and prints key results)
+
+Expected output highlights (example from last run):
+- Status: `optimal`
+- PV size (kW): `~3162.38`
+- LCC: `~1.068e7`
+- Average annual PV energy (kWh): `~5.63e6`
+- Year-one utility bill: `~1.115e6`
+
 ## Required Packages
 ### Core Required Packages 
 REopt.jl has three essential packages that must be installed index.md:7-11 :
