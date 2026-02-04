@@ -340,3 +340,108 @@ Example JSON input files are available in the `test/scenarios/` directory coveri
 - REopt.jl is used as the core model for both the REopt API and REopt Web Tool, but contains additional functionality for local execution. [1-cite-45](#1-cite-45)   
   
 - The project follows semantic versioning and maintains a detailed CHANGELOG. [1-cite-46](#1-cite-46)
+
+## 5. Validating and Checking REopt.jl Results  
+  
+## Results Output Structure  
+  
+REopt.jl returns results as a nested dictionary (`Dict{String, Any}`) created by the `reopt_results` function. The structure contains top-level keys for each technology and system component: [5-cite-0](#5-cite-0)   
+  
+The main top-level categories include:  
+- **Financial** - Lifecycle costs, capital costs, O&M costs, payback periods  
+- **Site** - Renewable energy fractions, emissions metrics  
+- **ElectricTariff** - Utility costs and export benefits  
+- **ElectricUtility** - Grid purchases and emissions  
+- **ElectricLoad** - Load profiles and annual consumption  
+- **Technology-specific keys** (PV, Wind, CHP, Generator, ElectricStorage, etc.) - Sizing, production, and dispatch profiles  
+  
+## Key Metrics to Verify  
+  
+### 1. Financial Metrics  
+  
+The `Financial` results contain comprehensive economic metrics that should be validated: [5-cite-1](#5-cite-1)   
+  
+Key financial outputs to check:  
+- `lcc` - Lifecycle cost (should decrease with optimized system)  
+- `npv` - Net present value (when comparing to BAU scenario)  
+- `initial_capital_costs` and `initial_capital_costs_after_incentives`  
+- `simple_payback_years`  
+- Operating costs (year one and lifecycle)  
+  
+### 2. Technology Sizing  
+  
+For each technology, verify the optimal size is within expected bounds:  
+  
+**PV results:** [5-cite-2](#5-cite-2)   
+  
+**ElectricStorage results:** [5-cite-3](#5-cite-3)   
+  
+### 3. Site-Level Renewable Energy and Emissions [5-cite-4](#5-cite-4)   
+  
+Key metrics:  
+- Renewable electricity fractions (onsite and grid+onsite)  
+- Annual and lifecycle emissions (CO2, NOx, SO2, PM25)  
+- Emissions from fuel burning vs. grid purchases  
+  
+## 6. Validation Approaches  
+  
+### 1. Tolerance-Based Comparisons  
+  
+The test suite demonstrates validation using tolerance-based assertions: [5-cite-5](#5-cite-5)   
+  
+Use approximate equality checks (`≈`) with appropriate tolerances (`atol` for absolute, `rtol` for relative):  
+- `@test results["PV"]["size_kw"] ≈ expected_value atol=0.01`  
+- `@test results["Financial"]["lcc"] ≈ expected_value rtol=1e-5`  
+  
+### 2. Energy Balance Validation  
+  
+One of the most important validation checks is verifying energy balance - that supply equals demand plus losses: [5-cite-6](#5-cite-6)   
+  
+This test validates:  
+- Cooling production (chillers) = cooling load + storage losses  
+- Heating production (boiler + CHP) = heating load + absorption chiller consumption + storage losses  
+- Storage efficiency is tracked correctly  
+  
+### 3. Technology-Specific Constraints  
+  
+Verify that results respect input constraints: [5-cite-7](#5-cite-7)   
+  
+Check that:  
+- Technology sizes respect min/max bounds  
+- Production doesn't exceed capacity  
+- Operational constraints are satisfied (e.g., min turn-down fractions)  
+- Unavailability periods result in zero production  
+  
+### 4. Financial Calculation Verification  
+  
+Verify capital costs match expected formulas: [5-cite-8](#5-cite-8)   
+  
+### 5. BAU Comparison (When Using Two Models)  
+  
+When comparing optimized results to Business-As-Usual, additional metrics are calculated: [5-cite-9](#5-cite-9)   
+  
+Key comparison metrics:  
+- `npv` - Net present value of optimal vs. BAU  
+- `lifecycle_emissions_reduction_CO2_fraction`  
+- `breakeven_cost_of_emissions_reduction_per_tonne_CO2`  
+- Operating cost savings (year one and lifecycle)  
+  
+## Common Validation Checks  
+  
+1. **No simultaneous charge/discharge** for storage systems [5-cite-10](#5-cite-10)   
+  
+2. **Export constraints respected** - No exports when `can_wholesale` and `can_net_meter` are false [5-cite-11](#5-cite-11)   
+  
+3. **Load profiles sum correctly** - Annual energy calculations match [5-cite-12](#5-cite-12)   
+  
+## Notes  
+  
+- **Documentation**: All results functions include detailed docstrings documenting output keys. Refer to `outputs.md` for comprehensive documentation.  
+  
+- **Tolerances**: Financial results should use `rtol=1e-5` or similar, while energy balances can use `atol` values appropriate to the scale (e.g., `atol=1.0` for kWh values in the thousands).  
+  
+- **Model cleanup**: After validation, always clean up models with `finalize(backend(model))`, `empty!(model)`, and `GC.gc()` to free memory.  
+  
+- **Multiple PV systems**: When modeling multiple PV arrays, results are organized in an array under the "PV" key, with each having a "name" field to distinguish them.  
+  
+- **Series vs. Annual**: All timeseries (`_series`) and `annual_` results represent average annual values accounting for degradation over the analysis period, not just the first year.

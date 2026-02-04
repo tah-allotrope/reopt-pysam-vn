@@ -12,12 +12,14 @@
 5. **NREL API keys set (session)** – Environment variables configured for the smoke run.
 6. **Input schema fixes** – Updated `test/pv.json` field names to current REopt schema.
 7. **Smoke run completed** – `run_reopt_smoke.jl` executed successfully with status `optimal`.
+8. **PV results validated** – Confirmed PV size, LCC, annual energy, and year-one bill are present and positive.
 
 ## Current Status
 - **Julia:** Installed and version-confirmed (1.10.10).
 - **Packages:** REopt, JuMP, and HiGHS installed manually.
 - **API keys:** Configured in the current session (not yet persisted system-wide).
 - **Smoke run:** Successful using `test/pv.json` and HiGHS.
+- **Latest PV output:** Status `optimal`, PV size ≈ 3162.38 kW, LCC ≈ 1.068e7, annual energy ≈ 5.63e6 kWh, year-one bill ≈ 1.115e6.
 
 ## Next Immediate Steps
 - Persist NREL API environment variables (system/user scope) if desired.
