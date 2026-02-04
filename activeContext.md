@@ -10,16 +10,19 @@
 3. **Dependencies installed** – REopt, JuMP, and HiGHS installed manually by user.
 4. **Setup plan drafted** – Prerequisites-only plan saved to `C:\Users\tukum\.windsurf\plans\reopt-setup-plan-c4b217.md`.
 5. **NREL API keys set (session)** – Environment variables configured for the smoke run.
-6. **Input schema fixes** – Updated `test/pv.json` field names to current REopt schema.
-7. **Smoke run completed** – `run_reopt_smoke.jl` executed successfully with status `optimal`.
+6. **Input schema fixes** – Updated `test/pv.json` and `test/pv_storage.json` field names to current REopt schema.
+7. **Smoke runs completed** – Both `pv.json` and `pv_storage.json` executed successfully with status `optimal`.
 8. **PV results validated** – Confirmed PV size, LCC, annual energy, and year-one bill are present and positive.
+9. **Storage results extracted** – Added storage sizing, SOC series, and to-load metrics to output reporting.
+10. **Results documented** – Updated `test/test_results.md` with both PV-only and PV+Storage scenarios.
 
 ## Current Status
 - **Julia:** Installed and version-confirmed (1.10.10).
 - **Packages:** REopt, JuMP, and HiGHS installed manually.
 - **API keys:** Configured in the current session (not yet persisted system-wide).
-- **Smoke run:** Successful using `test/pv.json` and HiGHS.
-- **Latest PV output:** Status `optimal`, PV size ≈ 3162.38 kW, LCC ≈ 1.068e7, annual energy ≈ 5.63e6 kWh, year-one bill ≈ 1.115e6.
+- **Smoke runs:** Successful for both `pv.json` and `pv_storage.json` using HiGHS.
+- **PV-only output:** Status `optimal`, PV size ≈ 3162.38 kW, LCC ≈ 1.068e7, annual energy ≈ 5.63e6 kWh, year-one bill ≈ 1.115e6.
+- **PV+Storage output:** Status `optimal`, PV size ≈ 216.67 kW, Storage ≈ 55.88 kW / 78.91 kWh, LCC ≈ 1.240e7, year-one bill ≈ 1.681e6, storage SOC cycles 20-100%.
 
 ## Next Immediate Steps
 - Persist NREL API environment variables (system/user scope) if desired.
