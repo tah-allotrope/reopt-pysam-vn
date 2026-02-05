@@ -16,6 +16,7 @@
 9. **Storage results extracted** – Added storage sizing, SOC series, and to-load metrics to output reporting.
 10. **Results documented** – Updated `test/test_results.md` with both PV-only and PV+Storage scenarios.
 
+
 ## Current Status
 - **Julia:** Installed and version-confirmed (1.10.10).
 - **Packages:** REopt, JuMP, and HiGHS installed manually.
