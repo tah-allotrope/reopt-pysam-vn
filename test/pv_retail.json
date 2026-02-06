@@ -13,13 +13,13 @@
     "ElectricTariff": {
         "urdb_label": "5ed6c1a15457a3367add15ae"
     },
-    "ElectricUtility": {
-        "net_metering_limit_kw": 1000
-    },
     "Financial": {
-        "elec_cost_escalation_rate_fraction": 0.026,
-        "offtaker_discount_rate_fraction": 0.08,
-        "offtaker_tax_rate_fraction": 0.28,
-        "om_cost_escalation_rate_fraction": 0.025
+        "elec_cost_escalation_pct": 0.026,
+        "offtaker_discount_pct": 0.08,
+        "owner_discount_pct": 0.08,
+        "analysis_years": 20,
+        "offtaker_tax_pct": 0.28,
+        "owner_tax_pct": 0.28,
+        "om_cost_escalation_pct": 0.025
     }
 }

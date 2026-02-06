@@ -15,6 +15,7 @@
 8. **PV results validated** – Confirmed PV size, LCC, annual energy, and year-one bill are present and positive.
 9. **Storage results extracted** – Added storage sizing, SOC series, and to-load metrics to output reporting.
 10. **Results documented** – Updated `test/test_results.md` with both PV-only and PV+Storage scenarios.
+11. **pv_retail.json executed** – Created `run_pv_retail.jl` script, fixed schema keys (`*_pct` format), removed unsupported `ElectricUtility` block, and successfully ran with HiGHS. Results documented in `test/test_results.md`.
 
 
 ## Current Status
@@ -24,6 +25,7 @@
 - **Smoke runs:** Successful for both `pv.json` and `pv_storage.json` using HiGHS.
 - **PV-only output:** Status `optimal`, PV size ≈ 3162.38 kW, LCC ≈ 1.068e7, annual energy ≈ 5.63e6 kWh, year-one bill ≈ 1.115e6.
 - **PV+Storage output:** Status `optimal`, PV size ≈ 216.67 kW, Storage ≈ 55.88 kW / 78.91 kWh, LCC ≈ 1.240e7, year-one bill ≈ 1.681e6, storage SOC cycles 20-100%.
+- **pv_retail.json output:** Status `optimal`, PV size ≈ 63.85 kW, LCC ≈ $273,532, annual energy ≈ 111,746 kWh, year-one bill ≈ $23,912.
 
 ## Next Immediate Steps
 - Persist NREL API environment variables (system/user scope) if desired.
@@ -35,6 +37,7 @@
 
 ## Notes
 - `test/pv.json` field updates: `federal_itc_pct`, `macrs_bonus_pct`, financial `*_pct` keys; removed `ElectricUtility.co2_from_avert` (unsupported).
+- `test/pv_retail.json` fixes: Updated Financial keys to `*_pct` format (e.g., `offtaker_tax_pct`, `elec_cost_escalation_pct`), removed unsupported `ElectricUtility` block to resolve constructor errors.
 - Smoke-run results (test input): PV size ≈ 3162.38 kW, LCC ≈ 1.068e7, average annual PV energy ≈ 5.63e6 kWh, year-one bill ≈ 1.115e6.
 - Plan excludes input file prep and first run per user request; those will be a later phase.
 - If GHP analysis is needed later, add `GhpGhx.jl` from GitHub and `using GhpGhx`.

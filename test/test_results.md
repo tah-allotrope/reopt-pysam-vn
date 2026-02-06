@@ -29,3 +29,15 @@ These values are reasonable for a commercial retail building with a ~3.2 MW sola
 - Storage delivers ~11 MWh to load in year one.
 - PV provides ~379 MWh annually.
 - The optimizer selected modest storage sizing given the tariff and cost assumptions.
+
+## pv_retail.json results
+**Scenario:** `test/pv_retail.json`  
+**Solver:** HiGHS  
+**Status:** optimal  
+
+| Metric | Value |
+|--------|-------|
+| PV size (kW) | 63.8462 |
+| PV annual energy (kWh) | 111,745.52 |
+| Lifecycle cost (LCC) | $273,532.28 |
+| Utility bill (year one) | $23,911.73 |
