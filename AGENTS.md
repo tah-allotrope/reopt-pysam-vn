@@ -28,7 +28,6 @@
   - Decision variables prefixed with `dv` (camelCase)
 
 ## 4. Coding Standards (High-Level)
-- **Security:** Use environment variables for secrets (API keys). No hardcoded credentials.
 - **Error Handling:** Prefer REopt’s `handle_errors` patterns and structured warnings/errors via the custom logger.
 - **Input Validation:** Validate at struct construction; enforce bounds, enum membership, and time-series length consistency.
 - **Formatting:** Follow REopt conventions (`m` for JuMP model, `p` for REoptInputs, `p.s` for Scenario access; constants uppercase).
