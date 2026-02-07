@@ -1,0 +1,4 @@
+[deps]
+ArchGDAL = "c9ce4bd3-c3d5-55b8-8973-c0e20141b8c3"
+HiGHS = "87dc4568-4c63-4d18-b0c0-bb2238e4078b"
+REopt = "d36ad4e8-d74a-4f7a-ace1-eaea049febf6"
