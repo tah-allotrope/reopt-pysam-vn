@@ -47,7 +47,7 @@ end
 
 function summarize_results(label::AbstractString, results::Dict{String, Any})
     status = safe_get(results, ["status"], "unknown")
-    pv_size_kw = safe_get(results, ["PV", 1, "size_kw"], missing)
+    pv_size_kw = safe_get(results, ["PV", "size_kw"], missing)
     storage_size_kw = safe_get(results, ["ElectricStorage", "size_kw"], missing)
     storage_size_kwh = safe_get(results, ["ElectricStorage", "size_kwh"], missing)
     capital_cost = safe_get(results, ["Financial", "lifecycle_capital_costs"], missing)

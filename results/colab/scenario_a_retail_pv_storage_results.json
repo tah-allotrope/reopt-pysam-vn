@@ -123203,5 +123203,5 @@
         "lifecycle_outage_cost_bau": 0.0,
         "lifecycle_chp_standby_cost_after_tax": 0.0
     },
-    "solver_seconds": 55.609
+    "solver_seconds": 74.502
 }
