@@ -3,10 +3,11 @@ using JuMP
 using HiGHS
 using REopt
 
-const SCENARIO_A_PATH = joinpath(@__DIR__, "test", "colab", "scenario_a_retail_pv_storage.json")
-const SCENARIO_B_PATH = joinpath(@__DIR__, "test", "colab", "scenario_b_hospital_resilience.json")
-const ENV_PATH = joinpath(@__DIR__, "NREL_API.env")
-const RESULTS_DIR = joinpath(@__DIR__, "results", "colab")
+const REPO_ROOT = abspath(joinpath(@__DIR__, "..", ".."))
+const SCENARIO_A_PATH = joinpath(REPO_ROOT, "scenarios", "colab", "scenario_a_retail_pv_storage.json")
+const SCENARIO_B_PATH = joinpath(REPO_ROOT, "scenarios", "colab", "scenario_b_hospital_resilience.json")
+const ENV_PATH = joinpath(REPO_ROOT, "NREL_API.env")
+const RESULTS_DIR = joinpath(REPO_ROOT, "results", "colab")
 
 function load_nrel_env(env_path::AbstractString)
     if !isfile(env_path)

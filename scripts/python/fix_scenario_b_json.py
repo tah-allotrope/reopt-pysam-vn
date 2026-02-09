@@ -1,8 +1,9 @@
 import json
 from pathlib import Path
 
-json_path = Path("test/colab/scenario_b_hospital_resilience.json")
-loads_path = Path("results/colab/scenario_b_outage_times.json")
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+json_path = REPO_ROOT / "scenarios" / "colab" / "scenario_b_hospital_resilience.json"
+loads_path = REPO_ROOT / "results" / "colab" / "scenario_b_outage_times.json"
 
 data = json.loads(json_path.read_text())
 loads_data = json.loads(loads_path.read_text())

@@ -5,9 +5,9 @@ from pathlib import Path
 
 import requests
 
-REPO_ROOT = Path(__file__).resolve().parent
+REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 ENV_PATH = REPO_ROOT / "NREL_API.env"
-SCENARIO_A_PATH = REPO_ROOT / "test" / "colab" / "scenario_a_retail_pv_storage.json"
+SCENARIO_A_PATH = REPO_ROOT / "scenarios" / "colab" / "scenario_a_retail_pv_storage.json"
 RESULTS_DIR = REPO_ROOT / "results" / "colab"
 RESULTS_PATH = RESULTS_DIR / "scenario_a_retail_pv_storage_api_results.json"
 API_URL = "https://developer.nrel.gov/api/reopt/stable"

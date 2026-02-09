@@ -3,7 +3,8 @@
     "latitude": 50.0,
     "longitude": 30.0,
     "land_acres": 1,
-    "roof_squarefeet": 5000
+    "roof_squarefeet": 5000,
+    "min_resil_time_steps": 48
   },
   "PV": {
     "installed_cost_per_kw": 800.0

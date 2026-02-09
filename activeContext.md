@@ -18,30 +18,51 @@
 11. **pv_retail.json executed** – Created `run_pv_retail.jl` script, fixed schema keys (`*_pct` format), removed unsupported `ElectricUtility` block, and successfully ran with HiGHS. Results documented in `test/test_results.md`.
 12. **wind_battery_hospital.json executed** – Created `run_wind_battery_hospital.jl` and ran BAU comparison with HiGHS. Results saved to `results/wind_battery_hospital_results.json` and summarized in `results/wind_battery_hospital_results.md`.
 13. **wind_battery_hospital.json cost alignment** – Added `installed_cost_per_kw: 3137` to `Wind` block to match NREL reference cost assumption. Re-ran scenario: Wind size now ~153.01 kW (matches reference ~153.03 kW), but storage still not selected (0.0 kW vs reference 7.04 kW). LCC improved to ~1.14e6 vs reference ~1.13e6. Remaining gap attributed to storage cost/incentive defaults differing between REopt.jl versions.
+14. **Colab comparison plan** – Extracted two scenarios from `notebooks/google_colab_simple_examples.ipynb`: Scenario A (Retail PV+Storage, Kyiv) and Scenario B (Hospital Resilience, 48h outage). Created JSON inputs and `scripts/julia/run_colab_scenarios.jl`.
+15. **Scenario A validated** – REopt.jl results match REopt API exactly (PV=49.45 kW, NPV=$36,933). Created `scripts/python/run_colab_api_reference.py` for API comparison.
+16. **Scenario B investigation** – Identified major discrepancy: Julia gave PV=36 kW, no storage, NPV=+$27K vs Colab reference PV=97 kW, storage=177 kWh, NPV=-$26K.
+17. **Scenario B root cause found** – Three issues identified and fixed:
+    - Outage start times: Replaced hardcoded values with API-derived `[90, 3593, 5272, 6448]` via `scripts/python/get_scenario_b_outage_times.py`.
+    - Load profile: Injected API-generated `loads_kw` array with `year: 2017`.
+    - **Root cause:** REopt.jl uses soft outage penalty ($1/kWh VoLL) vs API hard constraint. Fixed by adding `min_resil_time_steps: 48` to `Site`.
+18. **Scenario B reconciled** – With `min_resil_time_steps=48`, Julia matches API exactly: PV=77.23 kW, Storage=17.36 kW / 199.05 kWh, Capital=$210,325. ~2% NPV difference ($-162.8K vs $-166.3K) due to emissions cost calculations at non-US locations. Colab reference differs from both (older API version). Full analysis in `results/colab/comparison_report.md`.
 
 ## Current Status
 - **Julia:** Installed and version-confirmed (1.10.10).
 - **Packages:** REopt, JuMP, and HiGHS installed manually.
-- **API keys:** Configured in the current session (not yet persisted system-wide).
-- **Smoke runs:** Successful for both `pv.json` and `pv_storage.json` using HiGHS.
-- **PV-only output:** Status `optimal`, PV size ≈ 3162.38 kW, LCC ≈ 1.068e7, annual energy ≈ 5.63e6 kWh, year-one bill ≈ 1.115e6.
-- **PV+Storage output:** Status `optimal`, PV size ≈ 216.67 kW, Storage ≈ 55.88 kW / 78.91 kWh, LCC ≈ 1.240e7, year-one bill ≈ 1.681e6, storage SOC cycles 20-100%.
-- **pv_retail.json output:** Status `optimal`, PV size ≈ 63.85 kW, LCC ≈ $273,532, annual energy ≈ 111,746 kWh, year-one bill ≈ $23,912.
-- **wind_battery_hospital.json output (original):** Status `optimal`, Wind size ≈ 145.07 kW, Storage ≈ 0.0 kW / -0.0 kWh, LCC ≈ 1.18997e6, NPV ≈ 297,622.61, year-one bill ≈ 62,141.76.
-- **wind_battery_hospital.json output (cost-override):** Status `optimal`, Wind size ≈ 153.01 kW (matches reference), Storage ≈ 0.0 kW / -0.0 kWh (still missing vs reference 7.04 kW), LCC ≈ 1.13978e6, NPV ≈ 347,819.10, year-one bill ≈ 84,569.10.
+- **API keys:** Configured via `NREL_API.env` file, loaded at script startup.
+- **Colab Scenario A (Retail PV+Storage):** Perfect match between Julia and API. PV=49.45 kW, no storage, NPV=$36,933.
+- **Colab Scenario B (Hospital Resilience 48h):** Julia matches API on all sizing/cost metrics after adding `min_resil_time_steps=48`. PV=77.23 kW, Storage=17.36 kW / 199.05 kWh, NPV=-$162,825.
+- **Key learning:** REopt.jl multiple outage modeling is a soft constraint by default; use `Site.min_resil_time_steps` for hard constraint.
 
 ## Next Immediate Steps
-- Persist NREL API environment variables (system/user scope) if desired.
-- Decide whether to keep or remove debug key dumps in `run_reopt_smoke.jl`.
-- Swap `test/pv.json` with a real scenario input and rerun.
+- Begin Vietnam-specific scenario development (real site data, local tariffs, local financial parameters).
+- Override US-specific defaults (ITC, MACRS) for non-US financial modeling.
+- Set Vietnam grid emissions factor for `ElectricUtility.emissions_factor_series_lb_CO2_per_kwh`.
+- If GHP analysis is needed later, add `GhpGhx.jl` from GitHub and `using GhpGhx`.
 
 ## Key Commands Verified
 - Julia version check: `& "C:\Users\tukum\.julia\juliaup\julia-1.10.10+0.x64.w64.mingw32\bin\julia.exe" --version` → `julia version 1.10.10`
+- Julia with precompilation workaround: `$env:JULIA_PKG_PRECOMPILE_AUTO="0"; julia --project --compile=min <script>.jl`
+
+## Colab Comparison Files
+| File | Description |
+|---|---|
+| `notebooks/google_colab_simple_examples.ipynb` | Reference Colab notebook |
+| `scenarios/colab/scenario_a_retail_pv_storage.json` | Scenario A input |
+| `scenarios/colab/scenario_b_hospital_resilience.json` | Scenario B input (final) |
+| `scripts/julia/run_colab_scenarios.jl` | Julia script for both scenarios |
+| `scripts/julia/run_scenario_b_only.jl` | Julia script for Scenario B only |
+| `scripts/python/run_colab_api_reference.py` | API reference for Scenario A |
+| `scripts/python/run_colab_api_reference_b.py` | API reference for Scenario B (loads_kw) |
+| `scripts/python/run_colab_api_reference_b_doe.py` | API reference for Scenario B (doe_ref) |
+| `scripts/python/get_scenario_b_outage_times.py` | Fetch API load profile + outage times |
+| `scripts/python/fix_scenario_b_json.py` | Update Scenario B JSON with API loads |
+| `results/colab/comparison_report.md` | Full comparison analysis |
 
 ## Notes
 - `test/pv.json` field updates: `federal_itc_pct`, `macrs_bonus_pct`, financial `*_pct` keys; removed `ElectricUtility.co2_from_avert` (unsupported).
-- `test/pv_retail.json` fixes: Updated Financial keys to `*_pct` format (e.g., `offtaker_tax_pct`, `elec_cost_escalation_pct`), removed unsupported `ElectricUtility` block to resolve constructor errors.
-- Smoke-run results (test input): PV size ≈ 3162.38 kW, LCC ≈ 1.068e7, average annual PV energy ≈ 5.63e6 kWh, year-one bill ≈ 1.115e6.
-- Wind+Battery hospital results recorded in `results/wind_battery_hospital_results.md`; BAU run used HiGHS with two-model setup for NPV.
-- Plan excludes input file prep and first run per user request; those will be a later phase.
-- If GHP analysis is needed later, add `GhpGhx.jl` from GitHub and `using GhpGhx`.
+- `test/pv_retail.json` fixes: Updated Financial keys to `*_pct` format, removed unsupported `ElectricUtility` block.
+- Wind+Battery hospital results recorded in `results/wind_battery_hospital_results.md`.
+- ElectricStorage `installed_cost_constant` defaults to $222,115 — large fixed cost only if battery selected.
+- US federal incentives (30% ITC, 100% MACRS bonus) apply by default even for non-US sites.

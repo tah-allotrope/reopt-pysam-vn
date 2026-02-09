@@ -3,9 +3,10 @@ using JuMP
 using HiGHS
 using REopt
 
-const INPUT_PATH = joinpath(@__DIR__, "test", "wind_battery_hospital.json")
-const ENV_PATH = joinpath(@__DIR__, "NREL_API.env")
-const RESULTS_DIR = joinpath(@__DIR__, "results")
+const REPO_ROOT = abspath(joinpath(@__DIR__, "..", ".."))
+const INPUT_PATH = joinpath(REPO_ROOT, "scenarios", "wind", "wind_battery_hospital.json")
+const ENV_PATH = joinpath(REPO_ROOT, "NREL_API.env")
+const RESULTS_DIR = joinpath(REPO_ROOT, "results", "wind")
 const RESULTS_PATH = joinpath(RESULTS_DIR, "wind_battery_hospital_results.json")
 
 function load_nrel_env(env_path::AbstractString)
