@@ -26,6 +26,7 @@
     - Load profile: Injected API-generated `loads_kw` array with `year: 2017`.
     - **Root cause:** REopt.jl uses soft outage penalty ($1/kWh VoLL) vs API hard constraint. Fixed by adding `min_resil_time_steps: 48` to `Site`.
 18. **Scenario B reconciled** – With `min_resil_time_steps=48`, Julia matches API exactly: PV=77.23 kW, Storage=17.36 kW / 199.05 kWh, Capital=$210,325. ~2% NPV difference ($-162.8K vs $-166.3K) due to emissions cost calculations at non-US locations. Colab reference differs from both (older API version). Full analysis in `results/colab/comparison_report.md`.
+19. **Tinh scenario extracted and run** – Extracted input dict from `notebooks/REopt_Tinh_test.ipynb` (cell 4) into `scenarios/tinh/tinh_pv_storage.json`. Created `scripts/julia/run_tinh_scenario.jl` (two-model BAU+optimal). Results: PV=22.0 kW (roof-constrained), Storage=45.91 kW / 114.38 kWh, LCC=$1,224,115, NPV=-$120,872. Notebook cell outputs are stale (from an earlier Helsinki run at $1,500/kW PV), explaining all discrepancies. Full analysis in `results/tinh/tinh_comparison_report.md`.
 
 ## Current Status
 - **Julia:** Installed and version-confirmed (1.10.10).
@@ -33,12 +34,14 @@
 - **API keys:** Configured via `NREL_API.env` file, loaded at script startup.
 - **Colab Scenario A (Retail PV+Storage):** Perfect match between Julia and API. PV=49.45 kW, no storage, NPV=$36,933.
 - **Colab Scenario B (Hospital Resilience 48h):** Julia matches API on all sizing/cost metrics after adding `min_resil_time_steps=48`. PV=77.23 kW, Storage=17.36 kW / 199.05 kWh, NPV=-$162,825.
+- **Tinh PV+Storage (HCMC, Vietnam):** PV=22.0 kW, Storage=45.91 kW / 114.38 kWh, LCC=$1,224,115, NPV=-$120,872. Notebook outputs stale; script results are correct for current inputs.
 - **Key learning:** REopt.jl multiple outage modeling is a soft constraint by default; use `Site.min_resil_time_steps` for hard constraint.
 
 ## Next Immediate Steps
-- Begin Vietnam-specific scenario development (real site data, local tariffs, local financial parameters).
-- Override US-specific defaults (ITC, MACRS) for non-US financial modeling.
+- Zero out remaining US incentive defaults on Tinh scenario (storage ITC 30%, MACRS bonus, `installed_cost_constant` $222K) for realistic Vietnam financials.
+- Add `Financial` block with Vietnam-appropriate parameters (tax rate, discount rate, currency).
 - Set Vietnam grid emissions factor for `ElectricUtility.emissions_factor_series_lb_CO2_per_kwh`.
+- Re-run notebook with current inputs to confirm match with Julia script.
 - If GHP analysis is needed later, add `GhpGhx.jl` from GitHub and `using GhpGhx`.
 
 ## Key Commands Verified
@@ -60,9 +63,19 @@
 | `scripts/python/fix_scenario_b_json.py` | Update Scenario B JSON with API loads |
 | `results/colab/comparison_report.md` | Full comparison analysis |
 
+## Tinh Scenario Files
+| File | Description |
+|---|---|
+| `scenarios/tinh/tinh_pv_storage.json` | Input JSON (from notebook cell 4) |
+| `scenarios/tinh/Tinh_test_load.csv` | 8760-hour load profile (199 kW peak) |
+| `scripts/julia/run_tinh_scenario.jl` | Julia run script (two-model) |
+| `results/tinh/tinh_pv_storage_results.json` | Full results JSON |
+| `results/tinh/tinh_comparison_report.md` | Comparison report vs notebook |
+
 ## Notes
 - `test/pv.json` field updates: `federal_itc_pct`, `macrs_bonus_pct`, financial `*_pct` keys; removed `ElectricUtility.co2_from_avert` (unsupported).
 - `test/pv_retail.json` fixes: Updated Financial keys to `*_pct` format, removed unsupported `ElectricUtility` block.
 - Wind+Battery hospital results recorded in `results/wind_battery_hospital_results.md`.
 - ElectricStorage `installed_cost_constant` defaults to $222,115 — large fixed cost only if battery selected.
 - US federal incentives (30% ITC, 100% MACRS bonus) apply by default even for non-US sites.
+- Tinh notebook cell outputs are stale (from a Helsinki run with different PV cost); current code inputs produce different results.
