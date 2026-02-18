@@ -1,0 +1,95 @@
+{
+  "_meta": {
+    "version": "2025.1",
+    "effective_date": "2025-06-01",
+    "source": "Decree 57/2025/ND-CP on renewable energy development mechanisms, MOIT ceiling tariff decisions",
+    "source_url": "https://www.vietnam-briefing.com/news/vietnam-renewable-energy-decree-57.html/",
+    "notes": "Decree 57 replaces Decree 80/2024. Key changes: rooftop solar can sell max 20% of generation to EVN, DPPA ceiling tariffs by tech/region, biomass eligible for DPPAs. Surplus purchase price = previous year avg wholesale market price or mutually agreed rate.",
+    "last_updated": "2026-02-18",
+    "currency": "VND",
+    "exchange_rate_vnd_per_usd": 26400
+  },
+  "data": {
+    "rooftop_solar": {
+      "max_export_fraction": 0.20,
+      "surplus_purchase_rate_vnd_per_kwh": 671,
+      "surplus_purchase_rate_usd_per_kwh": 0.0254,
+      "purchaser": "EVN (exclusive)",
+      "pricing_basis": "Previous year average wholesale market price or mutually agreed rate",
+      "notes": "Rooftop systems sell max 20% of total generation to grid. Remainder must be self-consumed or curtailed. REopt mapping: can_net_meter=false, can_wholesale=true (limited), can_export_beyond_nem_limit=false."
+    },
+
+    "dppa_ceiling_tariffs_vnd_per_kwh": {
+      "notes": "Maximum tariffs for private grid DPPAs set by MOIT. Excludes VAT. Parties negotiate within these ceilings. Tariffs vary by technology, storage inclusion, and region (North/Central/South).",
+
+      "solar_ground_no_storage": {
+        "north": 1382.7,
+        "central": 1197.0,
+        "south": 1012.0
+      },
+      "solar_floating_no_storage": {
+        "north": 1685.8,
+        "central": 1457.0,
+        "south": 1228.2
+      },
+      "solar_ground_with_bess": {
+        "north": 1571.98,
+        "central": 1360.92,
+        "south": 1149.86
+      },
+      "solar_floating_with_bess": {
+        "north": 1876.57,
+        "central": 1621.85,
+        "south": 1367.13
+      }
+    },
+
+    "dppa_ceiling_tariffs_usd_per_kwh": {
+      "notes": "Converted at VND 26,400/USD for convenience. Use VND values as authoritative.",
+
+      "solar_ground_no_storage": {
+        "north": 0.0524,
+        "central": 0.0453,
+        "south": 0.0383
+      },
+      "solar_floating_no_storage": {
+        "north": 0.0639,
+        "central": 0.0552,
+        "south": 0.0465
+      },
+      "solar_ground_with_bess": {
+        "north": 0.0595,
+        "central": 0.0516,
+        "south": 0.0436
+      },
+      "solar_floating_with_bess": {
+        "north": 0.0711,
+        "central": 0.0614,
+        "south": 0.0518
+      }
+    },
+
+    "bess_incentive_requirements": {
+      "min_storage_capacity_fraction": 0.10,
+      "min_storage_duration_hours": 2,
+      "min_stored_output_fraction": 0.05,
+      "notes": "BESS-equipped projects qualify for higher ceiling tariffs if: storage capacity >= 10% of plant capacity, storage duration >= 2 hours, and at least 5% of delivered power comes from stored output."
+    },
+
+    "dppa_eligibility": {
+      "min_plant_capacity_mw": 10,
+      "eligible_technologies": ["solar", "wind", "biomass"],
+      "consumer_threshold": "Per VWEM regulations (previously 200,000 kWh/month avg)",
+      "notes": "Grid-connected DPPAs require generators >= 10 MW and participation in VWEM. Private grid DPPAs have no minimum capacity but require dedicated transmission infrastructure."
+    },
+
+    "reopt_mapping": {
+      "notes": "How Decree 57 rules map to REopt input parameters.",
+      "can_net_meter": false,
+      "can_wholesale": true,
+      "can_export_beyond_nem_limit": false,
+      "can_curtail": true,
+      "wholesale_rate_source": "rooftop_solar.surplus_purchase_rate_usd_per_kwh"
+    }
+  }
+}

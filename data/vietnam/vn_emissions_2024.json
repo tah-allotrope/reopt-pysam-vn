@@ -1,0 +1,31 @@
+{
+  "_meta": {
+    "version": "2024.1",
+    "effective_date": "2024-01-01",
+    "source": "Hanoi University of Science and Technology (HUST) & Ministry of Agriculture and Environment, 2024 Grid Emission Factor Study",
+    "source_url": "https://vietnamnews.vn/environment/1716087/study-shows-coal-power-dominant-as-viet-nam-s-grid-emissions-climbed-in-2024.html",
+    "notes": "Vietnam 2024 grid emission factor: 0.681 tCO2e/MWh (3.2% increase from 2023 due to 17.7% surge in coal output, 49.5% of mix). Converted to lb CO2/kWh for REopt: 0.681 tCO2e/MWh × 2204.62 lb/t ÷ 1000 kWh/MWh = 1.5013 lb CO2/kWh. Used as constant 8760 series (no hourly dispatch shape available).",
+    "last_updated": "2026-02-18",
+    "currency": null,
+    "exchange_rate_vnd_per_usd": null
+  },
+  "data": {
+    "grid_emission_factor_tCO2e_per_mwh": 0.681,
+    "grid_emission_factor_lb_CO2_per_kwh": 1.5013,
+    "series_type": "constant",
+    "series_length": 8760,
+
+    "historical_context": {
+      "notes": "For reference only — not used by the tool. Shows trend for calibration.",
+      "2019": 0.7221,
+      "2020": 0.7221,
+      "2021": 0.7093,
+      "2022": 0.6743,
+      "2023": 0.6598,
+      "2024": 0.6810,
+      "unit": "tCO2e/MWh"
+    },
+
+    "update_schedule": "Published annually by HUST/MONRE, typically Q1-Q2 of the following year. Next expected: Q1 2026 for 2025 data."
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "_meta": {
+    "version": "2025.1",
+    "effective_date": "2025-01-01",
+    "source": "Vietnam CIT Law 2025 (PWC Tax Summary), State Bank of Vietnam refinancing rate, General Statistics Office inflation data",
+    "source_url": "https://taxsummaries.pwc.com/vietnam/corporate/taxes-on-corporate-income",
+    "notes": "Standard CIT 20%. Preferential 10% for renewable energy projects (4yr exempt + 9yr 50% reduction per CIT Law). Discount rates reflect Vietnam commercial lending environment. Escalation rates based on 5-year historical averages.",
+    "last_updated": "2026-02-18",
+    "currency": "USD",
+    "exchange_rate_vnd_per_usd": 26400
+  },
+  "data": {
+    "standard": {
+      "offtaker_tax_rate_fraction": 0.20,
+      "offtaker_discount_rate_fraction": 0.10,
+      "owner_tax_rate_fraction": 0.20,
+      "owner_discount_rate_fraction": 0.08,
+      "elec_cost_escalation_rate_fraction": 0.04,
+      "om_cost_escalation_rate_fraction": 0.03,
+      "analysis_years": 25
+    },
+
+    "renewable_energy_preferential": {
+      "notes": "Applicable to projects qualifying under CIT Law for renewable energy: 10% CIT rate, 4-year full exemption from first revenue year, 50% reduction for 9 subsequent years. Model this via reduced effective tax rate over analysis period.",
+      "offtaker_tax_rate_fraction": 0.10,
+      "offtaker_discount_rate_fraction": 0.10,
+      "owner_tax_rate_fraction": 0.10,
+      "owner_discount_rate_fraction": 0.08,
+      "elec_cost_escalation_rate_fraction": 0.04,
+      "om_cost_escalation_rate_fraction": 0.03,
+      "analysis_years": 25,
+      "tax_holiday": {
+        "exempt_years": 4,
+        "half_rate_years": 9,
+        "notes": "REopt does not natively model multi-year tax holidays. Approximate by using the effective blended rate over the analysis period: (4*0 + 9*0.05 + 12*0.10) / 25 = 0.066. Or use owner_tax_rate_fraction=0.066 as a weighted average.",
+        "effective_blended_rate_25yr": 0.066
+      }
+    },
+
+    "high_tech_zone": {
+      "notes": "Projects in designated high-tech zones or special economic zones may qualify for additional incentives. 10% CIT for 15 years, 4yr exempt + 9yr 50%. Consult local tax advisor.",
+      "offtaker_tax_rate_fraction": 0.10,
+      "offtaker_discount_rate_fraction": 0.10,
+      "owner_tax_rate_fraction": 0.10,
+      "owner_discount_rate_fraction": 0.08,
+      "elec_cost_escalation_rate_fraction": 0.04,
+      "om_cost_escalation_rate_fraction": 0.03,
+      "analysis_years": 25
+    },
+
+    "reference_rates": {
+      "notes": "For context only — not directly used by the tool. Helps users calibrate their own assumptions.",
+      "sbv_refinancing_rate_2025": 0.045,
+      "commercial_lending_rate_range": [0.07, 0.12],
+      "inflation_rate_5yr_avg": 0.035,
+      "vat_rate": 0.08,
+      "vat_notes": "8% VAT on electricity (reduced from 10% per Resolution 2024). May revert to 10%."
+    }
+  }
+}

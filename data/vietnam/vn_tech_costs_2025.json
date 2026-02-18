@@ -1,0 +1,143 @@
+{
+  "_meta": {
+    "version": "2025.1",
+    "effective_date": "2025-01-01",
+    "source": "Vietnam solar/wind market surveys, Decree 57/2025 ceiling tariffs (implies cost ranges), IRENA Renewable Power Generation Costs 2024 (Southeast Asia data)",
+    "source_url": "https://www.vietnam-briefing.com/news/vietnam-renewable-energy-decree-57.html/",
+    "notes": "Costs are estimates based on Vietnam market conditions. Rooftop PV includes mounting and inverter. Ground PV includes land prep. Battery is Li-ion (LFP). Wind is onshore only. All costs in USD. Regional variation reflects logistics, labor, and solar/wind resource differences.",
+    "last_updated": "2026-02-18",
+    "currency": "USD",
+    "exchange_rate_vnd_per_usd": 26400
+  },
+  "data": {
+    "PV": {
+      "rooftop": {
+        "north": {
+          "installed_cost_per_kw": 650,
+          "om_cost_per_kw": 10
+        },
+        "central": {
+          "installed_cost_per_kw": 620,
+          "om_cost_per_kw": 9
+        },
+        "south": {
+          "installed_cost_per_kw": 600,
+          "om_cost_per_kw": 8
+        }
+      },
+      "ground": {
+        "north": {
+          "installed_cost_per_kw": 550,
+          "om_cost_per_kw": 9
+        },
+        "central": {
+          "installed_cost_per_kw": 520,
+          "om_cost_per_kw": 8
+        },
+        "south": {
+          "installed_cost_per_kw": 500,
+          "om_cost_per_kw": 7
+        }
+      },
+      "common_defaults": {
+        "module_type": 1,
+        "array_type": 1,
+        "dc_ac_ratio": 1.2,
+        "losses": 0.14,
+        "tilt_rule": "latitude",
+        "azimuth": 180.0,
+        "macrs_option_years": 0,
+        "macrs_bonus_fraction": 0.0,
+        "federal_itc_fraction": 0.0,
+        "federal_rebate_per_kw": 0,
+        "state_ibi_fraction": 0.0,
+        "state_ibi_max": 0,
+        "state_rebate_per_kw": 0,
+        "utility_ibi_fraction": 0.0,
+        "utility_ibi_max": 0,
+        "utility_rebate_per_kw": 0,
+        "production_incentive_per_kwh": 0.0,
+        "production_incentive_max_benefit": 0,
+        "production_incentive_years": 0
+      }
+    },
+
+    "Wind": {
+      "onshore": {
+        "north": {
+          "installed_cost_per_kw": 1400,
+          "om_cost_per_kw": 28
+        },
+        "central": {
+          "installed_cost_per_kw": 1300,
+          "om_cost_per_kw": 26
+        },
+        "south": {
+          "installed_cost_per_kw": 1350,
+          "om_cost_per_kw": 27
+        }
+      },
+      "common_defaults": {
+        "macrs_option_years": 0,
+        "macrs_bonus_fraction": 0.0,
+        "federal_itc_fraction": 0.0,
+        "federal_rebate_per_kw": 0,
+        "state_ibi_fraction": 0.0,
+        "state_ibi_max": 0,
+        "state_rebate_per_kw": 0,
+        "utility_ibi_fraction": 0.0,
+        "utility_ibi_max": 0,
+        "utility_rebate_per_kw": 0,
+        "production_incentive_per_kwh": 0.0,
+        "production_incentive_max_benefit": 0,
+        "production_incentive_years": 0
+      }
+    },
+
+    "ElectricStorage": {
+      "li_ion": {
+        "north": {
+          "installed_cost_per_kw": 400,
+          "installed_cost_per_kwh": 300
+        },
+        "central": {
+          "installed_cost_per_kw": 380,
+          "installed_cost_per_kwh": 280
+        },
+        "south": {
+          "installed_cost_per_kw": 370,
+          "installed_cost_per_kwh": 270
+        }
+      },
+      "common_defaults": {
+        "installed_cost_constant": 0,
+        "replace_cost_per_kw": 200,
+        "replace_cost_per_kwh": 150,
+        "inverter_replacement_year": 10,
+        "battery_replacement_year": 10,
+        "macrs_option_years": 0,
+        "macrs_bonus_fraction": 0.0,
+        "total_itc_fraction": 0.0,
+        "total_rebate_per_kw": 0
+      }
+    },
+
+    "Generator": {
+      "diesel": {
+        "installed_cost_per_kw": 500,
+        "om_cost_per_kw": 20,
+        "om_cost_per_kwh": 0.01,
+        "fuel_cost_per_gallon": 4.50,
+        "electric_efficiency_half_load": 0.30,
+        "electric_efficiency_full_load": 0.35
+      },
+      "common_defaults": {
+        "macrs_option_years": 0,
+        "macrs_bonus_fraction": 0.0,
+        "federal_itc_fraction": 0.0,
+        "federal_rebate_per_kw": 0
+      },
+      "notes": "Diesel fuel cost based on Vietnam retail diesel price ~VND 22,000/liter ≈ $3.15/gallon + delivery markup for remote/industrial sites."
+    }
+  }
+}
