@@ -12,6 +12,18 @@ RESULTS_PATH = RESULTS_DIR / "scenario_b_hospital_resilience_api_results.json"
 API_URL = "https://developer.nrel.gov/api/reopt/stable"
 
 
+def redact_sensitive_fields(payload: dict) -> dict:
+    if isinstance(payload, dict):
+        return {
+            key: redact_sensitive_fields(value)
+            for key, value in payload.items()
+            if not (isinstance(key, str) and key.lower() == "api_key")
+        }
+    if isinstance(payload, list):
+        return [redact_sensitive_fields(item) for item in payload]
+    return payload
+
+
 def load_api_key(env_path: Path) -> str:
     if not env_path.exists():
         raise FileNotFoundError(f"NREL_API.env not found at {env_path}")
@@ -76,9 +88,10 @@ def main() -> None:
     post_payload = load_post_payload(SCENARIO_B_PATH)
     run_uuid = submit_job(post_payload, api_key)
     results = poll_results(run_uuid, api_key)
+    sanitized_results = redact_sensitive_fields(results)
 
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    RESULTS_PATH.write_text(json.dumps(results, indent=4))
+    RESULTS_PATH.write_text(json.dumps(sanitized_results, indent=4))
     print(f"Saved API results to: {RESULTS_PATH}")
 
 

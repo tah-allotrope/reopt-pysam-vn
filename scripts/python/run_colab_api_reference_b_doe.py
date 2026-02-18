@@ -17,6 +17,18 @@ RESULTS_PATH = RESULTS_DIR / "scenario_b_api_doe_ref_results.json"
 API_URL = "https://developer.nrel.gov/api/reopt/stable"
 
 
+def redact_sensitive_fields(payload: dict) -> dict:
+    if isinstance(payload, dict):
+        return {
+            key: redact_sensitive_fields(value)
+            for key, value in payload.items()
+            if not (isinstance(key, str) and key.lower() == "api_key")
+        }
+    if isinstance(payload, list):
+        return [redact_sensitive_fields(item) for item in payload]
+    return payload
+
+
 def load_api_key(env_path: Path) -> str:
     for line in env_path.read_text().splitlines():
         stripped = line.strip()
@@ -37,7 +49,7 @@ def get_simulated_load(api_key: str) -> list:
         "longitude": 30,
         "annual_kwh": 100000,
     }
-    r = requests.get(url, params=params, verify=False, timeout=60)
+    r = requests.get(url, params=params, timeout=60)
     r.raise_for_status()
     return r.json()["loads_kw"]
 
@@ -130,10 +142,11 @@ def main() -> None:
     run_uuid = submit_job(post, api_key)
     print(f"Submitted job: {run_uuid}")
     results = poll_results(run_uuid, api_key)
+    sanitized_results = redact_sensitive_fields(results)
 
     # Step 5: Save and print summary
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    RESULTS_PATH.write_text(json.dumps(results, indent=4))
+    RESULTS_PATH.write_text(json.dumps(sanitized_results, indent=4))
     print(f"Saved to: {RESULTS_PATH}")
 
     o = results.get("outputs", {})
