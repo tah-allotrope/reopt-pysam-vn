@@ -28,6 +28,10 @@
 18. **Scenario B reconciled** – With `min_resil_time_steps=48`, Julia matches API exactly: PV=77.23 kW, Storage=17.36 kW / 199.05 kWh, Capital=$210,325. ~2% NPV difference ($-162.8K vs $-166.3K) due to emissions cost calculations at non-US locations. Colab reference differs from both (older API version). Full analysis in `results/colab/comparison_report.md`.
 19. **Tinh scenario extracted and run** – Extracted input dict from `notebooks/REopt_Tinh_test.ipynb` (cell 4) into `scenarios/tinh/tinh_pv_storage.json`. Created `scripts/julia/run_tinh_scenario.jl` (two-model BAU+optimal). Results: PV=22.0 kW (roof-constrained), Storage=45.91 kW / 114.38 kWh, LCC=$1,224,115, NPV=-$120,872. Notebook cell outputs are stale (from an earlier Helsinki run at $1,500/kW PV), explaining all discrepancies. Full analysis in `results/tinh/tinh_comparison_report.md`.
 20. **REopt Vietnam Tool — Phase 1 (Data Layer) complete** – Created `data/vietnam/` with 5 versioned JSON data files + manifest for Vietnam-specific assumptions. Each file has a `_meta` envelope (`version`, `effective_date`, `source`, `source_url`, `last_updated`, `currency`). Manifest-driven: swap policy data by changing one line in `manifest.json`. Data covers: EVN tariffs (Decision 14/2025, TOU by customer type/voltage), tech costs (PV/Wind/Battery by region), financials (CIT 20%/10% preferential, tax holidays), grid emissions (0.681 tCO2e/MWh = 1.50 lb CO2/kWh), and Decree 57 export rules (20% cap, DPPA ceilings).
+21. **REopt Vietnam Tool — Phase 2 (Julia Module) complete** – Built `src/REoptVietnam.jl` as a self-contained Julia module. Exports: `load_vietnam_data()`, `apply_vietnam_defaults!()`, `zero_us_incentives!()`, `apply_vietnam_financials!()`, `build_vietnam_tariff()`, `apply_vietnam_emissions!()`, `apply_vietnam_tech_costs!()`, `apply_decree57_export!()`, `convert_vnd_to_usd()`, `convert_usd_to_vnd()`. All values loaded from manifest-driven data files — no hardcoded policy values. Non-destructive: user values always win. Dual VND/USD currency support.
+22. **REopt Vietnam Tool — Phase 3 (Julia Tests) complete** – Wrote Layer 1 (data validation) and Layer 2 (unit tests) for Julia. `tests/julia/test_data_validation.jl`: schema compliance, tariff TOU completeness, tech cost bounds, emissions range, financial bounds, export rules. `tests/julia/test_unit.jl`: 40+ tests covering every exported function, edge cases, error handling, non-destructive merge, PV-as-vector, selective disable flags.
+23. **REopt Vietnam Tool — Phase 4 (Python Module) complete** – Built `src/reopt_vietnam.py` as a Python mirror of the Julia module. Shares the same `data/vietnam/` data files. Identical API: `load_vietnam_data()`, `apply_vietnam_defaults()`, `build_vietnam_tariff()`, `zero_us_incentives()`, `apply_vietnam_financials()`, `apply_vietnam_emissions()`, `apply_vietnam_tech_costs()`, `apply_decree57_export()`, `run_vietnam_reopt()` (REopt API convenience wrapper with polling). Immutable `VNData` dataclass.
+24. **REopt Vietnam Tool — Phase 5 (Python Tests + Cross-Validation) complete** – Wrote Layer 1 + Layer 2 Python tests and Layer 3 cross-validation. All 78 Python tests pass (1.46s). Layer 3 cross-validation (`tests/cross_validate.py`) runs Julia via subprocess, compares all dict values within 1e-10 tolerance — **tariff array max diff = 0.00e+00**. Julia helper: `tests/julia/export_processed_dict.jl`.
 
 ## Current Status
 - **Julia:** Installed and version-confirmed (1.10.10).
@@ -36,16 +40,19 @@
 - **Colab Scenario A (Retail PV+Storage):** Perfect match between Julia and API. PV=49.45 kW, no storage, NPV=$36,933.
 - **Colab Scenario B (Hospital Resilience 48h):** Julia matches API on all sizing/cost metrics after adding `min_resil_time_steps=48`. PV=77.23 kW, Storage=17.36 kW / 199.05 kWh, NPV=-$162,825.
 - **Tinh PV+Storage (HCMC, Vietnam):** PV=22.0 kW, Storage=45.91 kW / 114.38 kWh, LCC=$1,224,115, NPV=-$120,872. Notebook outputs stale; script results are correct for current inputs.
-- **Vietnam Data Layer:** Phase 1 complete — 5 versioned JSON files + manifest in `data/vietnam/`. Ready for Phase 2 (Julia module).
+- **REopt Vietnam Tool — Phases 1–5 complete.** Data layer, Julia module, Python module, Julia tests (Layer 1+2), Python tests (Layer 1+2, 78 passed), and Layer 3 cross-validation (Julia ↔ Python, max diff = 0.00e+00) all done.
 - **Key learning:** REopt.jl multiple outage modeling is a soft constraint by default; use `Site.min_resil_time_steps` for hard constraint.
 
 ## Next Immediate Steps (REopt Vietnam Tool)
-- **Phase 2:** Build `src/REoptVietnam.jl` — Julia module with `load_vietnam_data()`, `apply_vietnam_defaults!()`, TOU tariff builder, currency conversion.
-- **Phase 3:** Write Layer 1 (data validation) + Layer 2 (unit tests) for Julia.
-- **Phase 4:** Build `src/reopt_vietnam.py` — Python mirror sharing same data files.
-- **Phase 5:** Python tests + Layer 3 cross-validation (Julia ↔ Python dict equality).
-- **Phase 6:** Create 4 scenario templates (commercial rooftop, industrial PV+storage, off-grid microgrid, hospital resilience).
-- **Phase 7:** Layer 4 integration/regression tests + baselines.
+- ✅ ~~Phase 1: Data layer (5 JSON files + manifest)~~
+- ✅ ~~Phase 2: `src/REoptVietnam.jl` Julia module~~
+- ✅ ~~Phase 3: Julia Layer 1 + Layer 2 tests~~
+- ✅ ~~Phase 4: `src/reopt_vietnam.py` Python module~~
+- ✅ ~~Phase 5: Python Layer 1 + Layer 2 tests + Layer 3 cross-validation~~
+- **Step 6 (next):** Create 4 scenario templates in `scenarios/templates/` — commercial rooftop PV, industrial PV+storage, off-grid microgrid, hospital resilience. All Vietnam defaults pre-filled; user overrides Site + ElectricLoad only.
+- **Step 7:** Layer 4 integration/regression tests + save baselines in `tests/baselines/`.
+- **Step 8:** Test runner script `tests/run_all_tests.ps1`.
+- **Step 9:** Update `AGENTS.md` + `README.md` with tool + testing docs.
 - **Full plan:** `C:\Users\tukum\.windsurf\plans\reopt-vietnam-tool-9a40df.md`
 
 ## Key Commands Verified
