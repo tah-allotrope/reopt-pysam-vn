@@ -1,5 +1,5 @@
 """
-Layer 3: Cross-Validation — Julia ↔ Python
+Layer 3: Cross-Validation - Julia vs Python
 
 Ensures both modules produce identical preprocessed dicts from the same input.
 Runs the Julia export_processed_dict.jl helper via subprocess, then compares
@@ -34,7 +34,7 @@ from src.reopt_vietnam import (
 CROSS_VALIDATE_YEAR = 2025
 TOLERANCE = 1e-10
 
-# Minimal scenario used by both Julia and Python — must be identical
+# Minimal scenario used by both Julia and Python - must be identical
 MINIMAL_SCENARIO = {
     "Site": {"latitude": 10.8, "longitude": 106.6},
     "ElectricLoad": {"doe_reference_name": "Hospital", "annual_kwh": 1_000_000},
@@ -129,7 +129,7 @@ def _compare_values(py_val, jl_val, path: str, diffs: list, tol: float = TOLERAN
         if py_val != jl_val:
             diffs.append(f"  {path}: Python={py_val}, Julia={jl_val}")
     elif type(py_val) != type(jl_val):
-        # Type mismatch — but allow int/float cross-comparison (handled above)
+        # Type mismatch - but allow int/float cross-comparison (handled above)
         # and bool vs int (Julia JSON may serialize bools as true/false)
         if isinstance(py_val, bool) or isinstance(jl_val, bool):
             if bool(py_val) != bool(jl_val):
@@ -182,7 +182,7 @@ class TestCrossValidation:
             diff_report = "\n".join(diffs[:50])  # cap at 50 diffs
             total = len(diffs)
             pytest.fail(
-                f"Julia ↔ Python dict mismatch ({total} differences):\n{diff_report}"
+                f"Julia vs Python dict mismatch ({total} differences):\n{diff_report}"
             )
 
     def test_tariff_array_equality(self, processed_dicts):
@@ -282,7 +282,7 @@ if __name__ == "__main__":
     import copy
 
     print("=" * 60)
-    print("Layer 3: Cross-Validation — Julia ↔ Python")
+    print("Layer 3: Cross-Validation - Julia vs Python")
     print("=" * 60)
 
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -315,14 +315,14 @@ if __name__ == "__main__":
         _compare_values(py_dict, jl_dict, "root", diffs)
 
         if diffs:
-            print(f"\n✗ FAILED: {len(diffs)} differences found:")
+            print(f"\n[FAIL] {len(diffs)} differences found:")
             for d in diffs[:30]:
                 print(d)
             if len(diffs) > 30:
                 print(f"  ... and {len(diffs) - 30} more")
             sys.exit(1)
         else:
-            print("\n✓ PASSED: All values match within tolerance (1e-10)")
+            print("\n[PASS] All values match within tolerance (1e-10)")
 
         # Tariff array spot-check
         py_rates = py_dict["ElectricTariff"]["energy_rate_series_per_kwh"]
@@ -331,4 +331,4 @@ if __name__ == "__main__":
         print(f"  Tariff array max diff: {max_diff:.2e}")
         print(f"  Tariff array length: Python={len(py_rates)}, Julia={len(jl_rates)}")
 
-    print("\n✓ Layer 3: Cross-validation complete.")
+    print("\n[PASS] Layer 3: Cross-validation complete.")

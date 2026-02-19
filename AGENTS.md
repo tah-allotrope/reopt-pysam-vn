@@ -75,3 +75,92 @@ Versioned JSON files with Vietnam-specific assumptions, loaded by `src/REoptViet
 
 ### File Schema
 Every file has `_meta` (version, effective_date, source, source_url, last_updated, currency) + `data` block. Code reads only `data`; `_meta` is for audit.
+
+## 9. Preprocessing Modules
+
+Dual Julia/Python modules that apply Vietnam defaults to a REopt input dict **before** `Scenario()` construction.
+
+| Module | Language | Key Function |
+|---|---|---|
+| `src/REoptVietnam.jl` | Julia | `apply_vietnam_defaults!(dict, vn; customer_type, voltage_level, region)` |
+| `src/reopt_vietnam.py` | Python | `apply_vietnam_defaults(dict, vn, customer_type, voltage_level, region)` |
+
+Both modules share the same `data/vietnam/` data files and produce identical output (verified by Layer 3 cross-validation, max diff = 0.00e+00).
+
+**Exported functions (both languages):**
+- `load_vietnam_data()` - Load all data files via manifest
+- `apply_vietnam_defaults!()` / `apply_vietnam_defaults()` - Full pipeline (tariff + financials + emissions + tech costs + export rules + zero incentives)
+- `build_vietnam_tariff()` - Build 8760 TOU energy rate series
+- `zero_us_incentives!()` / `zero_us_incentives()` - Zero all US-specific incentive fields
+- `apply_vietnam_financials!()` / `apply_vietnam_financials()` - Set CIT, discount rates, analysis years
+- `apply_vietnam_emissions!()` / `apply_vietnam_emissions()` - Set constant 8760 emissions series
+- `apply_vietnam_tech_costs!()` / `apply_vietnam_tech_costs()` - Set PV/Wind/Battery/Generator costs by region
+- `apply_decree57_export!()` / `apply_decree57_export()` - Set export rules per Decree 57
+- `convert_vnd_to_usd()` / `convert_usd_to_vnd()` - Currency conversion
+
+**Non-destructive:** User values already present in the dict are never overwritten.
+
+## 10. Scenario Templates (`scenarios/templates/`)
+
+Pre-filled Vietnam scenario templates requiring only Site/Load/sizing overrides.
+
+| Template | Use Case | Technologies | Mode |
+|---|---|---|---|
+| `vn_commercial_rooftop_pv.json` | Commercial building, HCMC | PV + Storage | Grid-tied, TOU tariff |
+| `vn_industrial_pv_storage.json` | Industrial facility, south | PV + Storage | Grid-tied, demand optimization |
+| `vn_offgrid_microgrid.json` | Remote site, central | PV + Wind + Generator + Storage | Off-grid |
+| `vn_hospital_resilience.json` | Hospital, HCMC | PV + Storage | Grid-tied, 4h outage resilience |
+
+Each template includes a `_template` metadata block (name, description, usage, region, customer_type, voltage_level). Strip `_template` before passing to `Scenario()`.
+
+**Usage pattern:**
+```julia
+d = JSON.parsefile("scenarios/templates/vn_commercial_rooftop_pv.json")
+delete!(d, "_template")
+# Override site-specific values
+d["Site"]["latitude"] = 10.82
+d["ElectricLoad"]["annual_kwh"] = 500_000
+# Apply Vietnam defaults (builds TOU tariff series, etc.)
+apply_vietnam_defaults!(d, vn; customer_type="commercial", region="south")
+s = Scenario(d)
+```
+
+## 11. Testing Strategy (4 Layers)
+
+| Layer | What | Speed | Files |
+|---|---|---|---|
+| **1: Data Validation** | Schema compliance, value bounds for all `data/vietnam/` files | <2s | `tests/julia/test_data_validation.jl`, `tests/python/test_data_validation.py` |
+| **2: Unit Tests** | Every exported function, edge cases, error handling, non-destructive merge | <3s | `tests/julia/test_unit.jl`, `tests/python/test_unit.py` |
+| **3: Cross-Validation** | Julia vs Python produce identical dicts (tolerance 1e-10) | <5s | `tests/cross_validate.py`, `tests/julia/export_processed_dict.jl` |
+| **4: Integration** | Scenario() construction, solver runs, regression baselines, incentive verification | ~30-60s/scenario | `tests/julia/test_integration.jl`, `tests/python/test_integration.py` |
+
+**Baselines:** Stored in `tests/baselines/`. Auto-generated on first run; subsequent runs compare within 5% tolerance. Delete baseline file to regenerate.
+
+## 12. Test Runner
+
+```powershell
+# Run all layers (Layers 1-3 fast, Layer 4 slow)
+.\tests\run_all_tests.ps1
+
+# Skip solver-dependent tests
+.\tests\run_all_tests.ps1 -SkipLayer4
+
+# Layer 4 smoke tests only (Scenario construction, no solver)
+.\tests\run_all_tests.ps1 -SmokeOnly
+
+# Run a single layer
+.\tests\run_all_tests.ps1 -Layer 2
+```
+
+**Julia tests directly:**
+```powershell
+$env:JULIA_PKG_PRECOMPILE_AUTO="0"
+julia --project --compile=min tests/julia/test_unit.jl
+julia --project --compile=min tests/julia/test_integration.jl --smoke-only
+```
+
+**Python tests directly:**
+```powershell
+python -m pytest tests/python/test_unit.py -v
+python -m pytest tests/python/test_integration.py -v -k smoke
+```

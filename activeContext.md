@@ -32,27 +32,28 @@
 22. **REopt Vietnam Tool — Phase 3 (Julia Tests) complete** – Wrote Layer 1 (data validation) and Layer 2 (unit tests) for Julia. `tests/julia/test_data_validation.jl`: schema compliance, tariff TOU completeness, tech cost bounds, emissions range, financial bounds, export rules. `tests/julia/test_unit.jl`: 40+ tests covering every exported function, edge cases, error handling, non-destructive merge, PV-as-vector, selective disable flags.
 23. **REopt Vietnam Tool — Phase 4 (Python Module) complete** – Built `src/reopt_vietnam.py` as a Python mirror of the Julia module. Shares the same `data/vietnam/` data files. Identical API: `load_vietnam_data()`, `apply_vietnam_defaults()`, `build_vietnam_tariff()`, `zero_us_incentives()`, `apply_vietnam_financials()`, `apply_vietnam_emissions()`, `apply_vietnam_tech_costs()`, `apply_decree57_export()`, `run_vietnam_reopt()` (REopt API convenience wrapper with polling). Immutable `VNData` dataclass.
 24. **REopt Vietnam Tool — Phase 5 (Python Tests + Cross-Validation) complete** – Wrote Layer 1 + Layer 2 Python tests and Layer 3 cross-validation. All 78 Python tests pass (1.46s). Layer 3 cross-validation (`tests/cross_validate.py`) runs Julia via subprocess, compares all dict values within 1e-10 tolerance — **tariff array max diff = 0.00e+00**. Julia helper: `tests/julia/export_processed_dict.jl`.
+25. **REopt Vietnam Tool — Step 6 (Scenario Templates) complete** – Created 4 pre-filled Vietnam scenario templates in `scenarios/templates/`: commercial rooftop PV (HCMC), industrial PV+storage (south), off-grid microgrid (central), hospital resilience (HCMC). Each has `_template` metadata, zero US incentives, Vietnam financials/emissions/export rules. Fixed: hospital `outage_probabilities` must sum to 1.0; off-grid needs `doe_reference_name` in ElectricLoad.
+26. **REopt Vietnam Tool — Step 7 (Layer 4 Integration Tests) complete** – Created `tests/julia/test_integration.jl` (template smoke tests, incentive verification, Tinh regression, industrial solve) and `tests/python/test_integration.py` (template validation, API cross-check, baseline regression). Julia smoke: 65/65 passed. Python smoke: 9/9 passed. Baselines auto-generate on first solver run in `tests/baselines/`.
+27. **REopt Vietnam Tool — Step 8 (Test Runner) complete** – Created `tests/run_all_tests.ps1` PowerShell script orchestrating all 4 layers. Flags: `-SkipLayer4`, `-SmokeOnly`, `-Layer N`. Layers 1-3: 5/5 passed in 14.5s. Also fixed Unicode encoding issues in `tests/cross_validate.py` for Windows cp1252 compatibility.
+28. **REopt Vietnam Tool — Step 9 (Documentation) complete** – Updated `AGENTS.md` (sections 9-12: preprocessing modules, scenario templates, testing strategy, test runner), `activeContext.md`, `README.md`, and Windsurf memory.
 
 ## Current Status
 - **Julia:** Installed and version-confirmed (1.10.10).
 - **Packages:** REopt, JuMP, and HiGHS installed manually.
 - **API keys:** Configured via `NREL_API.env` file, loaded at script startup.
-- **Colab Scenario A (Retail PV+Storage):** Perfect match between Julia and API. PV=49.45 kW, no storage, NPV=$36,933.
-- **Colab Scenario B (Hospital Resilience 48h):** Julia matches API on all sizing/cost metrics after adding `min_resil_time_steps=48`. PV=77.23 kW, Storage=17.36 kW / 199.05 kWh, NPV=-$162,825.
-- **Tinh PV+Storage (HCMC, Vietnam):** PV=22.0 kW, Storage=45.91 kW / 114.38 kWh, LCC=$1,224,115, NPV=-$120,872. Notebook outputs stale; script results are correct for current inputs.
-- **REopt Vietnam Tool — Phases 1–5 complete.** Data layer, Julia module, Python module, Julia tests (Layer 1+2), Python tests (Layer 1+2, 78 passed), and Layer 3 cross-validation (Julia ↔ Python, max diff = 0.00e+00) all done.
+- **REopt Vietnam Tool — All 9 steps complete.** Full preprocessing pipeline (data + Julia + Python modules), 4 scenario templates, 4-layer test suite (Layers 1-3: 5/5 pass in ~15s), test runner, and documentation.
 - **Key learning:** REopt.jl multiple outage modeling is a soft constraint by default; use `Site.min_resil_time_steps` for hard constraint.
 
-## Next Immediate Steps (REopt Vietnam Tool)
-- ✅ ~~Phase 1: Data layer (5 JSON files + manifest)~~
-- ✅ ~~Phase 2: `src/REoptVietnam.jl` Julia module~~
-- ✅ ~~Phase 3: Julia Layer 1 + Layer 2 tests~~
-- ✅ ~~Phase 4: `src/reopt_vietnam.py` Python module~~
-- ✅ ~~Phase 5: Python Layer 1 + Layer 2 tests + Layer 3 cross-validation~~
-- **Step 6 (next):** Create 4 scenario templates in `scenarios/templates/` — commercial rooftop PV, industrial PV+storage, off-grid microgrid, hospital resilience. All Vietnam defaults pre-filled; user overrides Site + ElectricLoad only.
-- **Step 7:** Layer 4 integration/regression tests + save baselines in `tests/baselines/`.
-- **Step 8:** Test runner script `tests/run_all_tests.ps1`.
-- **Step 9:** Update `AGENTS.md` + `README.md` with tool + testing docs.
+## Implementation Status (REopt Vietnam Tool)
+- ✅ Step 1: Data layer (5 JSON files + manifest)
+- ✅ Step 2: `src/REoptVietnam.jl` Julia module
+- ✅ Step 3: Julia Layer 1 + Layer 2 tests
+- ✅ Step 4: `src/reopt_vietnam.py` Python module
+- ✅ Step 5: Python Layer 1 + Layer 2 tests + Layer 3 cross-validation
+- ✅ Step 6: 4 scenario templates in `scenarios/templates/`
+- ✅ Step 7: Layer 4 integration/regression tests + baselines
+- ✅ Step 8: Test runner `tests/run_all_tests.ps1`
+- ✅ Step 9: Documentation updates (AGENTS.md, README.md, activeContext.md)
 - **Full plan:** `C:\Users\tukum\.windsurf\plans\reopt-vietnam-tool-9a40df.md`
 
 ## Key Commands Verified
@@ -92,6 +93,28 @@
 | `data/vietnam/vn_financial_defaults_2025.json` | CIT 20% standard / 10% RE preferential, tax holiday (4yr exempt + 9yr 50%), discount & escalation rates |
 | `data/vietnam/vn_emissions_2024.json` | Grid emission factor 0.681 tCO2e/MWh (1.50 lb CO2/kWh), 2019–2024 historical trend |
 | `data/vietnam/vn_export_rules_decree57.json` | Rooftop 20% export cap, surplus rate VND 671/kWh, DPPA ceiling tariffs by tech/region |
+
+## Scenario Templates
+| File | Description |
+|---|---|
+| `scenarios/templates/vn_commercial_rooftop_pv.json` | Commercial building, HCMC: PV + Storage, grid-tied, TOU tariff |
+| `scenarios/templates/vn_industrial_pv_storage.json` | Industrial facility, south: PV + Storage, demand optimization |
+| `scenarios/templates/vn_offgrid_microgrid.json` | Remote site, central: PV + Wind + Generator + Storage, off-grid |
+| `scenarios/templates/vn_hospital_resilience.json` | Hospital, HCMC: PV + Storage, 4h outage resilience |
+
+## Testing Files
+| File | Layer | Description |
+|---|---|---|
+| `tests/julia/test_data_validation.jl` | 1 | Julia data file schema/bounds validation |
+| `tests/python/test_data_validation.py` | 1 | Python data file schema/bounds validation |
+| `tests/julia/test_unit.jl` | 2 | Julia unit tests for all exported functions |
+| `tests/python/test_unit.py` | 2 | Python unit tests for all exported functions |
+| `tests/cross_validate.py` | 3 | Julia vs Python cross-validation (max diff = 0.00e+00) |
+| `tests/julia/export_processed_dict.jl` | 3 | Julia helper for cross-validation |
+| `tests/julia/test_integration.jl` | 4 | Julia integration: template smoke, incentive verify, regression |
+| `tests/python/test_integration.py` | 4 | Python integration: template smoke, API cross-check |
+| `tests/baselines/` | 4 | Regression baselines (auto-generated on first solver run) |
+| `tests/run_all_tests.ps1` | All | Master test runner: `-SkipLayer4`, `-SmokeOnly`, `-Layer N` |
 
 ## Notes
 - `test/pv.json` field updates: `federal_itc_pct`, `macrs_bonus_pct`, financial `*_pct` keys; removed `ElectricUtility.co2_from_avert` (unsupported).
