@@ -1,0 +1,89 @@
+{
+    "_template": {
+        "name": "Vietnam Hospital Resilience",
+        "description": "Grid-tied hospital with rooftop PV and Li-ion battery storage, designed for outage resilience. Uses min_resil_time_steps as a hard constraint to ensure 100% critical load survival during outages. Decree 57 export rules apply.",
+        "usage": "Override Site.latitude/longitude, ElectricLoad (critical load profile), Site.min_resil_time_steps, and outage parameters. Run through apply_vietnam_defaults!(d, vn; customer_type=\"commercial\") to generate the 8760 TOU tariff series.",
+        "region": "south",
+        "customer_type": "commercial",
+        "voltage_level": "medium_voltage_22kv_to_110kv"
+    },
+
+    "Site": {
+        "latitude": 10.7626,
+        "longitude": 106.6602,
+        "land_acres": 0.0,
+        "roof_squarefeet": 8000,
+        "min_resil_time_steps": 4
+    },
+
+    "ElectricLoad": {
+        "doe_reference_name": "Hospital",
+        "annual_kwh": 1000000.0,
+        "year": 2025
+    },
+
+    "ElectricTariff": {
+        "blended_annual_energy_rate": 0.0884,
+        "monthly_demand_rates": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    },
+
+    "Financial": {
+        "offtaker_tax_rate_fraction": 0.20,
+        "offtaker_discount_rate_fraction": 0.10,
+        "owner_tax_rate_fraction": 0.20,
+        "owner_discount_rate_fraction": 0.08,
+        "elec_cost_escalation_rate_fraction": 0.04,
+        "om_cost_escalation_rate_fraction": 0.03,
+        "analysis_years": 25
+    },
+
+    "PV": {
+        "location": "roof",
+        "module_type": 1,
+        "array_type": 1,
+        "tilt": 10.8,
+        "azimuth": 180.0,
+        "dc_ac_ratio": 1.2,
+        "losses": 0.14,
+        "installed_cost_per_kw": 600,
+        "om_cost_per_kw": 8,
+        "can_net_meter": false,
+        "can_wholesale": true,
+        "can_export_beyond_nem_limit": false,
+        "can_curtail": true,
+        "macrs_option_years": 0,
+        "macrs_bonus_fraction": 0.0,
+        "federal_itc_fraction": 0.0,
+        "federal_rebate_per_kw": 0,
+        "state_ibi_fraction": 0.0,
+        "state_ibi_max": 0,
+        "state_rebate_per_kw": 0,
+        "utility_ibi_fraction": 0.0,
+        "utility_ibi_max": 0,
+        "utility_rebate_per_kw": 0,
+        "production_incentive_per_kwh": 0.0,
+        "production_incentive_max_benefit": 0,
+        "production_incentive_years": 0
+    },
+
+    "ElectricStorage": {
+        "installed_cost_per_kw": 370,
+        "installed_cost_per_kwh": 270,
+        "installed_cost_constant": 0,
+        "replace_cost_per_kw": 200,
+        "replace_cost_per_kwh": 150,
+        "inverter_replacement_year": 10,
+        "battery_replacement_year": 10,
+        "macrs_option_years": 0,
+        "macrs_bonus_fraction": 0.0,
+        "total_itc_fraction": 0.0,
+        "total_rebate_per_kw": 0
+    },
+
+    "ElectricUtility": {
+        "emissions_factor_series_lb_CO2_per_kwh": 1.5013,
+        "outage_start_time_steps": [4500],
+        "outage_durations": [4],
+        "outage_probabilities": [1.0]
+    }
+}
