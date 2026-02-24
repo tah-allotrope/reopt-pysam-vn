@@ -1,3 +1,5 @@
+# Benchmark: US wind + battery reference scenario (Kansas coordinates, US assumptions).
+# Do NOT add Vietnam preprocessing here — this scenario uses US lat/lon by design.
 using JSON
 using JuMP
 using HiGHS

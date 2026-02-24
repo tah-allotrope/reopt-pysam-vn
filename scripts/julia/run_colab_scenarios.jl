@@ -1,3 +1,5 @@
+# Benchmark: reproduces Google Colab tutorial results (non-Vietnam coordinates, US assumptions).
+# Do NOT add Vietnam preprocessing here — these scenarios use lat/lon outside Vietnam by design.
 using JSON
 using JuMP
 using HiGHS

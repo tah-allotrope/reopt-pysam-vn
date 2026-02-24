@@ -5,7 +5,8 @@
         "usage": "Override Site.latitude/longitude, ElectricLoad (critical load profile), Site.min_resil_time_steps, and outage parameters. Run through apply_vietnam_defaults!(d, vn; customer_type=\"commercial\") to generate the 8760 TOU tariff series.",
         "region": "south",
         "customer_type": "commercial",
-        "voltage_level": "medium_voltage_22kv_to_110kv"
+        "voltage_level": "medium_voltage_22kv_to_110kv",
+        "load_note": "ElectricLoad.doe_reference_name is a US building archetype placeholder. For Vietnam-accurate results, replace with loads_kw (8760 hourly kW values) and remove doe_reference_name and annual_kwh."
     },
 
     "Site": {

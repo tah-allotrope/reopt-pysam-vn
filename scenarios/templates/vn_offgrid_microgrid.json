@@ -5,7 +5,8 @@
         "usage": "Override Site.latitude/longitude, ElectricLoad, and technology sizing constraints. Off-grid mode: only PV/Wind/Generator/ElectricStorage allowed; grid export disabled; operating reserves enforced automatically by REopt.",
         "region": "central",
         "customer_type": "industrial",
-        "voltage_level": "low_voltage_below_22kv"
+        "voltage_level": "low_voltage_below_22kv",
+        "load_note": "ElectricLoad.doe_reference_name is a US building archetype placeholder. For Vietnam-accurate results, replace with loads_kw (8760 hourly kW values) and remove doe_reference_name and annual_kwh."
     },
 
     "Settings": {

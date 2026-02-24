@@ -404,6 +404,16 @@ end
         @test d["ElectricTariff"]["wholesale_rate"] == 0.05  # user value wins
     end
 
+    @testset "apply_decree57_export! — non-default max_export_fraction emits warning" begin
+        d = make_base_dict()
+        @test_logs (:warn, r"max_export_fraction=.*NOT enforced") apply_decree57_export!(d, VN; max_export_fraction=0.10)
+    end
+
+    @testset "apply_decree57_export! — default max_export_fraction emits no warning" begin
+        d = make_base_dict()
+        @test_nowarn apply_decree57_export!(d, VN; max_export_fraction=0.20)
+    end
+
     # ===================================================================
     # 9. apply_vietnam_defaults! — master function
     # ===================================================================

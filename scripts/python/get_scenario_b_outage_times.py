@@ -1,3 +1,6 @@
+# Benchmark: fetches outage times for Colab Scenario B using non-Vietnam coordinates (lat 50, lon 30) by design.
+# Do NOT add Vietnam preprocessing here.
+
 import json
 import time
 from pathlib import Path

@@ -38,6 +38,12 @@ When using `loads_kw` directly, `"year"` field is **required** (e.g., `"year": 2
 ### Off-Grid Mode
 `Settings.off_grid_flag = true`: only PV/Wind/Generator/ElectricStorage allowed; Generator+Storage required; grid export/charge forced off; operating reserves enforced.
 
+### Decree 57 Export Cap (`max_export_fraction`) — Not Enforced
+`apply_decree57_export!` / `apply_decree57_export` accept `max_export_fraction=0.20` but do **NOT** enforce it as an optimization constraint. REopt has no native "max % of generation exportable" constraint — enforcement requires custom JuMP constraints (future work). Passing a non-default value emits `@warn` / `UserWarning`. The function does correctly set `can_net_meter=false`, `can_wholesale=true`, and the surplus purchase rate.
+
+### Benchmark Scripts — Non-Vietnam by Design
+`scripts/julia/run_colab_scenarios.jl`, `run_scenario_b_only.jl`, `run_wind_battery_hospital.jl` and all `scripts/python/run_colab_api_reference*.py`, `get_scenario_b_outage_times.py` reproduce Colab tutorial results with non-Vietnam coordinates. Do **not** add `apply_vietnam_defaults!` to these scripts.
+
 ## 6. REopt API Reference
 - **Base URL:** `https://developer.nrel.gov/api/reopt/stable`
 - **Endpoints:** `/job/` (optimize), `/simulated_load/` (load profiles), `/peak_load_outage_times/` (outage starts)

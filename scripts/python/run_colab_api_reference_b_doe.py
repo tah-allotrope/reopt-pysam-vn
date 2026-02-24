@@ -3,6 +3,9 @@ Submit Scenario B to the REopt API using the Colab-style payload:
   - ElectricLoad uses doe_reference_name + annual_kwh (NOT raw loads_kw)
   - outage_start_time_steps from the peak_load_outage_times API (48h)
 This mirrors what the Colab notebook actually sends.
+
+Benchmark: non-Vietnam coordinates (lat 50, lon 30) and US assumptions by design.
+Do NOT add Vietnam preprocessing here.
 """
 import json
 import time

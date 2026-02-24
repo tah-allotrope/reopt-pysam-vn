@@ -572,6 +572,12 @@ constraint in REopt without custom JuMP constraints (deferred to future phase).
 function apply_decree57_export!(d::Dict, vn::VNData;
                                 max_export_fraction::Real=0.20,
                                 exchange_rate::Real=vn.exchange_rate)
+    if max_export_fraction != 0.20
+        @warn "max_export_fraction=$max_export_fraction is accepted but NOT enforced as an " *
+              "optimization constraint. Decree 57 export cap requires custom JuMP constraints " *
+              "(deferred to future phase). The value is stored for reference only."
+    end
+
     er = vn.export_rules
     rooftop = get(er, "rooftop_solar", Dict())
     mapping = get(er, "reopt_mapping", Dict())

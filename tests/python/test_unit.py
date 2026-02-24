@@ -451,6 +451,18 @@ class TestApplyDecree57Export:
 
         assert d["ElectricTariff"]["wholesale_rate"] == 0.05  # user value wins
 
+    def test_non_default_max_export_fraction_warns(self, vn):
+        d = make_base_dict()
+        with pytest.warns(UserWarning, match=r"max_export_fraction=.*NOT enforced"):
+            apply_decree57_export(d, vn, max_export_fraction=0.10)
+
+    def test_default_max_export_fraction_no_warning(self, vn):
+        d = make_base_dict()
+        import warnings as _warnings
+        with _warnings.catch_warnings():
+            _warnings.simplefilter("error", UserWarning)
+            apply_decree57_export(d, vn, max_export_fraction=0.20)  # must not raise
+
 
 # ===================================================================
 # 9. apply_vietnam_defaults — master function

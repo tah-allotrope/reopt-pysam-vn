@@ -4,6 +4,9 @@ using HiGHS
 using REopt
 using DelimitedFiles
 
+include(joinpath(@__DIR__, "..", "..", "src", "REoptVietnam.jl"))
+using .REoptVietnam
+
 const REPO_ROOT = abspath(joinpath(@__DIR__, "..", ".."))
 const SCENARIO_PATH = joinpath(REPO_ROOT, "scenarios", "tinh", "tinh_pv_storage.json")
 const LOAD_CSV_PATH = joinpath(REPO_ROOT, "scenarios", "tinh", "Tinh_test_load.csv")
@@ -94,6 +97,10 @@ println("Reading load profile: ", LOAD_CSV_PATH)
 loads_kw = load_csv_profile(LOAD_CSV_PATH)
 println("  Loaded $(length(loads_kw)) hourly values, peak = $(maximum(loads_kw)) kW")
 data["ElectricLoad"]["loads_kw"] = loads_kw
+
+println("Applying Vietnam defaults (customer_type=commercial, region=south)...")
+vn = load_vietnam_data()
+apply_vietnam_defaults!(data, vn; customer_type="commercial", region="south")
 
 println("Building models and running REopt...")
 m1 = Model(HiGHS.Optimizer)

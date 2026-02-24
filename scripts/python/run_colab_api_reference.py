@@ -1,3 +1,6 @@
+# Benchmark: reproduces Google Colab tutorial Scenario A via REopt API (non-Vietnam coordinates, US assumptions).
+# Do NOT add Vietnam preprocessing here — this scenario uses lat/lon outside Vietnam by design.
+
 import json
 import os
 import time

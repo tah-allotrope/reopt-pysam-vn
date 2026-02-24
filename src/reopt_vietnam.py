@@ -18,6 +18,7 @@ Usage:
 import json
 import os
 import time
+import warnings
 from copy import deepcopy
 from dataclasses import dataclass, field
 from datetime import date, timedelta
@@ -473,6 +474,15 @@ def apply_decree57_export(
     """Configure export rules per Decree 57/2025."""
     if exchange_rate is None:
         exchange_rate = vn.exchange_rate
+
+    if max_export_fraction != 0.20:
+        warnings.warn(
+            f"max_export_fraction={max_export_fraction} is accepted but NOT enforced as an "
+            "optimization constraint. Decree 57 export cap requires custom JuMP constraints "
+            "(deferred to future phase). The value is stored for reference only.",
+            UserWarning,
+            stacklevel=2,
+        )
 
     er = vn.export_rules
     rooftop = er.get("rooftop_solar", {})

@@ -1,3 +1,5 @@
+# Benchmark: reproduces Google Colab tutorial Scenario B (hospital resilience, non-Vietnam coordinates, US assumptions).
+# Do NOT add Vietnam preprocessing here — this scenario uses lat/lon outside Vietnam by design.
 using JSON
 using JuMP
 using HiGHS
