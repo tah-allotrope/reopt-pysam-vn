@@ -36,6 +36,7 @@
 26. **REopt Vietnam Tool — Step 7 (Layer 4 Integration Tests) complete** – Created `tests/julia/test_integration.jl` (template smoke tests, incentive verification, Tinh regression, industrial solve) and `tests/python/test_integration.py` (template validation, API cross-check, baseline regression). Julia smoke: 65/65 passed. Python smoke: 9/9 passed. Baselines auto-generate on first solver run in `tests/baselines/`.
 27. **REopt Vietnam Tool — Step 8 (Test Runner) complete** – Created `tests/run_all_tests.ps1` PowerShell script orchestrating all 4 layers. Flags: `-SkipLayer4`, `-SmokeOnly`, `-Layer N`. Layers 1-3: 5/5 passed in 14.5s. Also fixed Unicode encoding issues in `tests/cross_validate.py` for Windows cp1252 compatibility.
 28. **REopt Vietnam Tool — Step 9 (Documentation) complete** – Updated `AGENTS.md` (sections 9-12: preprocessing modules, scenario templates, testing strategy, test runner), `activeContext.md`, `README.md`, and Windsurf memory.
+29. **Latest review verification complete (run_tinh_scenario)** – Validated recent assessment claims for tariff handling and voltage-level behavior in `scripts/julia/run_tinh_scenario.jl`; conclusion: tariff-key concern needed correction in review framing, voltage-level concern remains a modeling-input risk, and recommendation is to pass `voltage_level` explicitly when site data is known.
 
 ## Current Status
 - **Julia:** Installed and version-confirmed (1.10.10).
@@ -43,6 +44,7 @@
 - **API keys:** Configured via `NREL_API.env` file, loaded at script startup.
 - **REopt Vietnam Tool — All 9 steps complete.** Full preprocessing pipeline (data + Julia + Python modules), 4 scenario templates, 4-layer test suite (Layers 1-3: 5/5 pass in ~15s), test runner, and documentation.
 - **Key learning:** REopt.jl multiple outage modeling is a soft constraint by default; use `Site.min_resil_time_steps` for hard constraint.
+- **Latest assessment status:** Claim-by-claim review for `run_tinh_scenario` has been completed; documentation updated and no immediate code change was required.
 
 ## Implementation Status (REopt Vietnam Tool)
 - ✅ Step 1: Data layer (5 JSON files + manifest)
@@ -124,3 +126,4 @@
 - US federal incentives (30% ITC, 100% MACRS bonus) apply by default even for non-US sites.
 - Tinh notebook cell outputs are stale (from a Helsinki run with different PV cost); current code inputs produce different results.
 - Vietnam data files use `_meta` envelope for versioning/audit; code reads only from `"data"` block. Update policy data by creating new versioned file + changing `manifest.json`.
+- Recent review item: for Tinh workflows, pass `voltage_level` explicitly to preprocessing when reliable site voltage information is available to avoid tariff category assumptions.
