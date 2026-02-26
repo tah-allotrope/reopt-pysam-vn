@@ -1,6 +1,6 @@
 # Wind + Battery Hospital Results
 
-Scenario: `test/wind_battery_hospital.json`
+Scenario: `scenarios/wind/wind_battery_hospital.json`
 
 ## Summary
 - **Status:** optimal

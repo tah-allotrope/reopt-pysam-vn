@@ -96,51 +96,18 @@ results = run_reopt([m1, m2], inputs)
 
 ## Vietnam Preprocessing Layer
 
-REopt defaults are US-centric. For Vietnam, a preprocessing layer in `data/vietnam/` + `src/REoptVietnam.jl` (Julia) / `src/reopt_vietnam.py` (Python) injects country-specific assumptions **before** `Scenario()` is called.
+REopt defaults are US-centric. For Vietnam, a preprocessing layer injects country-specific assumptions **before** `Scenario()` is called. See `AGENTS.md` sections 8-9 for the complete reference (data files, manifest schema, exported functions, injection categories).
 
-### Data Layer (`data/vietnam/`)
-
-All Vietnam-specific values live in versioned JSON files with a `_meta` envelope:
-
-```jsonc
-{
-  "_meta": { "version": "2025.1", "effective_date": "...", "source": "...", "source_url": "...", "last_updated": "..." },
-  "data": { ... }  // actual values used by the tool
-}
-```
-
-**`manifest.json`** points to the active version of each file:
-
-| Manifest Key | Active File | Contents |
-|---|---|---|
-| `tariff` | `vn_tariff_2025.json` | EVN Decision 14/2025 TOU schedule, rate multipliers by customer type & voltage |
-| `tech_costs` | `vn_tech_costs_2025.json` | PV/Wind/Battery/Generator costs by region, all US incentives pre-zeroed |
-| `financials` | `vn_financial_defaults_2025.json` | CIT 20%/10% preferential, tax holidays, discount & escalation rates |
-| `emissions` | `vn_emissions_2024.json` | Grid emission factor 0.681 tCO2e/MWh → 1.50 lb CO2/kWh |
-| `export_rules` | `vn_export_rules_decree57.json` | Rooftop 20% export cap, surplus rate, DPPA ceiling tariffs |
-
-**Update workflow:** Create new versioned file → change one line in `manifest.json` → zero code changes.
-
-### Planned Module Workflow (Phase 2+)
+**Module sources:** `src/REoptVietnam.jl` (Julia) / `src/reopt_vietnam.py` (Python)
 
 ```julia
 include("src/REoptVietnam.jl"); using .REoptVietnam
 vn = load_vietnam_data()                    # reads manifest → loads active data files
 d = JSON.parsefile("my_project.json")
-apply_vietnam_defaults!(d, vn, customer_type="industrial", region="south")
-results = run_reopt([Model(HiGHS.Optimizer), Model(HiGHS.Optimizer)], d)
+apply_vietnam_defaults!(d, vn; customer_type="industrial", region="south")
+s = Scenario(d)
+results = run_reopt([Model(HiGHS.Optimizer), Model(HiGHS.Optimizer)], REoptInputs(s))
 ```
-
-### What Gets Injected
-
-| Category | What changes |
-|---|---|
-| **US Incentives** | All zeroed: `federal_itc_fraction=0`, `macrs_option_years=0`, `macrs_bonus_fraction=0`, `installed_cost_constant=0` |
-| **Financials** | `offtaker_tax_rate_fraction=0.20`, `offtaker_discount_rate_fraction=0.10`, VN escalation rates |
-| **Tariff** | 8760-hour TOU array from EVN Decision 14 (peak/standard/off-peak × weekday/Sunday) |
-| **Emissions** | `ElectricUtility.emissions_factor_series_lb_CO2_per_kwh` = 1.50 (constant 8760) |
-| **Tech Costs** | VN-market PV/Wind/Battery costs by region (North/Central/South) |
-| **Export Rules** | Decree 57: `can_net_meter=false`, `can_wholesale=true`, 20% export cap |
 
 ## Output
 Save results to `results/` folder in JSON format.

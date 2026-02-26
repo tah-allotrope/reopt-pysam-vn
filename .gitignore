@@ -1,0 +1,29 @@
+# Credentials / API keys
+NREL_API.env
+*.env
+!*.env.example
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Julia
+*.jl.cov
+*.jl.mem
+deps/build.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Regression baselines (auto-generated on first solver run)
+tests/baselines/*.json

@@ -4,7 +4,7 @@ Techno-economic optimization for cost-optimal Solar, Wind, and Battery systems f
 
 ## Tech Stack
 
-- **Julia 1.10+** with REopt.jl v0.57.0, JuMP, HiGHS
+- **Julia 1.10+** with REopt.jl v0.56.4, JuMP, HiGHS
 - **Python 3.10+** for REopt API, preprocessing mirror, and tests
 - **Pipeline:** `Scenario(dict)` → `REoptInputs(s)` → `run_reopt(m, inputs)` → results dict
 
@@ -124,20 +124,12 @@ Pre-filled Vietnam templates in `scenarios/templates/` — override only Site/Lo
 | **3: Cross-Validation** | Julia vs Python identical output | <5s |
 | **4: Integration** | Scenario construction, solver runs, regression baselines | ~30-60s/scenario |
 
-## Key Scenarios (Reference)
-
-| Scenario | Input | Description |
-|---|---|---|
-| **A - Retail PV+Storage** | `scenarios/colab/scenario_a_retail_pv_storage.json` | Grid-tied PV optimization (Kyiv) |
-| **B - Hospital Resilience** | `scenarios/colab/scenario_b_hospital_resilience.json` | 48h outage survival with PV+Storage |
-| **Tinh PV+Storage** | `scenarios/tinh/tinh_pv_storage.json` | Vietnam HCMC site, PV + battery |
-
 ## Vietnam-Specific Notes
 
-- US incentive defaults (30% ITC, MACRS) must be **zeroed out** for non-US sites — handled automatically by the preprocessing tool.
-- Set `ElectricUtility.emissions_factor_series_lb_CO2_per_kwh` manually (AVERT/Cambium are US-only) — handled automatically by the preprocessing tool.
+- The preprocessing tool automatically handles all Vietnam overrides: US incentive zeroing, grid emissions, EVN tariff, tech costs, and Decree 57 export rules.
 - When using `loads_kw`, the `ElectricLoad.year` field is **required**.
 - Outage modeling is a soft constraint by default — add `Site.min_resil_time_steps` for hard constraint.
+- Colab benchmark scripts in `scripts/` reproduce non-Vietnam tutorial results — see `AGENTS.md` section 5 for details.
 
 ## References
 

@@ -4,7 +4,7 @@
 > **Mission:** Julia-based techno-economic optimization for cost-optimal energy generation (Solar, Wind, Battery) for buildings and microgrids using NREL REopt.jl.
 
 ## 2. Environment & Commands
-- **Language:** Julia 1.10+ with REopt.jl v0.57.0
+- **Language:** Julia 1.10+ with REopt.jl v0.56.4
 - **Environment:** Always use `julia --project` to activate `reopt-julia-VNanalysis`.
 - **API Keys:** `NREL_API.env` file; `ENV["NREL_DEVELOPER_API_KEY"]` (PVWatts, Wind, NSRDB) and `ENV["NREL_DEVELOPER_EMAIL"]` (Cambium emissions).
 - **Precompilation Workaround:** `$env:JULIA_PKG_PRECOMPILE_AUTO="0"; julia --project --compile=min <script>.jl`
