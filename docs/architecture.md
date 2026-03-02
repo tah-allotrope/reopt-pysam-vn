@@ -1,0 +1,33 @@
+# Architecture & Tech Stack
+
+## Tech Stack
+- **Core:** REopt.jl → JuMP → HiGHS (default). Optional: Cbc/SCIP/Xpress/CPLEX.
+- **Pipeline:** `Scenario(dict)` → `REoptInputs(s)` → `run_reopt(m, inputs)` → results dict.
+- **HiGHS limitation:** No indicator constraints — `model_degradation=true` and `FlexibleHVAC` require Xpress/CPLEX.
+- **Library internals** (workflow code, struct anatomy, decision variables, tech params, results keys): see `.windsurf/skills/reopt-julia/SKILL.md`.
+
+## Preprocessing Modules
+Dual Julia/Python modules that apply Vietnam defaults to a REopt input dict **before** `Scenario()` construction.
+
+| Module | Language | Key Function |
+|---|---|---|
+| `src/REoptVietnam.jl` | Julia | `apply_vietnam_defaults!(dict, vn; customer_type, voltage_level, region)` |
+| `src/reopt_vietnam.py` | Python | `apply_vietnam_defaults(dict, vn, customer_type, voltage_level, region)` |
+
+Both modules share the same `data/vietnam/` data files and produce identical output (verified by Layer 3 cross-validation, max diff = 0.00e+00).
+
+**Exported functions (both languages):**
+- `load_vietnam_data()` - Load all data files via manifest
+- `apply_vietnam_defaults!()` / `apply_vietnam_defaults()` - Full pipeline (tariff + financials + emissions + tech costs + export rules + zero incentives)
+- `build_vietnam_tariff()` - Build 8760 TOU energy rate series
+- `zero_us_incentives!()` / `zero_us_incentives()` - Zero all US-specific incentive fields
+- `apply_vietnam_financials!()` / `apply_vietnam_financials()` - Set CIT, discount rates, analysis years
+- `apply_vietnam_emissions!()` / `apply_vietnam_emissions()` - Set constant 8760 emissions series
+- `apply_vietnam_tech_costs!()` / `apply_vietnam_tech_costs()` - Set PV/Wind/Battery/Generator costs by region
+- `apply_decree57_export!()` / `apply_decree57_export()` - Set export rules per Decree 57
+- `convert_vnd_to_usd()` / `convert_usd_to_vnd()` - Currency conversion
+
+**Non-destructive:** User values already present in the dict are never overwritten.
+
+## Coding Standards
+- Prefer REopt's `handle_errors` patterns and structured warnings/errors via the custom logger.
