@@ -134,5 +134,5 @@ Pre-filled Vietnam templates in `scenarios/templates/` — override only Site/Lo
 ## References
 
 - [REopt.jl GitHub](https://github.com/NREL/REopt.jl)
-- [REopt API Docs](https://developer.nrel.gov/docs/energy-optimization/reopt/v2/)
+- [REopt API Docs](https://developer.nlr.gov/docs/energy-optimization/reopt/v2/)
 - [DeepWiki - REopt.jl Internals](https://deepwiki.com/NatLabRockies/REopt.jl)

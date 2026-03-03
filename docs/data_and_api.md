@@ -4,9 +4,12 @@
 - `NREL_API.env` file; `ENV["NREL_DEVELOPER_API_KEY"]` (PVWatts, Wind, NSRDB) and `ENV["NREL_DEVELOPER_EMAIL"]` (Cambium emissions).
 
 ## REopt API Reference
-- **Base URL:** `https://developer.nrel.gov/api/reopt/stable`
+- **Base URL:** `https://developer.nlr.gov/api/reopt/stable`
 - **Endpoints:** `/job/` (optimize), `/simulated_load/` (load profiles), `/peak_load_outage_times/` (outage starts)
 - **Scripts:** `scripts/python/run_colab_api_reference*.py`, `get_scenario_b_outage_times.py`
+- **API key signup:** `https://developer.nlr.gov/signup/`
+
+> **Domain migration (completed 2026-03):** NREL retired `developer.nrel.gov` in favour of `developer.nlr.gov` (NLR = National Laboratory of the Rockies). All URLs in this repo have been updated. Existing API keys continue to work — only the domain changed. Old domain brownouts begin May 1 2026; full expiry May 29 2026.
 
 ## Extended Reference (DeepWiki — fetch on demand)
 For deep REopt.jl internals (constraint math, source files, MPC, multi-node), fetch:
