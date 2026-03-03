@@ -13,7 +13,7 @@ ENV_PATH = REPO_ROOT / "NREL_API.env"
 SCENARIO_A_PATH = REPO_ROOT / "scenarios" / "colab" / "scenario_a_retail_pv_storage.json"
 RESULTS_DIR = REPO_ROOT / "results" / "colab"
 RESULTS_PATH = RESULTS_DIR / "scenario_a_retail_pv_storage_api_results.json"
-API_URL = "https://developer.nrel.gov/api/reopt/stable"
+API_URL = "https://developer.nlr.gov/api/reopt/stable"
 
 
 def redact_sensitive_fields(payload: dict) -> dict:

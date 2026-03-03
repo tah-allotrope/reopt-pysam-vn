@@ -31,7 +31,7 @@ BASELINES_DIR = REPO_ROOT / "tests" / "baselines"
 ENV_PATH = REPO_ROOT / "NREL_API.env"
 
 # REopt API config
-REOPT_API_BASE = "https://developer.nrel.gov/api/reopt/stable"
+REOPT_API_BASE = "https://developer.nlr.gov/api/reopt/stable"
 
 
 # ---------------------------------------------------------------------------
@@ -245,6 +245,43 @@ class TestTemplateSmokeTests:
 )
 class TestAPIIntegration:
     """Tests that require the REopt API. Skipped if no API key available."""
+
+    def test_nlr_domain_connectivity(self, api_key):
+        """Verify the new developer.nlr.gov domain is reachable and returns a valid load profile.
+
+        Uses the lightweight GET /simulated_load/ endpoint — no job submission,
+        no polling, completes in ~2 seconds. Confirms DNS, TLS, and API key all
+        work on the new domain after the nrel.gov → nlr.gov migration.
+        """
+        if api_key is None:
+            pytest.skip("No NREL API key available")
+
+        try:
+            import requests
+        except ImportError:
+            pytest.skip("requests library not installed")
+
+        url = (
+            f"{REOPT_API_BASE}/simulated_load/"
+            f"?api_key={api_key}"
+            f"&doe_reference_name=RetailStore"
+            f"&latitude=10.8"
+            f"&longitude=106.7"
+            f"&annual_kwh=100000"
+        )
+        resp = requests.get(url, timeout=15)
+
+        assert resp.status_code == 200, (
+            f"Expected HTTP 200 from developer.nlr.gov, got {resp.status_code}: {resp.text[:200]}"
+        )
+
+        data = resp.json()
+        assert "loads_kw" in data, (
+            f"Response missing 'loads_kw' key. Keys present: {list(data.keys())}"
+        )
+        assert len(data["loads_kw"]) == 8760, (
+            f"Expected 8760 hourly load values, got {len(data['loads_kw'])}"
+        )
 
     def test_commercial_rooftop_api_solve(self, vn, api_key):
         """Submit commercial rooftop PV template to REopt API and verify results."""

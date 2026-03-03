@@ -41,7 +41,7 @@ VALID_REGIONS = ("north", "central", "south")
 
 HOURS_PER_YEAR = 8760
 
-REOPT_API_BASE_URL = "https://developer.nrel.gov/api/reopt/stable"
+REOPT_API_BASE_URL = "https://developer.nlr.gov/api/reopt/stable"
 
 # US incentive fields to zero out, grouped by tech
 PV_WIND_INCENTIVE_FIELDS = [

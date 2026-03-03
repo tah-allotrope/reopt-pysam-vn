@@ -17,7 +17,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 ENV_PATH = REPO_ROOT / "NREL_API.env"
 RESULTS_DIR = REPO_ROOT / "results" / "colab"
 RESULTS_PATH = RESULTS_DIR / "scenario_b_api_doe_ref_results.json"
-API_URL = "https://developer.nrel.gov/api/reopt/stable"
+API_URL = "https://developer.nlr.gov/api/reopt/stable"
 
 
 def redact_sensitive_fields(payload: dict) -> dict:
