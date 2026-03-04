@@ -15,9 +15,11 @@ __pycache__/
 *.jl.mem
 deps/build.log
 
-# IDE
+# IDE / AI assistants
 .vscode/
 .idea/
+.windsurf/
+.cursor/
 *.swp
 *.swo
 

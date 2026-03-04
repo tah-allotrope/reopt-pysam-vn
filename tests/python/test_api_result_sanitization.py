@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-SCRIPT_PATH = REPO_ROOT / "scripts" / "python" / "run_colab_api_reference.py"
+SCRIPT_PATH = REPO_ROOT / "archive" / "colab" / "scripts" / "python" / "run_colab_api_reference.py"
 
 
 def load_module(module_path: Path):

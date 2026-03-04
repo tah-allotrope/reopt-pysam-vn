@@ -396,7 +396,7 @@ class TestJuliaVsAPICrossCheck:
     Requires both Julia solver results (from baselines) and API access.
     """
 
-    def test_tinh_julia_vs_api_structure(self, api_key):
+    def test_industrial_julia_vs_api_structure(self, api_key):
         """
         Structural cross-check: verify that Julia baseline and API results
         have the same key metrics within ~2% tolerance.
@@ -405,7 +405,7 @@ class TestJuliaVsAPICrossCheck:
         if api_key is None:
             pytest.skip("No NREL API key available")
 
-        julia_baseline_path = BASELINES_DIR / "tinh_vietnam_baseline.json"
+        julia_baseline_path = BASELINES_DIR / "industrial_vietnam_baseline.json"
         if not julia_baseline_path.is_file():
             pytest.skip("Julia baseline not yet generated — run test_integration.jl first")
 

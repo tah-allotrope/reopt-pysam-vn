@@ -17,20 +17,19 @@ src/
   reopt_vietnam.py      Python preprocessing module (mirror)
 scenarios/
   templates/            Pre-filled Vietnam scenario templates (4 templates)
-  colab/                Colab reference scenarios
-  tinh/                 Vietnam site-specific scenarios
   wind/                 Wind+Battery hospital scenario
 scripts/
-  julia/                Julia run scripts
-  python/               REopt API reference & utility scripts
-notebooks/              Jupyter notebooks (Colab examples, Tinh test)
+  julia/                Julia run scripts (Vietnam analysis)
 results/                Optimization outputs (JSON + markdown summaries)
+archive/
+  colab/                US-benchmark reference scripts and results (archived)
 tests/
   julia/                Julia tests (data validation, unit, integration)
   python/               Python tests (data validation, unit, integration)
   baselines/            Regression baselines (auto-generated)
   run_all_tests.ps1     Master test runner (all 4 layers)
   cross_validate.py     Layer 3: Julia vs Python cross-validation
+docs/                   Reference documentation (architecture, data, pitfalls, testing, internals)
 ```
 
 ## Quick Start
@@ -40,9 +39,9 @@ tests/
 $env:NREL_DEVELOPER_API_KEY = "your-key"
 $env:NREL_DEVELOPER_EMAIL   = "your-email"
 
-# 2. Run a scenario (with precompilation workaround)
+# 2. Run a scenario using a Vietnam template
 $env:JULIA_PKG_PRECOMPILE_AUTO = "0"
-julia --project --compile=min scripts/julia/run_colab_scenarios.jl
+julia --project --compile=min scripts/julia/run_vietnam_scenario.jl
 ```
 
 ## Vietnam Preprocessing Tool
@@ -129,7 +128,6 @@ Pre-filled Vietnam templates in `scenarios/templates/` — override only Site/Lo
 - The preprocessing tool automatically handles all Vietnam overrides: US incentive zeroing, grid emissions, EVN tariff, tech costs, and Decree 57 export rules.
 - When using `loads_kw`, the `ElectricLoad.year` field is **required**.
 - Outage modeling is a soft constraint by default — add `Site.min_resil_time_steps` for hard constraint.
-- Colab benchmark scripts in `scripts/` reproduce non-Vietnam tutorial results — see `AGENTS.md` section 5 for details.
 
 ## References
 

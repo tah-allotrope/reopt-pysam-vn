@@ -7,7 +7,7 @@ Requires: REopt.jl, HiGHS solver, NREL API key (for resource data).
 Tests:
   1. Template smoke tests — Scenario() construction (no solve) for all 4 templates
   2. Incentive verification — after solve, capital costs == capital costs after incentives
-  3. Tinh scenario regression — compare key metrics against saved baseline (±5%)
+  3. Industrial PV+Storage regression — compare key metrics against saved baseline (±5%)
 
 Run: julia --project tests/julia/test_integration.jl
   or: julia --project tests/julia/test_integration.jl --smoke-only   (skip solver tests)
@@ -299,44 +299,27 @@ const VN = load_vietnam_data()
         end
 
         # ---------------------------------------------------------------
-        # 3b. Tinh scenario regression test
+        # 3b. Industrial PV+Storage template regression test
         # ---------------------------------------------------------------
-        @testset "Tinh scenario regression" begin
-            baseline_path = joinpath(BASELINES_DIR, "tinh_vietnam_baseline.json")
+        @testset "Industrial PV+Storage template regression" begin
+            baseline_path = joinpath(BASELINES_DIR, "industrial_vietnam_baseline.json")
 
             if !isfile(baseline_path)
-                @warn "Baseline file not found — running Tinh scenario to generate it." baseline_path
+                @warn "Baseline file not found — running Industrial template to generate it." baseline_path
                 println("  Generating baseline: $baseline_path")
             end
 
-            # Load Tinh scenario and apply Vietnam defaults
-            scenario_path = joinpath(REPO_ROOT, "scenarios", "tinh", "tinh_pv_storage.json")
-            load_csv_path = joinpath(REPO_ROOT, "scenarios", "tinh", "Tinh_test_load.csv")
+            d = JSON.parsefile(joinpath(TEMPLATES_DIR, "vn_industrial_pv_storage.json"))
+            strip_template_meta!(d)
+            ensure_emissions_array!(d)
 
-            @test isfile(scenario_path)
-            @test isfile(load_csv_path)
-
-            d = JSON.parsefile(scenario_path)
-
-            # Load CSV load profile
-            lines = readlines(load_csv_path)
-            loads_kw = Float64[]
-            for line in lines[2:end]
-                parts = split(strip(line), ",")
-                if length(parts) >= 2
-                    push!(loads_kw, parse(Float64, strip(parts[2])))
-                end
-            end
-            d["ElectricLoad"]["loads_kw"] = loads_kw
-
-            # Apply Vietnam defaults
             apply_vietnam_defaults!(d, VN;
                 customer_type="industrial",
                 voltage_level="medium_voltage_22kv_to_110kv",
                 region="south",
             )
 
-            println("\n  Running Tinh regression solve...")
+            println("\n  Running Industrial PV+Storage regression solve...")
             m1 = Model(HiGHS.Optimizer)
             m2 = Model(HiGHS.Optimizer)
             results = run_reopt([m1, m2], d)
@@ -345,7 +328,6 @@ const VN = load_vietnam_data()
             @test status == "optimal"
 
             if status == "optimal"
-                # Extract key metrics
                 actual = Dict{String,Any}(
                     "pv_size_kw"       => safe_get(results, ["PV", "size_kw"], 0.0),
                     "storage_size_kw"  => safe_get(results, ["ElectricStorage", "size_kw"], 0.0),
@@ -357,11 +339,18 @@ const VN = load_vietnam_data()
                     "pv_year_one_energy_kwh" => safe_get(results, ["PV", "year_one_energy_produced_kwh"], 0.0),
                 )
 
-                # Incentive check: with Vietnam defaults, capital == capital_after_incentives
+                println("    PV size: $(actual["pv_size_kw"]) kW")
+                println("    Storage size: $(actual["storage_size_kw"]) kW / $(actual["storage_size_kwh"]) kWh")
+                println("    LCC: \$$(actual["lcc"])")
+
+                # Incentive verification: with Vietnam defaults, capital == capital_after_incentives
                 @test actual["initial_capital_costs"] ≈ actual["initial_capital_costs_after_incentives"] atol=1.0
 
+                # Sanity checks
+                @test actual["lcc"] > 0
+                @test actual["pv_size_kw"] >= 0
+
                 if isfile(baseline_path)
-                    # Compare against saved baseline
                     baseline = JSON.parsefile(baseline_path)
 
                     println("  Comparing against baseline:")
@@ -383,7 +372,6 @@ const VN = load_vietnam_data()
                         println("  ✓ All metrics within 5% of baseline")
                     end
                 else
-                    # Save as new baseline
                     mkpath(BASELINES_DIR)
                     open(baseline_path, "w") do f
                         JSON.print(f, actual, 2)
@@ -396,51 +384,7 @@ const VN = load_vietnam_data()
                     @test true  # baseline generation is a pass
                 end
             else
-                println("  ✗ Tinh solve did not reach optimal status: $status")
-            end
-        end
-
-        # ---------------------------------------------------------------
-        # 3c. Industrial PV+Storage template solve
-        # ---------------------------------------------------------------
-        @testset "Industrial PV+Storage template solve" begin
-            d = JSON.parsefile(joinpath(TEMPLATES_DIR, "vn_industrial_pv_storage.json"))
-            strip_template_meta!(d)
-            ensure_emissions_array!(d)
-
-            apply_vietnam_defaults!(d, VN;
-                customer_type="industrial",
-                voltage_level="medium_voltage_22kv_to_110kv",
-                region="south",
-            )
-
-            println("\n  Running industrial PV+storage solve...")
-            m1 = Model(HiGHS.Optimizer)
-            m2 = Model(HiGHS.Optimizer)
-            results = run_reopt([m1, m2], d)
-
-            status = safe_get(results, ["status"], "error")
-            @test status == "optimal"
-
-            if status == "optimal"
-                pv_kw = safe_get(results, ["PV", "size_kw"], 0.0)
-                stor_kw = safe_get(results, ["ElectricStorage", "size_kw"], 0.0)
-                lcc = safe_get(results, ["Financial", "lcc"], 0.0)
-                capital = safe_get(results, ["Financial", "initial_capital_costs"], 0.0)
-                capital_after = safe_get(results, ["Financial", "initial_capital_costs_after_incentives"], 0.0)
-
-                println("    PV size: $(pv_kw) kW")
-                println("    Storage size: $(stor_kw) kW")
-                println("    LCC: \$$lcc")
-
-                # Incentive verification
-                @test capital ≈ capital_after atol=1.0
-
-                # Sanity: LCC should be positive
-                @test lcc > 0
-
-                # Sanity: PV size should be non-negative
-                @test pv_kw >= 0
+                println("  ✗ Industrial solve did not reach optimal status: $status")
             end
         end
 

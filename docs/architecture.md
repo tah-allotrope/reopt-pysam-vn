@@ -4,7 +4,7 @@
 - **Core:** REopt.jl → JuMP → HiGHS (default). Optional: Cbc/SCIP/Xpress/CPLEX.
 - **Pipeline:** `Scenario(dict)` → `REoptInputs(s)` → `run_reopt(m, inputs)` → results dict.
 - **HiGHS limitation:** No indicator constraints — `model_degradation=true` and `FlexibleHVAC` require Xpress/CPLEX.
-- **Library internals** (workflow code, struct anatomy, decision variables, tech params, results keys): see `.windsurf/skills/reopt-julia/SKILL.md`.
+- **Library internals** (workflow code, struct anatomy, decision variables, tech params, results keys): see `docs/reopt_internals.md`.
 
 ## Preprocessing Modules
 Dual Julia/Python modules that apply Vietnam defaults to a REopt input dict **before** `Scenario()` construction.

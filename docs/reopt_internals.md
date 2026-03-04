@@ -1,8 +1,3 @@
----
-name: reopt-julia
-description: Use this skill to run techno-economic energy optimizations using the REopt.jl Julia package.
----
-
 # REopt.jl Library Reference
 
 > Pitfalls, environment setup, and project rules are in `AGENTS.md`. This file covers **library internals only**.
@@ -87,7 +82,7 @@ results = run_reopt([m1, m2], inputs)
 ## Resilience Modeling
 
 **Inputs:** `ElectricUtility.outage_durations` (hours array), `ElectricUtility.outage_start_time_steps` (1-indexed), `Site.min_resil_time_steps` (hard constraint).
-**Outage start times:** Use `/peak_load_outage_times/` API endpoint. See `scripts/python/get_scenario_b_outage_times.py`.
+**Outage start times:** Use `/peak_load_outage_times/` API endpoint.
 
 ## Input Tips
 - `loads_kw` requires `"year"` field. `doe_reference_name` does not.
@@ -96,7 +91,7 @@ results = run_reopt([m1, m2], inputs)
 
 ## Vietnam Preprocessing Layer
 
-REopt defaults are US-centric. For Vietnam, a preprocessing layer injects country-specific assumptions **before** `Scenario()` is called. See `AGENTS.md` sections 8-9 for the complete reference (data files, manifest schema, exported functions, injection categories).
+REopt defaults are US-centric. For Vietnam, a preprocessing layer injects country-specific assumptions **before** `Scenario()` is called. See `AGENTS.md` sections and `docs/architecture.md` for the complete reference (data files, manifest schema, exported functions, injection categories).
 
 **Module sources:** `src/REoptVietnam.jl` (Julia) / `src/reopt_vietnam.py` (Python)
 
