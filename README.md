@@ -35,12 +35,15 @@ docs/                   Reference documentation (architecture, data, pitfalls, t
 ## Quick Start
 
 ```powershell
-# 1. Set API keys (or source NREL_API.env)
+# 1. Set API keys (or put them in NREL_API.env — see NREL_API.env.example)
 $env:NREL_DEVELOPER_API_KEY = "your-key"
 $env:NREL_DEVELOPER_EMAIL   = "your-email"
 
-# 2. Run a scenario using a Vietnam template
+# 2. Validate inputs (no solver — fast)
 $env:JULIA_PKG_PRECOMPILE_AUTO = "0"
+julia --project --compile=min scripts/julia/run_vietnam_scenario.jl --no-solve
+
+# 3. Run full optimization (HiGHS solver, ~60s first run)
 julia --project --compile=min scripts/julia/run_vietnam_scenario.jl
 ```
 

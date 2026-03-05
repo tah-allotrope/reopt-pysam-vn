@@ -20,5 +20,18 @@ When using `loads_kw` directly, `"year"` field is **required** (e.g., `"year": 2
 ### Decree 57 Export Cap (`max_export_fraction`) — Enforcement
 `apply_decree57_export!` / `apply_decree57_export` accept `max_export_fraction=0.20` but do **NOT** enforce it as an optimization constraint. REopt has no native "max % of generation exportable" constraint — enforcement requires custom JuMP constraints (future work). Passing a non-default value emits `@warn` / `UserWarning`. The function does correctly set `can_net_meter=false`, `can_wholesale=true`, and the surplus purchase rate.
 
-### L4 API Integration Tests Return HTTP 400
+### L4 Julia Tests — Cold-Start Timeout
+On first run (no precompiled sysimage), loading REopt.jl + ArchGDAL takes **3-8 minutes** even with `--compile=min`. The test runner's `Invoke-Julia` function now accepts `-JuliaTimeoutSeconds` to cap this. Recommended values:
+
+| Scope | Flag | Suggested limit |
+|---|---|---|
+| L1 / L2 / L3 | (any) | 600s (10 min) |
+| L4 smoke-only | `-SmokeOnly` | 1200s (20 min) |
+| L4 full solve | (none) | 3600s (60 min) |
+
+Run with timeout: `.\tests\run_all_tests.ps1 -SmokeOnly -JuliaTimeoutSeconds 1200`
+
+Subsequent runs reuse the Julia depot cache and are much faster (~30-60s for smoke, ~5-10 min for solver).
+
+
 `TestAPIIntegration::test_commercial_rooftop_api_solve` and `test_api_vs_baseline_regression` both fail with `HTTP 400 Bad Request` when submitting the full optimization payload to `/job/`. This is a **pre-existing payload issue**, not caused by the `nrel.gov → nlr.gov` domain migration (connectivity is confirmed working via `test_nlr_domain_connectivity`). Investigation pending — run `python -m pytest tests/python/test_integration.py::TestAPIIntegration::test_nlr_domain_connectivity -v` to confirm the domain itself is healthy.

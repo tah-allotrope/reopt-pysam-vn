@@ -18,18 +18,28 @@
 .PARAMETER Layer
     Run only a specific layer: 1, 2, 3, or 4.
 
+.PARAMETER JuliaTimeoutSeconds
+    Kill a Julia test process if it exceeds this many seconds (default: 0 = no limit).
+    Julia cold-start on first run (no sysimage) can take 3-8 minutes.
+    Suggested values: 600 (L1/L2), 1800 (L4 smoke), 3600 (L4 full solve).
+
 .EXAMPLE
     .\tests\run_all_tests.ps1
     .\tests\run_all_tests.ps1 -SkipLayer4
     .\tests\run_all_tests.ps1 -SmokeOnly
     .\tests\run_all_tests.ps1 -Layer 2
+    .\tests\run_all_tests.ps1 -SmokeOnly -JuliaTimeoutSeconds 1200
 #>
 
 param(
     [switch]$SkipLayer4,
     [switch]$SmokeOnly,
     [ValidateSet('1','2','3','4')]
-    [string]$Layer
+    [string]$Layer,
+    # Maximum seconds to wait for a single Julia test process.
+    # Julia cold-start (first run, no sysimage) for REopt.jl can take 3-8 min.
+    # Set 0 to wait indefinitely (original behaviour).
+    [int]$JuliaTimeoutSeconds = 0
 )
 
 $ErrorActionPreference = 'Continue'
@@ -37,6 +47,7 @@ $script:REPO_ROOT = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyComma
 $script:TmpOut = Join-Path $script:REPO_ROOT 'tests\.stdout.tmp'
 $script:TmpErr = Join-Path $script:REPO_ROOT 'tests\.stderr.tmp'
 $script:Results = [System.Collections.ArrayList]::new()
+$script:JuliaTimeoutSeconds = $JuliaTimeoutSeconds
 
 # --- Helpers ---------------------------------------------------------------
 
@@ -63,9 +74,25 @@ function Invoke-Julia {
     $allArgs = @('--project', '--compile=min', $Script)
     if ($Extra -and $Extra.Count -gt 0) { $allArgs += $Extra }
     $proc = Start-Process -FilePath 'julia' -ArgumentList $allArgs `
-        -WorkingDirectory $script:REPO_ROOT -NoNewWindow -Wait -PassThru `
+        -WorkingDirectory $script:REPO_ROOT -NoNewWindow -PassThru `
         -RedirectStandardOutput $script:TmpOut `
         -RedirectStandardError  $script:TmpErr
+
+    # Wait with optional timeout
+    if ($script:JuliaTimeoutSeconds -gt 0) {
+        $finished = $proc.WaitForExit($script:JuliaTimeoutSeconds * 1000)
+        if (-not $finished) {
+            $proc.Kill()
+            $sw.Stop()
+            $elapsed = [math]::Round($sw.Elapsed.TotalSeconds, 1)
+            Write-Host "    TIMEOUT after ${elapsed}s (limit: ${script:JuliaTimeoutSeconds}s)" -ForegroundColor Red
+            Write-Host '    Tip: increase -JuliaTimeoutSeconds or run julia manually.' -ForegroundColor DarkGray
+            Add-Result -TestName $TestName -Passed $false -Seconds $elapsed
+            return
+        }
+    } else {
+        $proc.WaitForExit()
+    }
 
     $sw.Stop()
     $elapsed = [math]::Round($sw.Elapsed.TotalSeconds, 1)

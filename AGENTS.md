@@ -39,11 +39,12 @@ Detailed instructions have been organized into the `docs/` folder for progressiv
 |---|---|
 | L1 Julia + Python data validation | PASS |
 | L2 Julia + Python unit tests | PASS |
-| L3 Julia vs Python cross-validation | PASS |
-| L4 Template smoke tests (9 tests) | PASS |
-| L4 `test_nlr_domain_connectivity` | PASS — new domain confirmed healthy |
-| L4 `test_commercial_rooftop_api_solve` | FAIL (pre-existing HTTP 400 — payload issue, not domain) |
-| L4 `test_api_vs_baseline_regression` | FAIL (same root cause) |
+| L3 Julia vs Python cross-validation | PASS (exact match, max diff 0.00e+00) |
+| L4 Python: Template smoke tests (9 tests) | PASS |
+| L4 Python: `test_nlr_domain_connectivity` | PASS — new domain confirmed healthy |
+| L4 Python: `test_commercial_rooftop_api_solve` | FAIL (pre-existing HTTP 400 — payload issue, not domain) |
+| L4 Python: `test_api_vs_baseline_regression` | FAIL (same root cause) |
+| L4 Julia: Integration tests | NOT RUN — cold-start takes 3-8 min; use `-JuliaTimeoutSeconds 1800` |
 
 ## 5. Key Learnings & Notes
 - REopt.jl outage modeling is a **soft constraint** by default. Use `Site.min_resil_time_steps` for hard constraint.
