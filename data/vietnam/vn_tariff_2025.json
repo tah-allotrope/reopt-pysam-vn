@@ -1,16 +1,24 @@
 {
   "_meta": {
-    "version": "2025.1",
+    "version": "2025.2",
     "effective_date": "2025-05-10",
-    "source": "Decision 14/2025/QD-TTg (tariff structure), Decision 599/QD-EVN (avg price)",
-    "source_url": "https://en.evn.com.vn/d/en-US/news/RETAIL-ELECTRICITY-TARIFF-Decision-No-1279QD-BCT-dated-9-May-2025-of-Ministry-of-Industry-and-Trade-60-28-252",
-    "notes": "Average retail electricity price VND 2,204.07/kWh excl. VAT as of 2025-05-10. Rate multipliers are percentages of the average price per Decision 14. TOU hours per DFDL analysis of Decision 14.",
-    "last_updated": "2026-02-18",
+    "source": "Decision 14/2025/QD-TTg (tariff structure, effective 2025-05-29), Decision 599/QD-EVN (avg price, effective 2025-05-10), Decision 1279/QD-BCT (retail pricing by customer group, 2025-05-09)",
+    "source_urls": [
+      "https://www.dfdl.com/insights/legal-and-tax-updates/vietnams-2025-retail-electricity-rates/",
+      "https://en.evn.com.vn/d/en-US/news/RETAIL-ELECTRICITY-TARIFF-Decision-No-1279QD-BCT-dated-9-May-2025-of-Ministry-of-Industry-and-Trade-60-28-252"
+    ],
+    "notes": "Average retail electricity price VND 2,204.0655/kWh excl. VAT as of 2025-05-10 per Decision 599/QD-EVN. Rate multipliers are percentages of the average price per Decision 14/2025/QD-TTg. TOU hours per DFDL analysis of Decision 14. Multipliers expressed as decimal (e.g., 157% = 1.57). EVN can adjust avg price by 2-5% with 3-month minimum interval per Decision 07/2025/QD-TTg (price band VND 1,826.22 - 2,444.09/kWh).",
+    "last_updated": "2026-03-10",
     "currency": "VND",
-    "exchange_rate_vnd_per_usd": 26400
+    "exchange_rate_vnd_per_usd": 26400,
+    "changelog": [
+      "2025.2: Corrected all rate multipliers to match Decision 14/2025/QD-TTg table. Fixed voltage tier breakpoints for production tariff (220kV, >35kV-<220kV, >1kV-35kV, ≤1kV). Expanded commercial into 3 subcategories per Decision 14. Corrected household from 6 tiers to 5 tiers. Added two-part tariff trial data per Decree 146/2025/ND-CP. Updated Decree 57 DPPA data.",
+      "2025.1: Initial version based on preliminary sources. Contained incorrect multipliers and voltage tier breakpoints."
+    ]
   },
+
   "data": {
-    "base_avg_price_vnd_per_kwh": 2204.07,
+    "base_avg_price_vnd_per_kwh": 2204.0655,
 
     "tou_schedule": {
       "weekday": {
@@ -18,67 +26,196 @@
         "standard_hours": [4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 16, 20, 21],
         "offpeak_hours":  [0, 1, 2, 3, 22, 23]
       },
-      "sunday": {
+      "sunday_and_public_holidays": {
         "peak_hours":     [],
         "standard_hours": [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21],
         "offpeak_hours":  [0, 1, 2, 3, 22, 23]
       },
-      "notes": "Hours are 0-indexed (0=midnight-1am). Peak: Mon-Sat 9:30-11:30 & 17:00-20:00 (mapped to hours 9-10 & 17-19). Standard: Mon-Sat 4:00-9:30, 11:30-17:00, 20:00-22:00; Sun 4:00-22:00. Off-peak: all days 22:00-4:00."
+      "public_holidays": [
+        "New Year (Jan 1)",
+        "Tet (Lunar New Year, ~5 days Jan/Feb)",
+        "Hung Kings Commemoration (10th day 3rd lunar month)",
+        "Reunification Day (Apr 30)",
+        "International Labour Day (May 1)",
+        "National Day (Sep 2 + Sep 3)"
+      ],
+      "notes": "Hours are 0-indexed (0=midnight-1am). Decision 14 specifies: Peak Mon-Sat 9:30-11:30 & 17:00-20:00; Standard Mon-Sat 4:00-9:30, 11:30-17:00, 20:00-22:00; Sunday+holidays 4:00-22:00; Off-peak all days 22:00-4:00. APPROXIMATION: Hourly discretization maps 9:30-11:30 to hours [9,10] and 17:00-20:00 to hours [17,18,19]. Hour 9 (9:00-10:00) is actually ~50% standard / ~50% peak. Hour 11 (11:00-12:00) is ~50% peak / ~50% standard. For higher fidelity, use 30-minute timesteps."
     },
 
     "rate_multipliers": {
-      "notes": "Multiplier of base_avg_price_vnd_per_kwh. Values from Decision 14/2025 tariff structure table.",
+      "notes": "Multiplier of base_avg_price_vnd_per_kwh. Values from Decision 14/2025/QD-TTg retail tariff structure table. To compute VND/kWh rate: multiply base_avg_price by multiplier.",
 
-      "industrial": {
-        "high_voltage_110kv_plus": {
-          "peak": 1.70,
-          "standard": 1.00,
-          "offpeak": 0.58
+      "production": {
+        "notes": "Category 1 in Decision 14: 'Electricity for Production' (Sản xuất). This is the correct category for manufacturing facilities in industrial parks.",
+
+        "high_voltage_220kv": {
+          "peak": 1.46,
+          "standard": 0.84,
+          "offpeak": 0.53
         },
-        "medium_voltage_22kv_to_110kv": {
-          "peak": 1.72,
-          "standard": 1.02,
-          "offpeak": 0.60
+        "high_voltage_above_35kv_below_220kv": {
+          "peak": 1.51,
+          "standard": 0.85,
+          "offpeak": 0.54
         },
-        "low_voltage_below_22kv": {
-          "peak": 1.76,
-          "standard": 1.05,
-          "offpeak": 0.62
+        "medium_voltage_above_1kv_to_35kv": {
+          "peak": 1.57,
+          "standard": 0.86,
+          "offpeak": 0.56
+        },
+        "low_voltage_1kv_and_below": {
+          "peak": 1.68,
+          "standard": 0.93,
+          "offpeak": 0.61
+        }
+      },
+
+      "public_services": {
+        "notes": "Category 2 in Decision 14: 'Electricity for Public Services'. Flat rate (no TOU). Subcategories: healthcare/education and public lighting/admin.",
+
+        "healthcare_education": {
+          "medium_voltage_and_above": 0.90,
+          "low_voltage": 0.96
+        },
+        "public_lighting_admin": {
+          "medium_voltage_and_above": 0.99,
+          "low_voltage": 1.03
         }
       },
 
       "commercial": {
-        "high_voltage_110kv_plus": {
-          "peak": 1.72,
-          "standard": 1.04,
-          "offpeak": 0.62
+        "notes": "Category 3 in Decision 14: 'Electricity for Commercial Use'. Three subcategories with very different rates. 'Other commercial' is significantly more expensive than production rates.",
+
+        "tourism_accommodation": {
+          "notes": "Category 3.1: Tourism Accommodation Establishments. Rates identical to production at same voltage.",
+          "medium_voltage_and_above_1kv": {
+            "peak": 1.57,
+            "standard": 0.86,
+            "offpeak": 0.56
+          },
+          "low_voltage_1kv_and_below": {
+            "peak": 1.68,
+            "standard": 0.93,
+            "offpeak": 0.61
+          }
         },
-        "medium_voltage_22kv_to_110kv": {
-          "peak": 1.75,
-          "standard": 1.06,
-          "offpeak": 0.64
+
+        "ev_charging": {
+          "notes": "Category 3.2: Electric Vehicle Charging. New category in Decision 14.",
+          "medium_voltage_and_above_1kv": {
+            "peak": 1.74,
+            "standard": 1.18,
+            "offpeak": 0.71
+          },
+          "low_voltage_1kv_and_below": {
+            "peak": 1.95,
+            "standard": 1.25,
+            "offpeak": 0.75
+          }
         },
-        "low_voltage_below_22kv": {
-          "peak": 1.80,
-          "standard": 1.09,
-          "offpeak": 0.67
+
+        "other_commercial": {
+          "notes": "Category 3.3: Other Commercial Businesses. Highest TOU rates in the tariff structure.",
+          "medium_voltage_and_above_1kv": {
+            "peak": 2.30,
+            "standard": 1.33,
+            "offpeak": 0.75
+          },
+          "low_voltage_1kv_and_below": {
+            "peak": 2.48,
+            "standard": 1.45,
+            "offpeak": 0.89
+          }
         }
       },
 
       "household": {
-        "notes": "Household uses a tiered block tariff (not TOU). Multipliers here are approximate weighted averages for typical consumption levels.",
-        "tier_1_0_to_100kwh":   0.92,
-        "tier_2_101_to_200kwh": 1.00,
-        "tier_3_201_to_300kwh": 1.14,
-        "tier_4_301_to_400kwh": 1.28,
-        "tier_5_401_to_700kwh": 1.54,
-        "tier_6_above_700kwh":  1.59
+        "notes": "Category 4 in Decision 14: 'Residential Electricity'. Tiered block tariff (not TOU). 5 tiers per Decision 14, replacing the previous 6-tier structure. Multipliers apply to total consumption in each tier bracket.",
+        "tier_1_0_to_100kwh":     0.90,
+        "tier_2_101_to_200kwh":   1.08,
+        "tier_3_201_to_400kwh":   1.36,
+        "tier_4_401_to_700kwh":   1.62,
+        "tier_5_above_700kwh":    1.80
       }
     },
 
     "demand_charge": {
-      "notes": "Vietnam does not currently have a formal demand charge (kW-based) in the retail tariff. The two-part tariff (capacity + energy) is being piloted per Decree 146/2025. Set to 0 for now; update when two-part tariff is implemented.",
-      "monthly_demand_rate_vnd_per_kw": 0
+      "notes": "Vietnam is transitioning to a two-part tariff (capacity + energy) per Electricity Law 2024 Art. 50 and Decree 146/2025/ND-CP. Paper-based pilot Jan-Jun 2026 for large industrial customers (≥200,000 kWh/month avg). Not yet applied to actual bills. Set to 0 for current modeling; use trial values for forward-looking scenarios.",
+      "monthly_demand_rate_vnd_per_kw": 0,
+
+      "two_part_tariff_trial": {
+        "notes": "Trial capacity charges released by EVN Oct 2025 per Decree 146/2025/ND-CP. Paper trial only (not charged on actual bills during pilot). Energy charges under two-part model differ from single-component rates above. Target: large industrial customers ≥200,000 kWh/month connected at ≥22kV via EVN distribution units.",
+        "status": "paper_trial_jan_jun_2026",
+        "legal_basis": "Decree 146/2025/ND-CP, Electricity Law 2024 Art. 50",
+
+        "capacity_charge_vnd_per_kw_month": {
+          "high_voltage_110kv_plus": 209459,
+          "medium_voltage_22kv_to_110kv": 235414,
+          "medium_voltage_6kv_to_22kv": 240050,
+          "low_voltage_below_6kv": 286153
+        },
+        "energy_charge_vnd_per_kwh": {
+          "notes": "Approximate ranges from EVN trial release. Normal/peak/off-peak by voltage level.",
+          "normal_hours_range": [1253, 1332],
+          "peak_hours_range": [2162, 2251],
+          "offpeak_hours_range": [843, 904]
+        }
+      }
+    },
+
+    "decree_57_dppa": {
+      "notes": "Decree 57/2025/ND-CP (effective 2025-03-03) replaced Decree 80/2024/ND-CP after only 8 months. Governs Direct Power Purchase Agreements between RE generators and large electricity consumers. Two models: private wire and grid-connected.",
+      "legal_basis": "Decree 57/2025/ND-CP, Electricity Law 2024 (Law 61/2024/QH15)",
+
+      "models": {
+        "private_wire": {
+          "notes": "Model 1: Direct sale via private connection line (not connected to national grid). No application/registration required, but must report PPA to provincial People's Committee, local power company, and system operator.",
+          "price_cap": "Negotiated price cannot exceed MOIT ceiling generation tariff for the RE type",
+          "rooftop_solar_surplus_export_cap_pct": 20,
+          "rooftop_solar_surplus_price": "Average market electricity price from prior year, capped at highest ground-mounted solar ceiling tariff"
+        },
+        "grid_connected": {
+          "notes": "Model 2: Via national grid through forward contracts. Three contractual relationships: (1) generator-consumer forward contract, (2) generator-EVN spot market PPA, (3) consumer-EVN retail PPA. Generator must own RE plant ≥10 MW.",
+          "minimum_generator_capacity_mw": 10,
+          "eligible_re_sources": ["solar", "wind", "small_hydro", "biomass", "geothermal", "ocean"],
+          "spot_market": "VWEM (Vietnam Wholesale Electricity Market)"
+        }
+      },
+
+      "customer_eligibility": {
+        "notes": "Decree 57 replaced Decree 80's fixed 200,000 kWh/month threshold with a flexible 'Minimum Take Amount' set by MOIT per wholesale market rules. Expanded from production-only to include service providers and EV charging operators.",
+        "minimum_consumption": "Per MOIT wholesale market regulations (dynamic, no longer fixed at 200,000 kWh/month)",
+        "voltage_requirement": "Per MOIT regulations (no longer fixed at ≥22kV)",
+        "eligible_consumers": ["production", "services", "ev_charging_providers"],
+        "ongoing_compliance": "Large customers in DPPA for ≥12 months must purchase from EVN the Minimum Take Amount for the 12-month period ending Oct 31 of previous calendar year"
+      },
+
+      "solar_ceiling_tariffs_vnd_per_kwh": {
+        "notes": "Maximum generation tariffs for private wire DPPAs set by MOIT per Decree 57. Vary by technology, storage, and region (North/Central/South). Excl. VAT.",
+        "ground_mounted_no_storage": {
+          "range_min": 1012,
+          "range_max": 1382.7
+        },
+        "floating_no_storage": {
+          "range_min": 1228.2,
+          "range_max": 1685.8
+        },
+        "ground_mounted_with_bess": {
+          "range_min": 1149.86,
+          "range_max": 1571.98
+        },
+        "floating_with_bess": {
+          "range_min": 1367.13,
+          "range_max": 1876.57
+        }
+      },
+
+      "bess_incentive_thresholds": {
+        "notes": "BESS paired with solar qualifies for higher ceiling tariffs if it meets all three thresholds below.",
+        "min_storage_capacity_pct_of_plant": 10,
+        "min_storage_duration_hours": 2,
+        "min_stored_output_delivery_pct": 5
+      }
     }
   }
 }
