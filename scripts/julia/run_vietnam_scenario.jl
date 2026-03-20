@@ -1,13 +1,19 @@
 """
-Run a Vietnam scenario end-to-end using a pre-filled template.
+Run a Vietnam scenario end-to-end using a pre-filled template or a scenario JSON.
 
 Usage:
     julia --project --compile=min scripts/julia/run_vietnam_scenario.jl
     julia --project --compile=min scripts/julia/run_vietnam_scenario.jl --no-solve
+    julia --project --compile=min scripts/julia/run_vietnam_scenario.jl \\
+        --scenario scenarios/real_project/saigon18_scenario_a.json --no-solve
 
 Flags:
-    --no-solve   Build and validate Scenario() but skip the HiGHS solver.
-                 Useful for quick input validation without a full optimization run.
+    --no-solve            Build and validate Scenario() but skip the HiGHS solver.
+                          Useful for quick input validation without a full optimization run.
+    --scenario <path>     Load a specific scenario JSON directly (already has Vietnam
+                          defaults applied by build_saigon18_reopt_input.py). If omitted,
+                          uses the default vn_commercial_rooftop_pv.json template with
+                          Vietnam preprocessing applied at runtime.
 
 Environment (required for resource data fetch from NREL):
     NREL_DEVELOPER_API_KEY   your NREL developer API key
@@ -28,6 +34,10 @@ include(joinpath(REPO_ROOT, "src", "REoptVietnam.jl"))
 using .REoptVietnam
 
 const NO_SOLVE = "--no-solve" in ARGS
+
+# Parse --scenario flag
+const SCENARIO_IDX = findfirst(==("--scenario"), ARGS)
+const SCENARIO_PATH = SCENARIO_IDX !== nothing ? ARGS[SCENARIO_IDX + 1] : nothing
 
 # ---------------------------------------------------------------------------
 # Load NREL API keys from NREL_API.env if present
@@ -50,35 +60,48 @@ let env_path = joinpath(REPO_ROOT, "NREL_API.env")
 end
 
 # ---------------------------------------------------------------------------
-# Load Vietnam data and scenario template
+# Load scenario: either a direct JSON (--scenario) or the default template
 # ---------------------------------------------------------------------------
-println("\nLoading Vietnam data...")
-vn = load_vietnam_data()
-
-template = joinpath(REPO_ROOT, "scenarios", "templates", "vn_commercial_rooftop_pv.json")
-println("Loading template: $template")
-d = JSON.parsefile(template)
-
-# Strip _template metadata block — REopt does not accept it
-delete!(d, "_template")
-
-# Expand scalar emissions factor to 8760 array (REopt requires array)
-if haskey(d, "ElectricUtility")
-    ef = get(d["ElectricUtility"], "emissions_factor_series_lb_CO2_per_kwh", nothing)
-    if ef isa Number
-        d["ElectricUtility"]["emissions_factor_series_lb_CO2_per_kwh"] = fill(Float64(ef), 8760)
+if SCENARIO_PATH !== nothing
+    # Direct scenario JSON — already has Vietnam defaults applied by build_saigon18_reopt_input.py
+    println("\nLoading scenario: $SCENARIO_PATH")
+    d = JSON.parsefile(SCENARIO_PATH)
+    delete!(d, "_meta")   # remove builder metadata REopt doesn't accept
+    delete!(d, "_template")
+    # Expand scalar emissions factor to 8760 array (REopt requires array)
+    if haskey(d, "ElectricUtility")
+        ef = get(d["ElectricUtility"], "emissions_factor_series_lb_CO2_per_kwh", nothing)
+        if ef isa Number
+            d["ElectricUtility"]["emissions_factor_series_lb_CO2_per_kwh"] = fill(Float64(ef), 8760)
+        end
     end
-end
+else
+    # Default: use the commercial rooftop template with Vietnam preprocessing
+    println("\nLoading Vietnam data...")
+    vn = load_vietnam_data()
 
-# ---------------------------------------------------------------------------
-# Apply Vietnam preprocessing defaults
-# ---------------------------------------------------------------------------
-println("Applying Vietnam defaults (customer_type=commercial, region=south)...")
-apply_vietnam_defaults!(d, vn;
-    customer_type = "commercial",
-    voltage_level = "medium_voltage_22kv_to_110kv",
-    region        = "south",
-)
+    template = joinpath(REPO_ROOT, "scenarios", "templates", "vn_commercial_rooftop_pv.json")
+    println("Loading template: $template")
+    d = JSON.parsefile(template)
+
+    # Strip _template metadata block — REopt does not accept it
+    delete!(d, "_template")
+
+    # Expand scalar emissions factor to 8760 array (REopt requires array)
+    if haskey(d, "ElectricUtility")
+        ef = get(d["ElectricUtility"], "emissions_factor_series_lb_CO2_per_kwh", nothing)
+        if ef isa Number
+            d["ElectricUtility"]["emissions_factor_series_lb_CO2_per_kwh"] = fill(Float64(ef), 8760)
+        end
+    end
+
+    println("Applying Vietnam defaults (customer_type=commercial, region=south)...")
+    apply_vietnam_defaults!(d, vn;
+        customer_type = "commercial",
+        voltage_level = "medium_voltage_22kv_to_110kv",
+        region        = "south",
+    )
+end
 
 # ---------------------------------------------------------------------------
 # Construct Scenario (validates inputs — catches schema errors before solve)
@@ -127,8 +150,15 @@ else
     end
 
     # Save results to results/ directory
-    mkpath(joinpath(REPO_ROOT, "results"))
-    out_path = joinpath(REPO_ROOT, "results", "commercial_rooftop_results.json")
+    if SCENARIO_PATH !== nothing
+        basename_noext = replace(basename(SCENARIO_PATH), r"\.json$" => "")
+        out_dir = joinpath(REPO_ROOT, "results", "real_project")
+        mkpath(out_dir)
+        out_path = joinpath(out_dir, "$(basename_noext)_results.json")
+    else
+        mkpath(joinpath(REPO_ROOT, "results"))
+        out_path = joinpath(REPO_ROOT, "results", "commercial_rooftop_results.json")
+    end
     open(out_path, "w") do f
         JSON.print(f, results, 2)
     end
