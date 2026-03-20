@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(julia scripts/julia/run_vietnam_scenario.jl --scenario scenarios/real_project/saigon18_scenario_a.json --no-solve)",
+      "Bash(julia --project=. scripts/julia/run_vietnam_scenario.jl --scenario scenarios/real_project/saigon18_scenario_a.json --no-solve)",
+      "Bash(julia --project=. scripts/julia/run_vietnam_scenario.jl --scenario scenarios/real_project/saigon18_scenario_a.json)",
+      "Skill(update-config)"
+    ]
+  }
+}

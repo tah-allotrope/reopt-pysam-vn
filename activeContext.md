@@ -1,6 +1,6 @@
 # Active Context — Saigon18 REopt Integration
 
-> Last updated: 2026-03-20
+> Last updated: 2026-03-20 (Phase 2 complete)
 
 ---
 
@@ -14,7 +14,7 @@ Plan: `plans/saigon18_reopt_integration_plan.md`
 
 ## Progress by Phase
 
-### Phase 1 — Data Extraction & Input Validation ✅ (scripts done, partial validation)
+### Phase 1 — Data Extraction & Input Validation ✅ Complete
 
 | Task | Status | Notes |
 |---|---|---|
@@ -23,53 +23,172 @@ Plan: `plans/saigon18_reopt_integration_plan.md`
 | `scripts/python/dppa_settlement.py` | ✅ Done | DPPA CfD post-processing; compute settlement from FMP + REopt dispatch |
 | `scripts/python/compare_reopt_vs_excel.py` | ✅ Done | Comparison report script (delta table, 5% flag threshold) |
 | `scripts/python/equity_irr.py` | ✅ Done | Levered equity IRR from REopt EBITDA + debt schedule |
-| `scripts/julia/run_vietnam_scenario.jl` | ✅ Done | Added `--scenario <path>` flag; output path branches per mode |
-| `tests/python/test_saigon18_data.py` | ✅ Done | Layer 1 data validation tests (synthetic, no Excel needed) |
-| `data/real_project/saigon18_extracted.json` | ⏳ Blocked | Needs Excel file from project developer |
-| `scenarios/real_project/saigon18_scenario_a.json` | ⏳ Blocked | Needs extracted JSON first |
-| `scenarios/real_project/saigon18_scenario_b.json` | ⏳ Blocked | Needs extracted JSON first |
-| No-solve validation (`--scenario ... --no-solve`) | ⏳ Blocked | Needs scenario JSONs |
+| `scripts/julia/run_vietnam_scenario.jl` | ✅ Done | `--scenario <path>` flag; output path branches per mode |
+| `tests/python/test_saigon18_data.py` | ✅ Done | 19/19 Layer 1 tests pass |
+| `data/real_project/saigon18_extracted.json` | ✅ Done | 71.81 GWh PV, 184.26 GWh load, 30.2 MW peak — all checks passed |
+| `scenarios/real_project/saigon18_scenario_a.json` | ✅ Done | Built; no-solve validation passed |
+| `scenarios/real_project/saigon18_scenario_b.json` | ✅ Done | Built |
+| No-solve validation (`--scenario ... --no-solve`) | ✅ Done | Scenario A passes |
 
-### Phase 2 — REopt Run & Baseline Comparison ⏳ Not started
+### Phase 2 — REopt Run & Baseline Comparison ✅ Complete
 
-Blocked on Phase 1 Excel extraction.
+| Task | Status | Notes |
+|---|---|---|
+| Run Scenario A (full EVN TOU, fixed sizing) | ✅ Done | OPTIMAL |
+| Run Scenario B (PPA × 0.85, fixed sizing) | ✅ Done | OPTIMAL |
+| Generate comparison reports | ✅ Done | A vs Excel + B vs Excel |
+| Equity IRR (Scenario A) | ✅ Done | −17.9% — script bug identified (see below) |
 
-| Task | Status |
+#### Scenario A Results (2026-03-20)
+| Metric | REopt Result |
 |---|---|
-| Run Scenario A (full EVN TOU, fixed sizing) | ⏳ Blocked |
-| Run Scenario B (PPA × 0.85, fixed sizing) | ⏳ Blocked |
-| Generate comparison report | ⏳ Blocked |
-| `reports/real_project/saigon18_comparison_report.md` | ⏳ Blocked |
+| Status | OPTIMAL |
+| PV size | 40,360 kW (fixed) |
+| Year-1 PV energy | 71.81 GWh |
+| BESS power / capacity | 20,000 kW / 66,000 kWh (fixed) |
+| LCC | $129.5M |
+| NPV | $10.6M |
+| CAPEX | $47.5M |
+| Year-1 savings (before tax) | $5.93M |
+| Year-1 savings (after tax) | $4.74M |
+| Unlevered IRR | 12.6% |
+| Simple payback | 7.97 yr |
+| Grid purchases (year 1) | 117,705 MWh |
+| PV exported to grid | 549 MWh |
+| Output file | `results/real_project/saigon18_scenario_a_results.json` |
+
+#### Scenario B Results (2026-03-20)
+| Metric | REopt Result |
+|---|---|
+| Status | OPTIMAL |
+| PV / BESS | Same fixed sizing as A |
+| LCC | $118.1M |
+| NPV | $0.89M |
+| Simple payback | 10.2 yr |
+| Output file | `results/real_project/saigon18_scenario_b_results.json` |
+
+#### Phase 2 Comparison: REopt vs Excel
+| Metric | Excel | Scenario A | Scenario B |
+|---|---|---|---|
+| PV generation | 71,808 MWh | 71,808 MWh ✓ | 71,808 MWh ✓ |
+| NPV | $22.0M | $10.6M (−52%) | $0.89M (−96%) |
+| Payback | 6.0 yr | 8.0 yr (+33%) | 10.2 yr (+70%) |
+| Year-1 revenue/savings | $5.06M | $5.93M pre-tax ≈ +17% | ~$0.9M |
+
+Reports: `reports/real_project/saigon18_scenario_a_comparison.md`, `..._b_comparison.md`
 
 ### Phase 3 — Custom Constraints & Advanced Scenarios ⏳ Not started
 
 | Task | Status |
 |---|---|
+| Fix `equity_irr.py` EBITDA extraction bug (see bug log) | ⏳ Next |
+| Fix `compare_reopt_vs_excel.py` energy-flow key mapping (see bug log) | ⏳ Next |
 | Decree 57 20% export cap as hard JuMP constraint in `src/REoptVietnam.jl` | ⏳ Not started |
 | Optional fixed BESS dispatch window constraints (Option B) | ⏳ Not started |
-| Scenario C — optimized sizing (unconstrained PV + BESS) | ⏳ Blocked |
-| Equity IRR validation vs Excel 19.4% | ⏳ Blocked |
+| Scenario C — optimized sizing (unconstrained PV + BESS) | ⏳ Not started |
+| Equity IRR validation vs Excel 19.4% (after script fix) | ⏳ Blocked on fix |
 | `tests/python/test_saigon18_integration.py` (Layer 4) | ⏳ Not started |
 
 ---
 
-## Outstanding / Blockers
+## Phase 2 Bug Log — Scripts Need Fixing
 
-### Hard blocker
-- **Excel file not provided.** All downstream Phase 1–3 work (extraction, scenario build, solve, comparison) is blocked until the file is shared:
-  ```
-  llm 20260129 SOLAR BESS MODEL - Editing - for processing test.xlsx
-  ```
-  → Once provided, run: `python scripts/python/extract_excel_inputs.py --excel "<path>" --output data/real_project/saigon18_extracted.json`
+### Bug 1: `equity_irr.py` — EBITDA uses discounted NPV not nominal savings
 
-### Pending actions (unblocked now)
-- [ ] Confirm actual site coordinates (currently defaulting to lat=10.9577, lon=106.8426 near HCMC)
-- [ ] Confirm whether Saigon18 uses private-wire or grid-connected DPPA — ceiling tariff differs (VND 1,149.86/kWh vs. higher ceiling for private wire); plan uses VND 1,800/kWh strike price which may exceed the Decree 57 grid-connected ceiling
-- [ ] Run `python -m pytest tests/python/test_saigon18_data.py -v` to confirm all Layer 1 tests pass
+**Root cause:** `extract_annual_ebitda()` computes `lcc_bau - lcc_opt` which equals the NPV
+(both LCC values are present-value lifecycle costs). It then divides this discounted total
+by a nominal escalation factor sum, producing a severely understated year-1 CF (~$319K
+instead of ~$5.93M). This drives equity IRR to −17.9% — a model artifact, not a real result.
+
+**Correct approach:** Use `Financial.year_one_total_operating_cost_savings_before_tax` as the
+year-1 EBITDA base and grow at electricity escalation rate (5%). This gives $5.93M year-1
+vs Excel's $5.06M — only a 17% delta, explainable by REopt TOU optimization vs Excel fixed dispatch.
+
+**Keys available in results:**
+- `Financial.year_one_total_operating_cost_savings_before_tax` = $5,929,979 (use this)
+- `Financial.year_one_total_operating_cost_savings_after_tax` = $4,743,983
+- `Financial.internal_rate_of_return` = 0.126 (unlevered 12.6%)
+- `Financial.offtaker_annual_free_cashflows` — 21-element list (yr 0 = −CAPEX); do NOT use
+  directly for equity IRR (it's the net offtaker position, not pure EBITDA)
+
+### Bug 2: `compare_reopt_vs_excel.py` — energy flow keys don't match REopt output
+
+**Root cause:** Script looks for keys like `year_one_to_load_kwh`, `year_one_to_grid_kwh`,
+`year_one_to_load_series_kw` (BESS) which don't exist in the results JSON. Actual keys:
+
+| Metric | Wrong key used | Correct key | Location |
+|---|---|---|---|
+| PV to load | `pv.year_one_to_load_kwh` | `sum(pv.electric_to_load_series_kw)` | PV (series sum) |
+| PV to grid | `pv.year_one_to_grid_kwh` | `pv.annual_energy_exported_kwh` | PV scalar |
+| BESS discharge | `storage.year_one_to_load_series_kw` | sum of BESS series (not in scalar output) | ElectricStorage |
+| Grid purchases | `utility.year_one_energy_supplied_kwh` | `utility.annual_energy_supplied_kwh` | ElectricUtility |
+| Year-1 revenue | `npv / 25` | `fin.year_one_total_operating_cost_savings_before_tax` | Financial |
+
+**Actual values (Scenario A):**
+- PV to grid: 549 MWh (REopt) vs Excel 1,087 MWh — Decree 57 cap partially effective
+- Grid purchases: 117,705 MWh (REopt) vs Excel 112,454 MWh — +4.7%, within range
+- Year-1 savings: $5.93M (REopt) vs $5.06M (Excel) — +17%, reasonable given TOU optimization
+
+---
+
+## API Compatibility Fixes Applied (REopt.jl)
+
+The installed REopt.jl package has a newer API than the scripts assumed. Fixed in this session:
+
+| Old field | New field | File |
+|---|---|---|
+| `ElectricStorage.min_soc_fraction` | `soc_min_fraction` | `build_saigon18_reopt_input.py` |
+| `ElectricStorage.max_soc_fraction` | *(removed — defaults to 1.0)* | `build_saigon18_reopt_input.py` |
+| `ElectricStorage.om_cost_per_kwh` | `om_cost_fraction_of_installed_cost` | `build_saigon18_reopt_input.py` |
+| `ElectricTariff.energy_rate_series_per_kwh` | `tou_energy_rates_per_kwh` | `reopt_vietnam.py` + `build_saigon18_reopt_input.py` |
+| `ElectricTariff.net_metering_limit_kw` | *(removed)* | `reopt_vietnam.py` |
+| `ElectricTariff.export_rate_beyond_curtailment_limit` | `export_rate_beyond_net_metering_limit` | `reopt_vietnam.py` |
+| `schedule["sunday"]` key | dynamic fallback to `"sunday_and_public_holidays"` | `reopt_vietnam.py` |
+| Runner script `get(String, String, String)` crash at line 126 | `status = "unknown"` default | `run_vietnam_scenario.jl` |
+
+Tariff data fix: added `"industrial"` alias block (with `high_voltage_above_35kv_below_220kv` and `medium_voltage_22kv_to_110kv` keys) to `data/vietnam/vn_tariff_2025.json` — the v2025.2 update renamed it to `"production"` but all scripts/tests still use `"industrial"`.
+
+## Pre-existing Test Failures (not caused by this session)
+
+These 5 tests were failing before this session due to the tariff v2025.2 restructure. Not blocking Phase 2.
+
+| Test | Root cause |
+|---|---|
+| `test_unit.py::test_commercial_low_voltage` | Commercial tariff now has subcategories (tourism/EV/other) not flat voltage levels |
+| `test_unit.py::test_sunday_vs_weekday_pattern` | Test directly accesses `schedule["sunday"]` key (renamed to `sunday_and_public_holidays`) |
+| `test_data_validation.py::test_meta_and_data_blocks[tariff]` | Meta block has `source_urls` (plural) but test checks `source_url` |
+| `test_data_validation.py::test_tou_schedule_completeness[sunday]` | Test checks for `"sunday"` key in schedule |
+| `test_data_validation.py::test_commercial_multipliers` | Commercial now nested by subcategory |
+
+---
+
+## Next Actions
+
+1. **Fix `equity_irr.py` EBITDA extraction** — replace `lcc_bau - lcc` logic with
+   `year_one_total_operating_cost_savings_before_tax` as year-1 base, grown at elec escalation.
+   Re-run to get a realistic equity IRR vs Excel 19.4%.
+
+2. **Fix `compare_reopt_vs_excel.py` energy flow keys** — update `load_reopt_metrics()` to use
+   the correct REopt output keys (see Bug 2 table above).
+
+3. **Run Scenario C** (optimized sizing, Phase 3):
+   ```
+   julia --project=. scripts/julia/run_vietnam_scenario.jl --scenario scenarios/real_project/saigon18_scenario_c.json
+   ```
+
+4. **Fix pre-existing test failures** (Phase 3 housekeeping — not blocking)
+
+---
+
+## Outstanding / Pending Confirmations
+
+- [ ] Confirm actual site coordinates (currently lat=10.9577, lon=106.8426 near HCMC)
+- [ ] Confirm whether Saigon18 uses private-wire or grid-connected DPPA — ceiling tariff differs
+- [ ] Two-part tariff (capacity charge) sensitivity — Decree 146/2025 pilot Jan–Jun 2026
 
 ### Deferred (Phase 3)
-- Decree 57 20% export cap hard JuMP constraint — currently only `can_wholesale=True` + surplus rate is set; no upper bound on export volume
-- Two-part tariff (capacity charge) sensitivity scenario — Decree 146/2025 pilot started Jan 2026; relevant for Year 5+ of project life
+- Decree 57 20% export cap hard JuMP constraint — currently only `can_wholesale=True` + surplus rate set
+- Two-part tariff sensitivity scenario
 
 ---
 
@@ -77,22 +196,23 @@ Blocked on Phase 1 Excel extraction.
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| PV production profile | Inject from Excel (Option B) | Apples-to-apples vs Excel; avoids NREL API dependency for comparison runs |
-| BESS degradation | `battery_replacement_year=10`, `replace_cost_per_kwh=100` | REopt uses discrete replacement model; continuous 3%/yr not supported natively |
-| CIT tax rate | Blended 0.0575 | 4yr exempt + 9yr 50% + 7yr full = (0+0.45+0.70)/20 effective rate |
-| BESS dispatch | REopt free optimization (Phase 1–2); fixed windows optional (Phase 3) | Uncover dispatch value of optimization vs. Excel fixed schedule |
-| Currency | All inputs converted VND→USD at 26,000 VND/USD | REopt outputs USD; post-process for VND reporting |
+| PV production profile | Inject from Excel (Option B) | Apples-to-apples vs Excel; avoids NREL API dependency |
+| BESS degradation | `battery_replacement_year=10`, `replace_cost_per_kwh=100` | REopt uses discrete replacement model |
+| CIT tax rate | Blended 0.0575 | 4yr exempt + 9yr 50% + 7yr full |
+| BESS dispatch | REopt free optimization (Phase 1–2) | Uncover dispatch value vs Excel fixed schedule |
+| Currency | VND→USD at 26,400 VND/USD | REopt outputs USD |
+| Customer type | `"industrial"` / `high_voltage_above_35kv_below_220kv` (110kV) | Manufacturing park, 110kV grid connection |
 
 ---
 
 ## Scenario Summary
 
-| ID | Description | Tariff | Sizing |
-|---|---|---|---|
-| A | Baseline — REopt TOU optimization | Full EVN TOU | Fixed (40.36 MWp + 66 MWh) |
-| B | Bundled PPA — 15% discount | EVN TOU × 0.85 | Fixed |
-| C | Optimized sizing | Full EVN TOU | Unconstrained (up to 60 MWp / 100 MWh) |
-| D | DPPA strike price contract | EVN TOU (base) + FMP post-processing | Fixed |
+| ID | Description | Tariff | Sizing | Status |
+|---|---|---|---|---|
+| A | Baseline — REopt TOU optimization | Full EVN TOU (Decision 14) | Fixed (40.36 MWp + 66 MWh) | ✅ OPTIMAL |
+| B | Bundled PPA — 15% discount | EVN TOU × 0.85 | Fixed | ⏳ Ready |
+| C | Optimized sizing | Full EVN TOU | Unconstrained (up to 60 MWp / 100 MWh) | ⏳ Phase 3 |
+| D | DPPA strike price contract | EVN TOU (base) + FMP post-processing | Fixed | ⏳ Phase 3 |
 
 ---
 
@@ -107,18 +227,18 @@ scripts/python/
   equity_irr.py                 ← levered equity IRR from REopt EBITDA
 
 scripts/julia/
-  run_vietnam_scenario.jl       ← runner; --scenario flag added
+  run_vietnam_scenario.jl       ← runner; --scenario flag
 
 data/real_project/
-  saigon18_extracted.json       ← MISSING (needs Excel)
+  20260129 SOLAR BESS MODEL - Editing - V2.xlsm  ← source Excel ✅
+  saigon18_extracted.json                        ← extracted data ✅
 
 scenarios/real_project/
-  saigon18_scenario_a.json      ← MISSING (needs extracted JSON)
-  saigon18_scenario_b.json      ← MISSING (needs extracted JSON)
+  saigon18_scenario_a.json      ✅
+  saigon18_scenario_b.json      ✅
 
-results/real_project/           ← populated after REopt runs
+results/real_project/
+  saigon18_scenario_a_results.json  ✅
+
 reports/real_project/           ← populated after compare script
-
-tests/python/
-  test_saigon18_data.py         ← Layer 1 synthetic validation tests ✅
 ```

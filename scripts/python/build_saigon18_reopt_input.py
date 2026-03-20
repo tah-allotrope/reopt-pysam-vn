@@ -94,13 +94,16 @@ def build_base_scenario(extracted: dict) -> dict:
             "replace_cost_per_kwh": 100.0,
             "battery_replacement_year": 10,        # discrete replacement at mid-life
             "inverter_replacement_year": 10,
-            "min_soc_fraction": round(
+            "soc_min_fraction": round(
                 1.0 - assumptions.get("bess_dod_fraction", 0.85), 4
             ),                                     # 1 − DoD = 0.15
-            "max_soc_fraction": 1.0,
             "charge_efficiency": assumptions.get("bess_half_cycle_efficiency", 0.95),
             "discharge_efficiency": assumptions.get("bess_half_cycle_efficiency", 0.95),
-            "om_cost_per_kwh": assumptions.get("om_bess_per_kwh_per_year", 2.0),
+            "om_cost_fraction_of_installed_cost": round(
+                assumptions.get("om_bess_per_kwh_per_year", 2.0)
+                / assumptions.get("bess_capex_usd_per_kwh", BESS_CAPEX_PER_KWH),
+                6,
+            ),                                     # $/kWh/yr ÷ $/kWh capex
             "can_grid_charge": False,              # grid charging disabled per BESS strategy
         },
         "Financial": {
@@ -158,13 +161,13 @@ def build_scenario_b(extracted: dict) -> dict:
     d = build_base_scenario(extracted)
 
     ppa_discount = extracted.get("assumptions", {}).get("ppa_discount_fraction", 0.15)
-    tariff_series = d.get("ElectricTariff", {}).get("energy_rate_series_per_kwh", [])
+    tariff_series = d.get("ElectricTariff", {}).get("tou_energy_rates_per_kwh", [])
     if not tariff_series:
         raise ValueError(
-            "ElectricTariff.energy_rate_series_per_kwh is missing after apply_vietnam_defaults(). "
+            "ElectricTariff.tou_energy_rates_per_kwh is missing after apply_vietnam_defaults(). "
             "Check that apply_tariff=True is set and the tariff data file is present."
         )
-    d["ElectricTariff"]["energy_rate_series_per_kwh"] = [
+    d["ElectricTariff"]["tou_energy_rates_per_kwh"] = [
         r * (1.0 - ppa_discount) for r in tariff_series
     ]
 

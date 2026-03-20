@@ -123,7 +123,7 @@ else
     m2 = Model(HiGHS.Optimizer)
     results = run_reopt([m1, m2], d)
 
-    status = get(get(results, "status", Dict()), "", get(results, "status", "unknown"))
+    status = "unknown"
     if results isa Dict && haskey(results, "status")
         status = results["status"]
     end

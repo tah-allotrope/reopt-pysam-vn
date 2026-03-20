@@ -83,6 +83,30 @@
         }
       },
 
+      "industrial": {
+        "notes": "Alias for 'production' category (Decision 14 Category 1: Sản xuất). Uses legacy voltage-level key names expected by reopt_vietnam.py. medium_voltage_22kv_to_110kv maps to medium_voltage_above_1kv_to_35kv rates from Decision 14.",
+        "high_voltage_220kv": {
+          "peak": 1.46,
+          "standard": 0.84,
+          "offpeak": 0.53
+        },
+        "high_voltage_above_35kv_below_220kv": {
+          "peak": 1.51,
+          "standard": 0.85,
+          "offpeak": 0.54
+        },
+        "medium_voltage_22kv_to_110kv": {
+          "peak": 1.57,
+          "standard": 0.86,
+          "offpeak": 0.56
+        },
+        "low_voltage_1kv_and_below": {
+          "peak": 1.68,
+          "standard": 0.93,
+          "offpeak": 0.61
+        }
+      },
+
       "commercial": {
         "notes": "Category 3 in Decision 14: 'Electricity for Commercial Use'. Three subcategories with very different rates. 'Other commercial' is significantly more expensive than production rates.",
 

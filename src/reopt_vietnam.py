@@ -318,7 +318,8 @@ def build_vietnam_tariff(
         offpeak_rate = convert_vnd_to_usd(base_vnd * vl["offpeak"], exchange_rate=exchange_rate)
 
         weekday_rates = _build_hourly_rates(schedule["weekday"], peak_rate, standard_rate, offpeak_rate)
-        sunday_rates = _build_hourly_rates(schedule["sunday"], peak_rate, standard_rate, offpeak_rate)
+        sunday_key = "sunday" if "sunday" in schedule else "sunday_and_public_holidays"
+        sunday_rates = _build_hourly_rates(schedule[sunday_key], peak_rate, standard_rate, offpeak_rate)
 
         rates = _build_8760_rates(weekday_rates, sunday_rates, year)
 
@@ -328,7 +329,7 @@ def build_vietnam_tariff(
     return {
         "urdb_label": "",
         "blended_annual_energy_rate": 0,
-        "energy_rate_series_per_kwh": rates,
+        "tou_energy_rates_per_kwh": rates,
         "monthly_demand_rates": [demand_usd] * 12,
     }
 
@@ -489,15 +490,13 @@ def apply_decree57_export(
 
     et = _ensure_block(d, "ElectricTariff")
 
-    _set_default(et, "net_metering_limit_kw", 0)
-
     surplus_usd = rooftop.get("surplus_purchase_rate_usd_per_kwh")
     if surplus_usd is None:
         surplus_vnd = rooftop.get("surplus_purchase_rate_vnd_per_kwh", 671)
         surplus_usd = convert_vnd_to_usd(surplus_vnd, exchange_rate=exchange_rate)
     _set_default(et, "wholesale_rate", surplus_usd)
 
-    _set_default(et, "export_rate_beyond_curtailment_limit", 0)
+    _set_default(et, "export_rate_beyond_net_metering_limit", 0)
 
     if "PV" in d:
         targets = d["PV"] if isinstance(d["PV"], list) else [d["PV"]]
