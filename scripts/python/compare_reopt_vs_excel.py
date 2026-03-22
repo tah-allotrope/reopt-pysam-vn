@@ -11,6 +11,7 @@ Usage:
         --excel "path/to/Solar BESS MODEL.xlsx" \
         --output reports/real_project/saigon18_comparison.md
 """
+
 import argparse
 import json
 import warnings
@@ -23,14 +24,18 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 
 EXCEL_TARGETS = {
-    "pv_gen_mwh":        {"value": 71_808.0, "tolerance": 0.01,  "unit": "MWh"},
-    "pv_to_load_mwh":    {"value": 62_106.0, "tolerance": 0.02,  "unit": "MWh"},
-    "pv_to_grid_mwh":    {"value": 1_087.0,  "tolerance": 0.05,  "unit": "MWh"},
-    "bess_discharge_mwh":{"value": 8_591.0,  "tolerance": 0.05,  "unit": "MWh"},  # 7364+1227
-    "grid_purchases_mwh":{"value": 112_454.0,"tolerance": 0.02,  "unit": "MWh"},
-    "npv_usd":           {"value": 22_034_000.0, "tolerance": None, "unit": "USD"},
-    "payback_years":     {"value": 6.0,      "tolerance": 1.0,   "unit": "years"},
-    "year1_revenue_usd": {"value": 5_056_418.0,  "tolerance": None, "unit": "USD"},
+    "pv_gen_mwh": {"value": 71_808.0, "tolerance": 0.01, "unit": "MWh"},
+    "pv_to_load_mwh": {"value": 62_106.0, "tolerance": 0.02, "unit": "MWh"},
+    "pv_to_grid_mwh": {"value": 1_087.0, "tolerance": 0.05, "unit": "MWh"},
+    "bess_discharge_mwh": {
+        "value": 8_591.0,
+        "tolerance": 0.05,
+        "unit": "MWh",
+    },  # 7364+1227
+    "grid_purchases_mwh": {"value": 112_454.0, "tolerance": 0.02, "unit": "MWh"},
+    "npv_usd": {"value": 22_034_000.0, "tolerance": None, "unit": "USD"},
+    "payback_years": {"value": 6.0, "tolerance": 1.0, "unit": "years"},
+    "year1_revenue_usd": {"value": 5_056_418.0, "tolerance": None, "unit": "USD"},
 }
 
 
@@ -41,27 +46,28 @@ EXCEL_TARGETS = {
 
 def load_reopt_metrics(results: dict) -> dict:
     """Extract comparable metrics from a REopt results dict."""
-    pv       = results.get("PV", {})
-    storage  = results.get("ElectricStorage", {})
-    utility  = results.get("ElectricUtility", {})
-    fin      = results.get("Financial", {})
+    pv = results.get("PV", {})
+    storage = results.get("ElectricStorage", {})
+    utility = results.get("ElectricUtility", {})
+    fin = results.get("Financial", {})
 
-    bess_to_load_series = storage.get("year_one_to_load_series_kw", [])
-    bess_discharge_kwh  = sum(bess_to_load_series)
-
-    # Year-1 avoided cost: rough annual-equivalent from NPV (plan note)
+    pv_gen_kwh = pv.get("year_one_energy_produced_kwh") or 0
+    pv_export_kwh = pv.get("annual_energy_exported_kwh") or 0
+    bess_to_load_series = storage.get("storage_to_load_series_kw", [])
+    bess_discharge_kwh = sum(bess_to_load_series)
     npv = fin.get("npv", 0) or 0
 
     return {
-        "pv_gen_mwh":        (pv.get("year_one_energy_produced_kwh") or 0) / 1_000,
-        "pv_to_load_mwh":    (pv.get("year_one_to_load_kwh") or 0) / 1_000,
-        "pv_to_grid_mwh":    (pv.get("year_one_to_grid_kwh") or 0) / 1_000,
+        "pv_gen_mwh": pv_gen_kwh / 1_000,
+        "pv_to_load_mwh": (pv_gen_kwh - pv_export_kwh) / 1_000,
+        "pv_to_grid_mwh": pv_export_kwh / 1_000,
         "bess_discharge_mwh": bess_discharge_kwh / 1_000,
-        "grid_purchases_mwh":(utility.get("year_one_energy_supplied_kwh") or 0) / 1_000,
-        "npv_usd":           npv,
-        "payback_years":     fin.get("simple_payback_years") or 0,
-        "year1_revenue_usd": npv / 25,  # rough annual equivalent (plan approximation)
-        "lcc":               fin.get("lcc") or 0,
+        "grid_purchases_mwh": (utility.get("annual_energy_supplied_kwh") or 0) / 1_000,
+        "npv_usd": npv,
+        "payback_years": fin.get("simple_payback_years") or 0,
+        "year1_revenue_usd": fin.get("year_one_total_operating_cost_savings_before_tax")
+        or 0,
+        "lcc": fin.get("lcc") or 0,
     }
 
 
@@ -76,15 +82,15 @@ def compare_metrics(reopt_metrics: dict, excel_targets: dict) -> list[dict]:
     for key, target_info in excel_targets.items():
         excel_val = target_info["value"]
         reopt_val = reopt_metrics.get(key)
-        unit      = target_info["unit"]
-        tol       = target_info["tolerance"]
+        unit = target_info["unit"]
+        tol = target_info["tolerance"]
 
         if reopt_val is None:
             delta_pct = None
-            status    = "MISSING"
+            status = "MISSING"
         elif excel_val == 0:
             delta_pct = None
-            status    = "SKIP (Excel=0)"
+            status = "SKIP (Excel=0)"
         else:
             delta_pct = (reopt_val - excel_val) / abs(excel_val)
             if tol is None:
@@ -94,15 +100,17 @@ def compare_metrics(reopt_metrics: dict, excel_targets: dict) -> list[dict]:
             else:
                 status = "OK" if abs(delta_pct) <= tol else "WARN"
 
-        rows.append({
-            "metric":    key,
-            "unit":      unit,
-            "excel":     excel_val,
-            "reopt":     reopt_val,
-            "delta_pct": delta_pct,
-            "tolerance": tol,
-            "status":    status,
-        })
+        rows.append(
+            {
+                "metric": key,
+                "unit": unit,
+                "excel": excel_val,
+                "reopt": reopt_val,
+                "delta_pct": delta_pct,
+                "tolerance": tol,
+                "status": status,
+            }
+        )
     return rows
 
 
@@ -167,16 +175,23 @@ def generate_report(
         f"|---|---|---|---|---|---|---|",
     ]
 
-    energy_keys = {"pv_gen_mwh", "pv_to_load_mwh", "pv_to_grid_mwh",
-                   "bess_discharge_mwh", "grid_purchases_mwh"}
-    fin_keys    = {"npv_usd", "payback_years", "year1_revenue_usd"}
+    energy_keys = {
+        "pv_gen_mwh",
+        "pv_to_load_mwh",
+        "pv_to_grid_mwh",
+        "bess_discharge_mwh",
+        "grid_purchases_mwh",
+    }
+    fin_keys = {"npv_usd", "payback_years", "year1_revenue_usd"}
 
     def add_rows(keys):
         for r in rows:
             if r["metric"] not in keys:
                 continue
-            tol_str = f"±{r['tolerance']:.0%}" if isinstance(r["tolerance"], float) and r["tolerance"] < 1 else (
-                f"±{r['tolerance']:.1f} yr" if r["unit"] == "years" else "—"
+            tol_str = (
+                f"±{r['tolerance']:.0%}"
+                if isinstance(r["tolerance"], float) and r["tolerance"] < 1
+                else (f"±{r['tolerance']:.1f} yr" if r["unit"] == "years" else "—")
             )
             lines.append(
                 f"| {r['metric']} | {r['unit']} "
@@ -189,12 +204,19 @@ def generate_report(
 
     add_rows(energy_keys)
 
-    lines += ["", "## Financial Metrics", "", "| Metric | Unit | Excel | REopt | Delta | Notes | Status |",
-              "|---|---|---|---|---|---|---|"]
+    lines += [
+        "",
+        "## Financial Metrics",
+        "",
+        "| Metric | Unit | Excel | REopt | Delta | Notes | Status |",
+        "|---|---|---|---|---|---|---|",
+    ]
     for r in rows:
         if r["metric"] not in fin_keys:
             continue
-        note = DISCREPANCY_EXPLANATIONS.get(r["metric"], "")[:60] + ("…" if len(DISCREPANCY_EXPLANATIONS.get(r["metric"], "")) > 60 else "")
+        note = DISCREPANCY_EXPLANATIONS.get(r["metric"], "")[:60] + (
+            "…" if len(DISCREPANCY_EXPLANATIONS.get(r["metric"], "")) > 60 else ""
+        )
         lines.append(
             f"| {r['metric']} | {r['unit']} "
             f"| {_fmt(r['excel'], r['unit'])} "
@@ -209,9 +231,13 @@ def generate_report(
     if warn_rows:
         lines += ["", "## Discrepancies Requiring Investigation", ""]
         for r in warn_rows:
-            exp = DISCREPANCY_EXPLANATIONS.get(r["metric"], "No specific explanation documented.")
+            exp = DISCREPANCY_EXPLANATIONS.get(
+                r["metric"], "No specific explanation documented."
+            )
             lines.append(f"### `{r['metric']}`")
-            lines.append(f"- REopt: {_fmt(r['reopt'], r['unit'])}, Excel: {_fmt(r['excel'], r['unit'])}, Delta: {_fmt_delta(r['delta_pct'])}")
+            lines.append(
+                f"- REopt: {_fmt(r['reopt'], r['unit'])}, Excel: {_fmt(r['excel'], r['unit'])}, Delta: {_fmt_delta(r['delta_pct'])}"
+            )
             lines.append(f"- {exp}")
             lines.append("")
 
@@ -242,7 +268,9 @@ def generate_report(
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Compare REopt vs. Saigon18 Excel outputs")
+    parser = argparse.ArgumentParser(
+        description="Compare REopt vs. Saigon18 Excel outputs"
+    )
     parser.add_argument("--reopt", required=True, help="REopt results JSON file")
     parser.add_argument(
         "--extracted",
@@ -269,16 +297,22 @@ def main():
 
     # Print summary to stdout
     warn_count = sum(1 for r in rows if r["status"] == "WARN")
-    ok_count   = sum(1 for r in rows if r["status"] == "OK")
-    print(f"\nComparison: {ok_count} OK, {warn_count} WARN, "
-          f"{sum(1 for r in rows if r['status'] == 'MISSING')} MISSING")
+    ok_count = sum(1 for r in rows if r["status"] == "OK")
+    print(
+        f"\nComparison: {ok_count} OK, {warn_count} WARN, "
+        f"{sum(1 for r in rows if r['status'] == 'MISSING')} MISSING"
+    )
 
     for r in rows:
-        status_sym = {"OK": "✓", "WARN": "!", "MISSING": "?", "INFO": "i"}.get(r["status"], " ")
-        print(f"  [{status_sym}] {r['metric']:25s}  "
-              f"Excel={_fmt(r['excel'], r['unit']):>12}  "
-              f"REopt={_fmt(r['reopt'], r['unit']):>12}  "
-              f"Δ={_fmt_delta(r['delta_pct']):>8}")
+        status_sym = {"OK": "OK", "WARN": "!", "MISSING": "?", "INFO": "i"}.get(
+            r["status"], " "
+        )
+        print(
+            f"  [{status_sym}] {r['metric']:25s}  "
+            f"Excel={_fmt(r['excel'], r['unit']):>12}  "
+            f"REopt={_fmt(r['reopt'], r['unit']):>12}  "
+            f"delta={_fmt_delta(r['delta_pct']):>8}"
+        )
 
     generate_report(rows, reopt_metrics, args.scenario, Path(args.output))
 

@@ -39,45 +39,24 @@ EXCEL_EQUITY_IRR_TARGET  = 0.194         # 19.4% from Excel
 def extract_annual_ebitda(results: dict, analysis_years: int) -> list[float]:
     """Derive annual unlevered free cash flows (EBITDA proxy) from REopt results.
 
-    REopt does not expose a year-by-year EBITDA series directly.
-    We approximate it from:
-      annual_savings = (lcc_bau - lcc_optimal) / analysis_years  [simple average]
-
-    For a more accurate series, use the REopt proforma if available, or assume
-    year-1 savings scaled by electricity escalation (5%) and PV degradation.
+    Uses year_one_total_operating_cost_savings_before_tax as the year-1 base
+    and grows it at the electricity escalation rate (default 5%) each year.
+    This is the correct approach — lcc_bau - lcc_opt yields a present-value
+    total, not a nominal year-1 figure, and using it as the EBITDA base
+    produces a severely understated series (was causing −17.9% equity IRR).
 
     Returns a list of `analysis_years` annual cash flows.
     """
     fin = results.get("Financial", {})
-    lcc_bau = fin.get("lcc_bau_offtaker") or fin.get("lcc_bau") or 0
-    lcc_opt = fin.get("lcc") or 0
-    npv     = fin.get("npv") or 0
-
-    # Prefer NPV-based reconstruction if lcc_bau is available
-    if lcc_bau and lcc_opt:
-        total_lifetime_savings = lcc_bau - lcc_opt
-    elif npv:
-        # Fall back: reconstruct lifetime savings from NPV using owner discount rate
-        # NPV ≈ Σ (CF_t / (1+r)^t) — reverse-engineer CF assuming flat real annuity
-        owner_r = fin.get("owner_discount_rate_fraction", 0.08)
-        # Annuity factor
-        if owner_r > 0:
-            ann_factor = (1 - (1 + owner_r) ** (-analysis_years)) / owner_r
-            annual_cf_nominal = npv / ann_factor if ann_factor else 0
-        else:
-            annual_cf_nominal = npv / analysis_years
-        return [annual_cf_nominal] * analysis_years
-    else:
+    year1_cf = fin.get("year_one_total_operating_cost_savings_before_tax")
+    if not year1_cf:
         raise ValueError(
-            "Cannot determine annual cash flows: REopt results missing 'lcc', "
-            "'lcc_bau', and 'npv'. Check that the scenario solved successfully."
+            "Cannot determine annual cash flows: REopt results missing "
+            "'Financial.year_one_total_operating_cost_savings_before_tax'. "
+            "Check that the scenario solved successfully."
         )
 
-    # Build nominal cash flow series with 5% electricity escalation
     elec_esc = fin.get("elec_cost_escalation_rate_fraction", 0.05)
-    year1_cf = total_lifetime_savings / sum(
-        (1 + elec_esc) ** (yr - 1) for yr in range(1, analysis_years + 1)
-    )
     return [year1_cf * (1 + elec_esc) ** (yr - 1) for yr in range(1, analysis_years + 1)]
 
 

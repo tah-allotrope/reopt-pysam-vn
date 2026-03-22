@@ -7,10 +7,10 @@
 | Metric | Unit | Excel | REopt | Delta | Tol | Status |
 |---|---|---|---|---|---|---|
 | pv_gen_mwh | MWh | 71,808 | 71,808 | +0.0% | ±1% | OK |
-| pv_to_load_mwh | MWh | 62,106 | 0 | -100.0% | ±2% | WARN |
-| pv_to_grid_mwh | MWh | 1,087 | 0 | -100.0% | ±5% | WARN |
-| bess_discharge_mwh | MWh | 8,591 | 0 | -100.0% | ±5% | WARN |
-| grid_purchases_mwh | MWh | 112,454 | 0 | -100.0% | ±2% | WARN |
+| pv_to_load_mwh | MWh | 62,106 | 71,259 | +14.7% | ±2% | WARN |
+| pv_to_grid_mwh | MWh | 1,087 | 549 | -49.5% | ±5% | WARN |
+| bess_discharge_mwh | MWh | 8,591 | 17,956 | +109.0% | ±5% | WARN |
+| grid_purchases_mwh | MWh | 112,454 | 117,705 | +4.7% | ±2% | WARN |
 
 ## Financial Metrics
 
@@ -18,24 +18,24 @@
 |---|---|---|---|---|---|---|
 | npv_usd | USD | $22,034,000 | $10,551,159 | -52.1% | REopt NPV uses unlevered owner discount rate (8%) on unlever… | INFO |
 | payback_years | years | 6.0 | 8.0 | +32.8% | REopt simple payback is based on avoided electricity cost vs… | WARN |
-| year1_revenue_usd | USD | $5,056,418 | $422,046 | -91.7% |  | INFO |
+| year1_revenue_usd | USD | $5,056,418 | $5,929,979 | +17.3% |  | INFO |
 
 ## Discrepancies Requiring Investigation
 
 ### `pv_to_load_mwh`
-- REopt: 0, Excel: 62,106, Delta: -100.0%
+- REopt: 71,259, Excel: 62,106, Delta: +14.7%
 - No specific explanation documented.
 
 ### `pv_to_grid_mwh`
-- REopt: 0, Excel: 1,087, Delta: -100.0%
+- REopt: 549, Excel: 1,087, Delta: -49.5%
 - REopt applies Decree 57 export cap in post-processing only (hard JuMP constraint not yet implemented). Export volume may exceed the 20% limit — see plan Phase 3.
 
 ### `bess_discharge_mwh`
-- REopt: 0, Excel: 8,591, Delta: -100.0%
+- REopt: 17,956, Excel: 8,591, Delta: +109.0%
 - REopt optimizes dispatch timing freely (TOU arbitrage). Excel uses fixed windows (charge 11–15h, discharge from 18h). Dispatch totals may match even if timing differs.
 
 ### `grid_purchases_mwh`
-- REopt: 0, Excel: 112,454, Delta: -100.0%
+- REopt: 117,705, Excel: 112,454, Delta: +4.7%
 - No specific explanation documented.
 
 ### `payback_years`
