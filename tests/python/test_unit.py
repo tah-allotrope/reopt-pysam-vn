@@ -227,7 +227,9 @@ class TestApplyVietnamFinancials:
 
     def test_re_preferential_profile(self, vn):
         d = make_base_dict()
-        apply_vietnam_financials(d, vn, financial_profile="renewable_energy_preferential")
+        apply_vietnam_financials(
+            d, vn, financial_profile="renewable_energy_preferential"
+        )
 
         fin = d["Financial"]
         assert fin["offtaker_tax_rate_fraction"] == 0.10
@@ -240,7 +242,9 @@ class TestApplyVietnamFinancials:
         apply_vietnam_financials(d, vn, financial_profile="standard")
 
         assert d["Financial"]["offtaker_tax_rate_fraction"] == 0.15  # user value wins
-        assert d["Financial"]["owner_discount_rate_fraction"] == 0.08  # default injected
+        assert (
+            d["Financial"]["owner_discount_rate_fraction"] == 0.08
+        )  # default injected
 
     def test_invalid_profile(self, vn):
         d = make_base_dict()
@@ -255,16 +259,20 @@ class TestApplyVietnamFinancials:
 
 class TestBuildVietnamTariff:
     def test_industrial_medium_voltage(self, vn):
-        tariff = build_vietnam_tariff(vn, "industrial", "medium_voltage_22kv_to_110kv", year=2025)
+        tariff = build_vietnam_tariff(
+            vn, "industrial", "medium_voltage_22kv_to_110kv", year=2025
+        )
 
-        assert "energy_rate_series_per_kwh" in tariff
-        rates = tariff["energy_rate_series_per_kwh"]
+        assert "tou_energy_rates_per_kwh" in tariff
+        rates = tariff["tou_energy_rates_per_kwh"]
         assert len(rates) == 8760
         assert all(r > 0 for r in rates)
 
         # Peak rate should be highest, off-peak lowest
         base_vnd = vn.tariff["base_avg_price_vnd_per_kwh"]
-        mults = vn.tariff["rate_multipliers"]["industrial"]["medium_voltage_22kv_to_110kv"]
+        mults = vn.tariff["rate_multipliers"]["industrial"][
+            "medium_voltage_22kv_to_110kv"
+        ]
         expected_peak = base_vnd * mults["peak"] / vn.exchange_rate
         expected_offpeak = base_vnd * mults["offpeak"] / vn.exchange_rate
 
@@ -272,34 +280,45 @@ class TestBuildVietnamTariff:
         assert min(rates) == pytest.approx(expected_offpeak, abs=1e-8)
 
     def test_commercial_low_voltage(self, vn):
-        tariff = build_vietnam_tariff(vn, "commercial", "low_voltage_below_22kv", year=2025)
-        rates = tariff["energy_rate_series_per_kwh"]
+        tariff = build_vietnam_tariff(
+            vn, "commercial", "low_voltage_1kv_and_below", year=2025
+        )
+        rates = tariff["tou_energy_rates_per_kwh"]
         assert len(rates) == 8760
         assert max(rates) > min(rates)
 
     def test_household_flat(self, vn):
         tariff = build_vietnam_tariff(vn, "household", "", year=2025)
-        rates = tariff["energy_rate_series_per_kwh"]
+        rates = tariff["tou_energy_rates_per_kwh"]
         assert len(rates) == 8760
         # Household is flat — all values should be identical
         assert all(r == pytest.approx(rates[0]) for r in rates)
         assert rates[0] > 0
 
     def test_sunday_vs_weekday_pattern(self, vn):
-        tariff = build_vietnam_tariff(vn, "industrial", "medium_voltage_22kv_to_110kv", year=2025)
-        rates = tariff["energy_rate_series_per_kwh"]
+        tariff = build_vietnam_tariff(
+            vn, "industrial", "medium_voltage_22kv_to_110kv", year=2025
+        )
+        rates = tariff["tou_energy_rates_per_kwh"]
 
         # 2025-01-01 is a Wednesday. First Sunday = Jan 5 (day index 4, 0-based)
         # Sunday hours: index 4*24 to 4*24+23 = 96 to 119
         sunday_rates = rates[96:120]
         # Sunday has no peak hours — max should be standard rate
         base_vnd = vn.tariff["base_avg_price_vnd_per_kwh"]
-        mults = vn.tariff["rate_multipliers"]["industrial"]["medium_voltage_22kv_to_110kv"]
+        mults = vn.tariff["rate_multipliers"]["industrial"][
+            "medium_voltage_22kv_to_110kv"
+        ]
         expected_standard = base_vnd * mults["standard"] / vn.exchange_rate
         expected_peak = base_vnd * mults["peak"] / vn.exchange_rate
 
         # Sunday should NOT have peak rate
-        sunday_peak_hours = vn.tariff["tou_schedule"]["sunday"]["peak_hours"]
+        sunday_key = (
+            "sunday"
+            if "sunday" in vn.tariff["tou_schedule"]
+            else "sunday_and_public_holidays"
+        )
+        sunday_peak_hours = vn.tariff["tou_schedule"][sunday_key]["peak_hours"]
         if len(sunday_peak_hours) == 0:
             assert expected_peak not in sunday_rates
         # Sunday max should be standard
@@ -345,7 +364,9 @@ class TestApplyVietnamEmissions:
         d["ElectricUtility"] = {"emissions_factor_series_lb_CO2_per_kwh": custom_series}
         apply_vietnam_emissions(d, vn)
 
-        assert d["ElectricUtility"]["emissions_factor_series_lb_CO2_per_kwh"][0] == pytest.approx(2.0)
+        assert d["ElectricUtility"]["emissions_factor_series_lb_CO2_per_kwh"][
+            0
+        ] == pytest.approx(2.0)
 
 
 # ===================================================================
@@ -434,15 +455,15 @@ class TestApplyDecree57Export:
         apply_decree57_export(d, vn)
 
         et = d["ElectricTariff"]
-        assert et["net_metering_limit_kw"] == 0
         assert et["wholesale_rate"] == pytest.approx(0.0254, abs=1e-4)
-        assert et["export_rate_beyond_curtailment_limit"] == 0
+        assert et["export_rate_beyond_net_metering_limit"] == 0
 
         pv = d["PV"]
         assert pv["can_net_meter"] is False
         assert pv["can_wholesale"] is True
         assert pv["can_export_beyond_nem_limit"] is False
         assert pv["can_curtail"] is True
+        assert d["_meta"]["decree57_max_export_fraction"] == pytest.approx(0.20)
 
     def test_user_wholesale_rate_preserved(self, vn):
         d = make_base_dict()
@@ -453,15 +474,25 @@ class TestApplyDecree57Export:
 
     def test_non_default_max_export_fraction_warns(self, vn):
         d = make_base_dict()
-        with pytest.warns(UserWarning, match=r"max_export_fraction=.*NOT enforced"):
+        with pytest.warns(
+            UserWarning,
+            match=r"max_export_fraction=.*stored for Vietnam custom solve wrappers",
+        ):
             apply_decree57_export(d, vn, max_export_fraction=0.10)
+        assert d["_meta"]["decree57_max_export_fraction"] == pytest.approx(0.10)
 
     def test_default_max_export_fraction_no_warning(self, vn):
         d = make_base_dict()
         import warnings as _warnings
+
         with _warnings.catch_warnings():
             _warnings.simplefilter("error", UserWarning)
             apply_decree57_export(d, vn, max_export_fraction=0.20)  # must not raise
+
+    def test_invalid_max_export_fraction_errors(self, vn):
+        d = make_base_dict()
+        with pytest.raises(ValueError):
+            apply_decree57_export(d, vn, max_export_fraction=1.1)
 
 
 # ===================================================================
@@ -473,7 +504,8 @@ class TestApplyVietnamDefaults:
     def test_full_pipeline(self, vn):
         d = make_base_dict(wind=True, generator=True)
         apply_vietnam_defaults(
-            d, vn,
+            d,
+            vn,
             customer_type="industrial",
             voltage_level="medium_voltage_22kv_to_110kv",
             region="south",
@@ -485,12 +517,14 @@ class TestApplyVietnamDefaults:
 
         # Tariff injected
         assert "ElectricTariff" in d
-        assert "energy_rate_series_per_kwh" in d["ElectricTariff"]
-        assert len(d["ElectricTariff"]["energy_rate_series_per_kwh"]) == 8760
+        assert "tou_energy_rates_per_kwh" in d["ElectricTariff"]
+        assert len(d["ElectricTariff"]["tou_energy_rates_per_kwh"]) == 8760
 
         # Emissions injected
         assert "ElectricUtility" in d
-        assert len(d["ElectricUtility"]["emissions_factor_series_lb_CO2_per_kwh"]) == 8760
+        assert (
+            len(d["ElectricUtility"]["emissions_factor_series_lb_CO2_per_kwh"]) == 8760
+        )
 
         # Tech costs injected
         assert d["PV"]["installed_cost_per_kw"] == 600
@@ -507,11 +541,13 @@ class TestApplyVietnamDefaults:
         # Export rules
         assert d["PV"]["can_net_meter"] is False
         assert d["ElectricTariff"]["wholesale_rate"] == pytest.approx(0.0254, abs=1e-4)
+        assert d["_meta"]["decree57_max_export_fraction"] == pytest.approx(0.20)
 
     def test_selective_disable(self, vn):
         d = make_base_dict()
         apply_vietnam_defaults(
-            d, vn,
+            d,
+            vn,
             apply_tariff=False,
             apply_emissions=False,
             apply_export_rules=False,
@@ -524,7 +560,7 @@ class TestApplyVietnamDefaults:
         # Tariff, emissions, export should NOT be applied
         assert "ElectricUtility" not in d
         et = d.get("ElectricTariff", {})
-        assert "energy_rate_series_per_kwh" not in et
+        assert "tou_energy_rates_per_kwh" not in et
         assert "wholesale_rate" not in et
 
     def test_non_destructive_comprehensive(self, vn):
@@ -561,7 +597,9 @@ class TestApplyVietnamDefaults:
         assert d["ElectricStorage"]["max_kwh"] == 2000
         assert d["Financial"]["offtaker_tax_rate_fraction"] == 0.15
         assert d["ElectricTariff"]["wholesale_rate"] == 0.05
-        assert d["ElectricUtility"]["emissions_factor_series_lb_CO2_per_kwh"][0] == pytest.approx(2.0)
+        assert d["ElectricUtility"]["emissions_factor_series_lb_CO2_per_kwh"][
+            0
+        ] == pytest.approx(2.0)
 
         # Defaults still injected where user didn't specify
         assert d["PV"]["om_cost_per_kw"] == 8

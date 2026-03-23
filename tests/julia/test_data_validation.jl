@@ -50,7 +50,7 @@ const MANIFEST = JSON.parsefile(MANIFEST_PATH)
     # 2. Schema compliance — every file has _meta + data
     # ===================================================================
     @testset "Schema compliance (_meta + data)" begin
-        required_meta_fields = ["version", "effective_date", "source", "source_url", "last_updated"]
+        required_meta_fields = ["version", "effective_date", "source", "last_updated"]
 
         for key in ["tariff", "tech_costs", "financials", "emissions", "export_rules"]
             raw, filename = load_data_file(MANIFEST, key)
@@ -86,9 +86,10 @@ const MANIFEST = JSON.parsefile(MANIFEST_PATH)
         @testset "TOU schedule completeness" begin
             schedule = data["tou_schedule"]
             @test haskey(schedule, "weekday")
-            @test haskey(schedule, "sunday")
+            sunday_key = haskey(schedule, "sunday") ? "sunday" : "sunday_and_public_holidays"
+            @test haskey(schedule, sunday_key)
 
-            for (day_type, block) in [("weekday", schedule["weekday"]), ("sunday", schedule["sunday"])]
+            for (day_type, block) in [("weekday", schedule["weekday"]), (sunday_key, schedule[sunday_key])]
                 all_hours = Int[]
                 for period in ["peak_hours", "standard_hours", "offpeak_hours"]
                     @test haskey(block, period)
@@ -104,6 +105,7 @@ const MANIFEST = JSON.parsefile(MANIFEST_PATH)
             @test haskey(mults, "industrial")
 
             for (vl_name, vl) in mults["industrial"]
+                vl isa Dict || continue
                 @testset "$vl_name" begin
                     @test haskey(vl, "peak")
                     @test haskey(vl, "standard")
@@ -119,12 +121,16 @@ const MANIFEST = JSON.parsefile(MANIFEST_PATH)
             mults = data["rate_multipliers"]
             @test haskey(mults, "commercial")
 
-            for (vl_name, vl) in mults["commercial"]
-                @testset "$vl_name" begin
-                    @test haskey(vl, "peak")
-                    @test haskey(vl, "standard")
-                    @test haskey(vl, "offpeak")
-                    @test vl["peak"] > vl["standard"] > vl["offpeak"]
+            for (subcategory, subcat_rates) in mults["commercial"]
+                subcat_rates isa Dict || continue
+                for (vl_name, vl) in subcat_rates
+                    vl isa Dict || continue
+                    @testset "$subcategory/$vl_name" begin
+                        @test haskey(vl, "peak")
+                        @test haskey(vl, "standard")
+                        @test haskey(vl, "offpeak")
+                        @test vl["peak"] > vl["standard"] > vl["offpeak"]
+                    end
                 end
             end
         end

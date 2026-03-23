@@ -1,6 +1,13 @@
 # Active Context — Saigon18 REopt Integration
 
-> Last updated: 2026-03-22 (Phase 3 script fixes complete)
+> Last updated: 2026-03-23 (Decree 57 hard export cap + Scenario A/C reruns)
+
+## Current Execution Checklist
+
+- [x] Implement Decree 57 hard export-cap support in `src/REoptVietnam.jl`
+- [x] Add regression/integration coverage for the export cap
+- [x] Run targeted validation for the new constraint path
+- [x] Record review/results notes for this export-cap pass
 
 ---
 
@@ -57,6 +64,21 @@ Plan: `plans/saigon18_reopt_integration_plan.md`
 | PV exported to grid | 549 MWh |
 | Output file | `results/real_project/saigon18_scenario_a_results.json` |
 
+#### Scenario A Re-run with Hard Export Cap (2026-03-23)
+| Metric | REopt Result |
+|---|---|
+| Status | OPTIMAL |
+| PV size | 40,360 kW (fixed) |
+| Average annual PV energy | 69.02 GWh |
+| PV exported to grid | 549 MWh |
+| Export fraction of PV production | 0.80% |
+| BESS power / capacity | 20,000 kW / 66,000 kWh (fixed) |
+| LCC | $129.5M |
+| NPV | $10.55M |
+| Simple payback | 7.97 yr |
+| Unlevered IRR | 12.6% |
+| Output file | `results/real_project/saigon18_scenario_a_results.json` |
+
 #### Scenario B Results (2026-03-20)
 | Metric | REopt Result |
 |---|---|
@@ -66,6 +88,21 @@ Plan: `plans/saigon18_reopt_integration_plan.md`
 | NPV | $0.89M |
 | Simple payback | 10.2 yr |
 | Output file | `results/real_project/saigon18_scenario_b_results.json` |
+
+#### Scenario C Results (2026-03-23)
+| Metric | REopt Result |
+|---|---|
+| Status | OPTIMAL |
+| PV size | 42,666 kW |
+| Average annual PV energy | 57.44 GWh |
+| PV exported to grid | 3,714 MWh |
+| Export fraction of PV production | 6.47% |
+| BESS power / capacity | 0 kW / 0 kWh |
+| LCC | $128.2M |
+| NPV | $11.80M |
+| Simple payback | 7.52 yr |
+| Unlevered IRR | 14.2% |
+| Output file | `results/real_project/saigon18_scenario_c_results.json` |
 
 #### Phase 2 Comparison: REopt vs Excel
 | Metric | Excel | Scenario A | Scenario B |
@@ -94,9 +131,9 @@ Reports: `reports/real_project/saigon18_scenario_a_comparison.md`, `reports/real
 | Re-run equity IRR validation vs Excel 19.4% | ✅ Done — 19.8% vs 19.4% (+0.4%) |
 | Re-generate Scenario A/B comparison reports with corrected keys | ✅ Done |
 | Add regression test for Saigon18 comparison key mapping | ✅ Done — `tests/python/test_saigon18_compare.py` |
-| Decree 57 20% export cap as hard JuMP constraint in `src/REoptVietnam.jl` | ⏳ Not started |
+| Decree 57 20% export cap as hard JuMP constraint in `src/REoptVietnam.jl` | ✅ Done 2026-03-23 |
 | Optional fixed BESS dispatch window constraints (Option B) | ⏳ Not started |
-| Scenario C — optimized sizing (unconstrained PV + BESS) | ⏳ Not started |
+| Scenario C — optimized sizing (unconstrained PV + BESS) | ✅ Done 2026-03-23 |
 | `tests/python/test_saigon18_integration.py` (Layer 4) | ⏳ Not started |
 
 ---
@@ -165,17 +202,20 @@ The installed REopt.jl package has a newer API than the scripts assumed. Fixed i
 
 Tariff data fix: added `"industrial"` alias block (with `high_voltage_above_35kv_below_220kv` and `medium_voltage_22kv_to_110kv` keys) to `data/vietnam/vn_tariff_2025.json` — the v2025.2 update renamed it to `"production"` but all scripts/tests still use `"industrial"`.
 
-## Pre-existing Test Failures (not caused by this session)
+## Validation Status Update (2026-03-23)
 
-These 5 tests were failing before this session due to the tariff v2025.2 restructure. Not blocking Phase 2.
+The tariff v2025.2 schema drift in both Julia and Python test suites was fixed in this session.
 
-| Test | Root cause |
+| Validation scope | Result |
 |---|---|
-| `test_unit.py::test_commercial_low_voltage` | Commercial tariff now has subcategories (tourism/EV/other) not flat voltage levels |
-| `test_unit.py::test_sunday_vs_weekday_pattern` | Test directly accesses `schedule["sunday"]` key (renamed to `sunday_and_public_holidays`) |
-| `test_data_validation.py::test_meta_and_data_blocks[tariff]` | Meta block has `source_urls` (plural) but test checks `source_url` |
-| `test_data_validation.py::test_tou_schedule_completeness[sunday]` | Test checks for `"sunday"` key in schedule |
-| `test_data_validation.py::test_commercial_multipliers` | Commercial now nested by subcategory |
+| `tests/python/test_data_validation.py` | PASS |
+| `tests/python/test_unit.py` | PASS |
+| `tests/cross_validate.py` | PASS |
+| `tests/python/test_integration.py` | PASS (1 skipped API block) |
+| `tests/julia/test_data_validation.jl` | PASS |
+| `tests/julia/test_unit.jl` | PASS |
+
+Known environment noise remains on Julia startup from ArchGDAL method-overwrite precompile warnings, but it did not block scenario solves or the relevant validation passes.
 
 ---
 
@@ -183,16 +223,38 @@ These 5 tests were failing before this session due to the tariff v2025.2 restruc
 
 1. **Refine BESS comparison metric** — the report now uses actual REopt storage output keys, but it compares Excel's peak+standard dispatch target against total annual `storage_to_load_series_kw`. Next refinement should split REopt discharge by tariff period for apples-to-apples validation.
 
-2. **Build and run Scenario C** (optimized sizing, Phase 3):
-   ```
-   julia --project=. scripts/julia/run_vietnam_scenario.jl --scenario scenarios/real_project/saigon18_scenario_c.json
-   ```
+2. **Refresh Scenario A / Scenario C comparison artifacts** now that both were re-solved through the hard export-cap path.
 
 3. **Add `tests/python/test_saigon18_integration.py`** for the Saigon18 real-project pipeline.
 
-4. **Implement Decree 57 export cap as a hard JuMP constraint** in `src/REoptVietnam.jl`.
+4. **Refine BESS comparison metric by tariff period** for apples-to-apples Excel vs REopt validation.
 
-5. **Fix pre-existing test failures** (Phase 3 housekeeping — not blocking)
+5. **Optional fixed BESS dispatch window constraints (Option B)** if comparison to the Excel control logic becomes the priority.
+
+---
+
+## Review / Results — 2026-03-23 Decree 57 Hard Export Cap
+
+### What changed
+
+- Added a Vietnam-specific solver wrapper `run_vietnam_reopt` in `src/REoptVietnam.jl` that builds the REopt JuMP model, injects a hard annual PV export cap constraint, then solves and post-processes results.
+- `apply_decree57_export!` now stores `decree57_max_export_fraction` in `_meta` so scenario JSONs carry the intended cap into the Julia solve path.
+- `scripts/julia/run_vietnam_scenario.jl` now uses `run_vietnam_reopt(...)` instead of plain `run_reopt(...)`, so scenario runs honor the Decree 57 cap automatically.
+- Added a Julia integration test scenario that verifies annual PV exports are capped at 20% of annual PV production.
+- Updated Julia/Python tariff preprocessing and validation tests for the tariff v2025.2 schema (`tou_energy_rates_per_kwh`, commercial subcategories, `sunday_and_public_holidays`, legacy voltage aliases).
+- Rebuilt Scenario C and re-solved Scenario A + Scenario C through the hard export-cap runner.
+
+### Targeted validation
+
+- Focused synthetic Julia solve passed with `status=optimal`.
+- Validation result: `annual_energy_exported_kwh = 175,200`, `annual_energy_produced_kwh = 876,000`, export fraction `= 0.2000` (exactly at the Decree 57 cap).
+- Scenario A rerun passed with fixed design intact and export fraction `0.80%`, well below the 20% cap.
+- Scenario C solve passed and selected `42.67 MWp PV` with `0 MW / 0 MWh BESS`; export fraction `6.47%`, also below the cap.
+
+### Known remaining issues
+
+- Scenario comparison/report artifacts have not yet been regenerated for Scenario A/C after the hard export-cap reruns.
+- Julia startup still emits ArchGDAL precompile noise in this environment, but solves and tests complete successfully.
 
 ---
 
@@ -203,7 +265,6 @@ These 5 tests were failing before this session due to the tariff v2025.2 restruc
 - [ ] Two-part tariff (capacity charge) sensitivity — Decree 146/2025 pilot Jan–Jun 2026
 
 ### Deferred (Phase 3)
-- Decree 57 20% export cap hard JuMP constraint — currently only `can_wholesale=True` + surplus rate set
 - Two-part tariff sensitivity scenario
 
 ---
@@ -227,7 +288,7 @@ These 5 tests were failing before this session due to the tariff v2025.2 restruc
 |---|---|---|---|---|
 | A | Baseline — REopt TOU optimization | Full EVN TOU (Decision 14) | Fixed (40.36 MWp + 66 MWh) | ✅ OPTIMAL |
 | B | Bundled PPA — 15% discount | EVN TOU × 0.85 | Fixed | ✅ OPTIMAL |
-| C | Optimized sizing | Full EVN TOU | Unconstrained (up to 60 MWp / 100 MWh) | ⏳ Phase 3 |
+| C | Optimized sizing | Full EVN TOU | Unconstrained (up to 60 MWp / 100 MWh) | ✅ OPTIMAL |
 | D | DPPA strike price contract | EVN TOU (base) + FMP post-processing | Fixed | ⏳ Phase 3 |
 
 ---

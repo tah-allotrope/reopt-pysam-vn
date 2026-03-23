@@ -21,6 +21,10 @@ module REoptVietnam
 
 using JSON
 using Dates
+using REopt
+using JuMP
+
+const MOI = JuMP.MOI
 
 export VNData,
        load_vietnam_data,
@@ -31,6 +35,8 @@ export VNData,
        apply_vietnam_emissions!,
        apply_vietnam_tech_costs!,
        apply_decree57_export!,
+       add_decree57_export_cap_constraint!,
+       run_vietnam_reopt,
        convert_vnd_to_usd,
        convert_usd_to_vnd
 
@@ -47,6 +53,8 @@ const VALID_CUSTOMER_TYPES = ("industrial", "commercial")
 const VALID_REGIONS = ("north", "central", "south")
 
 const HOURS_PER_YEAR = 8760
+const DECREE57_META_KEY = "decree57_max_export_fraction"
+const DECREE57_CONSTRAINT_NAME = :Decree57AnnualExportCapCon
 
 # US incentive fields to zero out, grouped by tech
 const PV_WIND_INCENTIVE_FIELDS = [
@@ -188,6 +196,66 @@ function _ensure_block!(d::Dict, key::String)
     return d[key]
 end
 
+function _scenario_input_dict(d::Dict)
+    clean = deepcopy(d)
+    for key in ("_meta", "_template")
+        if haskey(clean, key)
+            delete!(clean, key)
+        end
+    end
+    return clean
+end
+
+function _decree57_export_fraction(d::Dict)
+    meta = get(d, "_meta", nothing)
+    if meta isa Dict && haskey(meta, DECREE57_META_KEY)
+        return Float64(meta[DECREE57_META_KEY])
+    end
+    return nothing
+end
+
+function _validate_export_fraction(max_export_fraction::Real)
+    0 <= max_export_fraction <= 1 || error("max_export_fraction must be between 0 and 1, got $max_export_fraction")
+    return Float64(max_export_fraction)
+end
+
+function _finalize_reopt_results(m::JuMP.AbstractModel, p; organize_pvs::Bool=true)
+    opt_time = 0.0
+    start_time = time()
+    optimize!(m)
+    opt_time = round(time() - start_time, digits=3)
+
+    if termination_status(m) == MOI.TIME_LIMIT
+        status = "timed-out"
+    elseif termination_status(m) == MOI.OPTIMAL
+        status = "optimal"
+    else
+        @warn "REopt solved with $(termination_status(m)); returning the model instead of results."
+        return m
+    end
+
+    results = REopt.reopt_results(m, p)
+    results["status"] = status
+    results["solver_seconds"] = opt_time
+    results["Messages"] = REopt.logger_to_dict()
+
+    if organize_pvs && !isempty(p.techs.pv)
+        REopt.organize_multiple_pv_results(p, results)
+    end
+
+    return results
+end
+
+function _run_reopt_with_optional_constraint(m::JuMP.AbstractModel, p;
+                                             organize_pvs::Bool=true,
+                                             max_export_fraction::Union{Nothing,Float64}=nothing)
+    REopt.build_reopt!(m, p)
+    if max_export_fraction !== nothing
+        add_decree57_export_cap_constraint!(m, p; max_export_fraction=max_export_fraction)
+    end
+    return _finalize_reopt_results(m, p; organize_pvs=organize_pvs)
+end
+
 # ---------------------------------------------------------------------------
 # zero_us_incentives!(d)
 # ---------------------------------------------------------------------------
@@ -317,9 +385,8 @@ Returns:
 Dict(
     "urdb_label" => "",
     "blended_annual_energy_rate" => 0,
-    "energy_rate_series_per_kwh" => Float64[...],  # 8760 USD/kWh
+    "tou_energy_rates_per_kwh" => Float64[...],  # 8760 USD/kWh
     "monthly_demand_rates" => zeros(12),
-    "monthly_energy_rates" => zeros(12)
 )
 ```
 
@@ -347,17 +414,16 @@ function build_vietnam_tariff(vn::VNData, customer_type::String, voltage_level::
             error("No rate multipliers for customer_type \"$customer_type\"")
         cust_mults = multipliers[customer_type]
 
-        haskey(cust_mults, voltage_level) ||
-            error("Unknown voltage_level \"$voltage_level\" for $customer_type. Available: $(join(keys(cust_mults), ", "))")
-        vl = cust_mults[voltage_level]
+        vl = _resolve_tariff_multiplier_block(customer_type, cust_mults, voltage_level)
 
         peak_rate_usd     = convert_vnd_to_usd(base_vnd * vl["peak"];     exchange_rate=exchange_rate)
         standard_rate_usd = convert_vnd_to_usd(base_vnd * vl["standard"]; exchange_rate=exchange_rate)
         offpeak_rate_usd  = convert_vnd_to_usd(base_vnd * vl["offpeak"];  exchange_rate=exchange_rate)
 
-        # Build hour-of-day → rate lookup for weekday and Sunday
+        # Build hour-of-day → rate lookup for weekday and Sunday/holiday
         weekday_rates = _build_hourly_rates(schedule["weekday"], peak_rate_usd, standard_rate_usd, offpeak_rate_usd)
-        sunday_rates  = _build_hourly_rates(schedule["sunday"],  peak_rate_usd, standard_rate_usd, offpeak_rate_usd)
+        sunday_key = haskey(schedule, "sunday") ? "sunday" : "sunday_and_public_holidays"
+        sunday_rates  = _build_hourly_rates(schedule[sunday_key],  peak_rate_usd, standard_rate_usd, offpeak_rate_usd)
 
         rates = _build_8760_rates(weekday_rates, sunday_rates, year)
     end
@@ -368,7 +434,7 @@ function build_vietnam_tariff(vn::VNData, customer_type::String, voltage_level::
     return Dict{String,Any}(
         "urdb_label" => "",
         "blended_annual_energy_rate" => 0,
-        "energy_rate_series_per_kwh" => rates,
+        "tou_energy_rates_per_kwh" => rates,
         "monthly_demand_rates" => fill(demand_usd, 12),
     )
 end
@@ -388,6 +454,45 @@ function _build_hourly_rates(schedule_block::Dict, peak::Float64, standard::Floa
         rates[Int(h) + 1] = standard
     end
     return rates
+end
+
+function _resolve_commercial_voltage(vl::String)
+    if vl in ("medium_voltage_22kv_to_110kv", "medium_voltage_above_1kv_to_35kv", "medium_voltage_and_above_1kv")
+        return "medium_voltage_and_above_1kv"
+    elseif vl in ("low_voltage_below_22kv", "low_voltage_1kv_and_below", "low_voltage")
+        return "low_voltage_1kv_and_below"
+    end
+    return vl
+end
+
+function _resolve_industrial_voltage(vl::String)
+    if vl == "low_voltage_below_22kv"
+        return "low_voltage_1kv_and_below"
+    elseif vl == "medium_voltage_above_1kv_to_35kv"
+        return "medium_voltage_22kv_to_110kv"
+    end
+    return vl
+end
+
+function _resolve_tariff_multiplier_block(customer_type::String, customer_mults::Dict, voltage_level::String)
+    if customer_type != "commercial"
+        normalized_vl = customer_type == "industrial" ? _resolve_industrial_voltage(voltage_level) : voltage_level
+        haskey(customer_mults, normalized_vl) ||
+            error("Unknown voltage_level \"$voltage_level\" for $customer_type. Available: $(join(keys(customer_mults), ", "))")
+        return customer_mults[normalized_vl]
+    end
+
+    if haskey(customer_mults, voltage_level)
+        return customer_mults[voltage_level]
+    end
+
+    normalized_vl = _resolve_commercial_voltage(voltage_level)
+    subcategories = filter(k -> customer_mults[k] isa Dict && haskey(customer_mults[k], normalized_vl), collect(keys(customer_mults)))
+    isempty(subcategories) && error("Unknown voltage_level \"$voltage_level\" for commercial. Available subcategories: $(join(filter(k -> customer_mults[k] isa Dict, collect(keys(customer_mults))), ", "))")
+
+    preferred = "other_commercial"
+    selected = preferred in subcategories ? preferred : first(subcategories)
+    return customer_mults[selected][normalized_vl]
 end
 
 """
@@ -560,22 +665,22 @@ end
                            exchange_rate::Real=vn.exchange_rate)
 
 Configure export rules per Decree 57/2025:
-- `can_net_meter = false`
-- `can_wholesale = true` at the surplus purchase rate
-- `can_export_beyond_nem_limit = false`
-- `can_curtail = true`
+ - `can_net_meter = false`
+ - `can_wholesale = true` at the surplus purchase rate
+ - `can_export_beyond_nem_limit = false`
+ - `can_curtail = true`
 
 The wholesale rate is set to the rooftop solar surplus purchase rate from the export rules data file.
-`max_export_fraction` is stored for reference but cannot be directly enforced as a percentage
-constraint in REopt without custom JuMP constraints (deferred to future phase).
+`max_export_fraction` is stored in `_meta` so Vietnam solve wrappers can add a hard JuMP
+constraint before optimization. Plain `REopt.run_reopt(...)` does not read this metadata.
 """
 function apply_decree57_export!(d::Dict, vn::VNData;
                                 max_export_fraction::Real=0.20,
                                 exchange_rate::Real=vn.exchange_rate)
+    max_export_fraction = _validate_export_fraction(max_export_fraction)
     if max_export_fraction != 0.20
-        @warn "max_export_fraction=$max_export_fraction is accepted but NOT enforced as an " *
-              "optimization constraint. Decree 57 export cap requires custom JuMP constraints " *
-              "(deferred to future phase). The value is stored for reference only."
+        @warn "max_export_fraction=$max_export_fraction is stored for Vietnam custom solve wrappers, " *
+              "but plain REopt.run_reopt(...) will NOT enforce it automatically."
     end
 
     er = vn.export_rules
@@ -583,9 +688,6 @@ function apply_decree57_export!(d::Dict, vn::VNData;
     mapping = get(er, "reopt_mapping", Dict())
 
     et = _ensure_block!(d, "ElectricTariff")
-
-    # Net metering off, wholesale on (limited)
-    _set_default!(et, "net_metering_limit_kw", 0)
 
     # Wholesale rate from surplus purchase price
     surplus_usd = get(rooftop, "surplus_purchase_rate_usd_per_kwh", nothing)
@@ -595,8 +697,8 @@ function apply_decree57_export!(d::Dict, vn::VNData;
     end
     _set_default!(et, "wholesale_rate", surplus_usd)
 
-    # Export beyond NEM limit off — this effectively caps exports to wholesale only
-    _set_default!(et, "export_rate_beyond_curtailment_limit", 0)
+    # Export beyond NEM limit off — this keeps Decree 57 exports on the wholesale bin only
+    _set_default!(et, "export_rate_beyond_net_metering_limit", 0)
 
     # PV-specific export settings
     if haskey(d, "PV")
@@ -610,7 +712,101 @@ function apply_decree57_export!(d::Dict, vn::VNData;
         end
     end
 
+    meta = _ensure_block!(d, "_meta")
+    _set_default!(meta, DECREE57_META_KEY, max_export_fraction)
+
     return d
+end
+
+"""
+    add_decree57_export_cap_constraint!(m::JuMP.AbstractModel, p::REopt.REoptInputs;
+                                        max_export_fraction::Real=0.20)
+
+Add the Decree 57 hard annual export cap for PV technologies:
+
+`annual PV export <= max_export_fraction * annual PV production`
+
+Both sides use REopt's average-annual production convention (`levelization_factor`) so the
+constraint aligns with `annual_energy_exported_kwh` and `annual_energy_produced_kwh` results.
+"""
+function add_decree57_export_cap_constraint!(m::JuMP.AbstractModel, p::REopt.REoptInputs;
+                                             max_export_fraction::Real=0.20)
+    max_export_fraction = _validate_export_fraction(max_export_fraction)
+
+    if isempty(p.techs.pv) || isempty(p.s.electric_tariff.export_bins)
+        return m
+    end
+
+    export_expr = @expression(m,
+        p.hours_per_time_step * sum(
+            m[:dvProductionToGrid][t, u, ts]
+            for t in p.techs.pv, u in p.export_bins_by_tech[t], ts in p.time_steps
+        )
+    )
+
+    production_expr = @expression(m,
+        p.hours_per_time_step * sum(
+            m[:dvRatedProduction][t, ts] * p.production_factor[t, ts] * p.levelization_factor[t]
+            for t in p.techs.pv, ts in p.time_steps
+        )
+    )
+
+    m[DECREE57_CONSTRAINT_NAME] = @constraint(m, export_expr <= max_export_fraction * production_expr)
+    return m
+end
+
+"""
+    run_vietnam_reopt(m::JuMP.AbstractModel, d::Dict)
+    run_vietnam_reopt(ms::AbstractVector{<:JuMP.AbstractModel}, d::Dict)
+
+Solve a Vietnam scenario while honoring the Decree 57 export-cap metadata written by
+`apply_decree57_export!`. For scenarios without the metadata, this falls back to REopt's
+standard solve path.
+"""
+function run_vietnam_reopt(m::JuMP.AbstractModel, d::Dict)
+    max_export_fraction = _decree57_export_fraction(d)
+    clean = _scenario_input_dict(d)
+
+    if max_export_fraction === nothing
+        return REopt.run_reopt(m, clean)
+    end
+
+    s = Scenario(clean)
+    p = REoptInputs(s)
+    return _run_reopt_with_optional_constraint(m, p; max_export_fraction=max_export_fraction)
+end
+
+function run_vietnam_reopt(ms::AbstractVector{T}, d::Dict) where {T <: JuMP.AbstractModel}
+    max_export_fraction = _decree57_export_fraction(d)
+    clean = _scenario_input_dict(d)
+
+    if max_export_fraction === nothing
+        return REopt.run_reopt(ms, clean)
+    end
+
+    s = Scenario(clean)
+    if s.settings.off_grid_flag
+        @warn "Only using first Model and not running BAU case because `off_grid_flag` is true. The BAU scenario is not applicable for off-grid microgrids."
+        return run_vietnam_reopt(ms[1], d)
+    end
+
+    p = REoptInputs(s)
+    bau_inputs = REopt.BAUInputs(p)
+    bau_results = REopt.run_reopt(ms[1], bau_inputs; organize_pvs=false)
+    opt_results = _run_reopt_with_optional_constraint(ms[2], p; organize_pvs=false, max_export_fraction=max_export_fraction)
+
+    if !(bau_results isa Dict) || !(opt_results isa Dict) || bau_results["status"] == "error" || opt_results["status"] == "error"
+        error("REopt scenarios solved either with errors or non-optimal solutions.")
+    end
+
+    results = REopt.combine_results(p, bau_results, opt_results, bau_inputs.s)
+    results["Financial"] = merge(results["Financial"], REopt.proforma_results(p, results))
+
+    if !isempty(p.techs.pv)
+        REopt.organize_multiple_pv_results(p, results)
+    end
+
+    return results
 end
 
 # ---------------------------------------------------------------------------

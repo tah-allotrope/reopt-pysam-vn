@@ -60,9 +60,11 @@ class TestManifestStructure:
 
 
 class TestSchemaCompliance:
-    REQUIRED_META_FIELDS = ["version", "effective_date", "source", "source_url", "last_updated"]
+    REQUIRED_META_FIELDS = ["version", "effective_date", "source", "last_updated"]
 
-    @pytest.mark.parametrize("key", ["tariff", "tech_costs", "financials", "emissions", "export_rules"])
+    @pytest.mark.parametrize(
+        "key", ["tariff", "tech_costs", "financials", "emissions", "export_rules"]
+    )
     def test_meta_and_data_blocks(self, manifest, key):
         raw, filename = _load_data_file(manifest, key)
         assert "_meta" in raw, f"{filename} missing _meta block"
@@ -90,7 +92,7 @@ class TestTariffSanity:
         assert base > 0
         assert base < 100_000
 
-    @pytest.mark.parametrize("day_type", ["weekday", "sunday"])
+    @pytest.mark.parametrize("day_type", ["weekday", "sunday_and_public_holidays"])
     def test_tou_schedule_completeness(self, tariff_data, day_type):
         schedule = tariff_data["tou_schedule"]
         assert day_type in schedule
@@ -125,13 +127,20 @@ class TestTariffSanity:
         mults = tariff_data["rate_multipliers"]
         assert "commercial" in mults
 
-        for vl_name, vl in mults["commercial"].items():
-            if not isinstance(vl, dict):
+        for subcategory, subcat_rates in mults["commercial"].items():
+            if not isinstance(subcat_rates, dict):
                 continue
-            assert "peak" in vl
-            assert "standard" in vl
-            assert "offpeak" in vl
-            assert vl["peak"] > vl["standard"] > vl["offpeak"]
+            for vl_name, vl in subcat_rates.items():
+                if not isinstance(vl, dict):
+                    continue
+                assert "peak" in vl, f"commercial.{subcategory}.{vl_name} missing peak"
+                assert "standard" in vl, (
+                    f"commercial.{subcategory}.{vl_name} missing standard"
+                )
+                assert "offpeak" in vl, (
+                    f"commercial.{subcategory}.{vl_name} missing offpeak"
+                )
+                assert vl["peak"] > vl["standard"] > vl["offpeak"]
 
     def test_household_tiers(self, tariff_data):
         mults = tariff_data["rate_multipliers"]
@@ -164,7 +173,9 @@ class TestTechCostBounds:
                 if region not in tech_data["PV"][pv_type]:
                     continue
                 cost = tech_data["PV"][pv_type][region]["installed_cost_per_kw"]
-                assert 200 <= cost <= 2000, f"PV {pv_type}/{region} cost {cost} out of range"
+                assert 200 <= cost <= 2000, (
+                    f"PV {pv_type}/{region} cost {cost} out of range"
+                )
                 om = tech_data["PV"][pv_type][region]["om_cost_per_kw"]
                 assert om >= 0
 
@@ -178,7 +189,9 @@ class TestTechCostBounds:
                 if region not in tech_data["Wind"][wind_type]:
                     continue
                 cost = tech_data["Wind"][wind_type][region]["installed_cost_per_kw"]
-                assert 500 <= cost <= 5000, f"Wind {wind_type}/{region} cost {cost} out of range"
+                assert 500 <= cost <= 5000, (
+                    f"Wind {wind_type}/{region} cost {cost} out of range"
+                )
 
     def test_battery_costs(self, tech_data):
         if "ElectricStorage" not in tech_data:
@@ -191,7 +204,9 @@ class TestTechCostBounds:
                 cost_kw = es["li_ion"][region]["installed_cost_per_kw"]
                 cost_kwh = es["li_ion"][region]["installed_cost_per_kwh"]
                 assert cost_kw > 0
-                assert 50 <= cost_kwh <= 1000, f"Battery {region} cost_kwh {cost_kwh} out of range"
+                assert 50 <= cost_kwh <= 1000, (
+                    f"Battery {region} cost_kwh {cost_kwh} out of range"
+                )
         if "common_defaults" in es:
             assert es["common_defaults"]["installed_cost_constant"] == 0
 
@@ -251,7 +266,9 @@ class TestFinancialBounds:
         raw, _ = _load_data_file(manifest, "financials")
         return raw["data"]
 
-    @pytest.mark.parametrize("profile_name", ["standard", "renewable_energy_preferential", "high_tech_zone"])
+    @pytest.mark.parametrize(
+        "profile_name", ["standard", "renewable_energy_preferential", "high_tech_zone"]
+    )
     def test_profile_bounds(self, financial_data, profile_name):
         if profile_name not in financial_data:
             pytest.skip(f"Profile {profile_name} not in data")

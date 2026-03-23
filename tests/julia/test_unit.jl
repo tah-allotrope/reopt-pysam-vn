@@ -207,8 +207,8 @@ end
     @testset "build_vietnam_tariff — industrial, medium voltage" begin
         tariff = build_vietnam_tariff(VN, "industrial", "medium_voltage_22kv_to_110kv"; year=2025)
 
-        @test haskey(tariff, "energy_rate_series_per_kwh")
-        rates = tariff["energy_rate_series_per_kwh"]
+        @test haskey(tariff, "tou_energy_rates_per_kwh")
+        rates = tariff["tou_energy_rates_per_kwh"]
         @test length(rates) == 8760
         @test all(r -> r > 0, rates)
 
@@ -223,15 +223,15 @@ end
     end
 
     @testset "build_vietnam_tariff — commercial, low voltage" begin
-        tariff = build_vietnam_tariff(VN, "commercial", "low_voltage_below_22kv"; year=2025)
-        rates = tariff["energy_rate_series_per_kwh"]
+        tariff = build_vietnam_tariff(VN, "commercial", "low_voltage_1kv_and_below"; year=2025)
+        rates = tariff["tou_energy_rates_per_kwh"]
         @test length(rates) == 8760
         @test maximum(rates) > minimum(rates)
     end
 
     @testset "build_vietnam_tariff — household (flat)" begin
         tariff = build_vietnam_tariff(VN, "household", ""; year=2025)
-        rates = tariff["energy_rate_series_per_kwh"]
+        rates = tariff["tou_energy_rates_per_kwh"]
         @test length(rates) == 8760
         # Household is flat — all values should be identical
         @test all(r -> r ≈ rates[1], rates)
@@ -240,7 +240,7 @@ end
 
     @testset "build_vietnam_tariff — Sunday vs weekday pattern" begin
         tariff = build_vietnam_tariff(VN, "industrial", "medium_voltage_22kv_to_110kv"; year=2025)
-        rates = tariff["energy_rate_series_per_kwh"]
+        rates = tariff["tou_energy_rates_per_kwh"]
 
         # 2025-01-01 is a Wednesday. Find first Sunday = Jan 5 (day index 4, 0-based)
         # Sunday hours: index 4*24+1 to 4*24+24 = 97 to 120
@@ -252,7 +252,8 @@ end
         expected_peak = base_vnd * mults["peak"] / VN.exchange_rate
 
         # Sunday should NOT have peak rate
-        @test !(expected_peak in sunday_rates) || isempty(VN.tariff["tou_schedule"]["sunday"]["peak_hours"])
+        sunday_key = haskey(VN.tariff["tou_schedule"], "sunday") ? "sunday" : "sunday_and_public_holidays"
+        @test !(expected_peak in sunday_rates) || isempty(VN.tariff["tou_schedule"][sunday_key]["peak_hours"])
         # Sunday max should be standard
         @test maximum(sunday_rates) ≈ expected_standard atol=1e-8
     end
@@ -385,15 +386,15 @@ end
         apply_decree57_export!(d, VN)
 
         et = d["ElectricTariff"]
-        @test et["net_metering_limit_kw"] == 0
         @test et["wholesale_rate"] ≈ 0.0254 atol=1e-4
-        @test et["export_rate_beyond_curtailment_limit"] == 0
+        @test et["export_rate_beyond_net_metering_limit"] == 0
 
         pv = d["PV"]
         @test pv["can_net_meter"] == false
         @test pv["can_wholesale"] == true
         @test pv["can_export_beyond_nem_limit"] == false
         @test pv["can_curtail"] == true
+        @test d["_meta"]["decree57_max_export_fraction"] == 0.20
     end
 
     @testset "apply_decree57_export! — user wholesale rate preserved" begin
@@ -406,12 +407,18 @@ end
 
     @testset "apply_decree57_export! — non-default max_export_fraction emits warning" begin
         d = make_base_dict()
-        @test_logs (:warn, r"max_export_fraction=.*NOT enforced") apply_decree57_export!(d, VN; max_export_fraction=0.10)
+        @test_logs (:warn, r"max_export_fraction=.*stored for Vietnam custom solve wrappers") apply_decree57_export!(d, VN; max_export_fraction=0.10)
+        @test d["_meta"]["decree57_max_export_fraction"] == 0.10
     end
 
     @testset "apply_decree57_export! — default max_export_fraction emits no warning" begin
         d = make_base_dict()
         @test_nowarn apply_decree57_export!(d, VN; max_export_fraction=0.20)
+    end
+
+    @testset "apply_decree57_export! — invalid max_export_fraction errors" begin
+        d = make_base_dict()
+        @test_throws Exception apply_decree57_export!(d, VN; max_export_fraction=1.1)
     end
 
     # ===================================================================
@@ -431,8 +438,8 @@ end
 
         # Tariff injected
         @test haskey(d, "ElectricTariff")
-        @test haskey(d["ElectricTariff"], "energy_rate_series_per_kwh")
-        @test length(d["ElectricTariff"]["energy_rate_series_per_kwh"]) == 8760
+        @test haskey(d["ElectricTariff"], "tou_energy_rates_per_kwh")
+        @test length(d["ElectricTariff"]["tou_energy_rates_per_kwh"]) == 8760
 
         # Emissions injected
         @test haskey(d, "ElectricUtility")
@@ -453,6 +460,7 @@ end
         # Export rules
         @test d["PV"]["can_net_meter"] == false
         @test d["ElectricTariff"]["wholesale_rate"] ≈ 0.0254 atol=1e-4
+        @test d["_meta"]["decree57_max_export_fraction"] == 0.20
     end
 
     @testset "apply_vietnam_defaults! — selective disable" begin
@@ -470,7 +478,7 @@ end
         # Tariff, emissions, export should NOT be applied
         @test !haskey(d, "ElectricUtility")
         et = get(d, "ElectricTariff", Dict())
-        @test !haskey(et, "energy_rate_series_per_kwh")
+        @test !haskey(et, "tou_energy_rates_per_kwh")
         @test !haskey(et, "wholesale_rate")
     end
 

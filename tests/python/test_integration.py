@@ -159,20 +159,36 @@ class TestTemplateSmokeTests:
             data = json.loads(f.read_text(encoding="utf-8"))
 
             if "PV" in data and isinstance(data["PV"], dict):
-                assert data["PV"].get("federal_itc_fraction", 0) == 0, f"{f.name} PV ITC not zero"
-                assert data["PV"].get("macrs_option_years", 0) == 0, f"{f.name} PV MACRS not zero"
-                assert data["PV"].get("macrs_bonus_fraction", 0) == 0, f"{f.name} PV MACRS bonus not zero"
+                assert data["PV"].get("federal_itc_fraction", 0) == 0, (
+                    f"{f.name} PV ITC not zero"
+                )
+                assert data["PV"].get("macrs_option_years", 0) == 0, (
+                    f"{f.name} PV MACRS not zero"
+                )
+                assert data["PV"].get("macrs_bonus_fraction", 0) == 0, (
+                    f"{f.name} PV MACRS bonus not zero"
+                )
 
             if "Wind" in data and isinstance(data["Wind"], dict):
-                assert data["Wind"].get("federal_itc_fraction", 0) == 0, f"{f.name} Wind ITC not zero"
-                assert data["Wind"].get("macrs_option_years", 0) == 0, f"{f.name} Wind MACRS not zero"
+                assert data["Wind"].get("federal_itc_fraction", 0) == 0, (
+                    f"{f.name} Wind ITC not zero"
+                )
+                assert data["Wind"].get("macrs_option_years", 0) == 0, (
+                    f"{f.name} Wind MACRS not zero"
+                )
 
             if "ElectricStorage" in data and isinstance(data["ElectricStorage"], dict):
-                assert data["ElectricStorage"].get("total_itc_fraction", 0) == 0, f"{f.name} Storage ITC not zero"
-                assert data["ElectricStorage"].get("installed_cost_constant", 0) == 0, f"{f.name} Storage cost_constant not zero"
+                assert data["ElectricStorage"].get("total_itc_fraction", 0) == 0, (
+                    f"{f.name} Storage ITC not zero"
+                )
+                assert data["ElectricStorage"].get("installed_cost_constant", 0) == 0, (
+                    f"{f.name} Storage cost_constant not zero"
+                )
 
             if "Generator" in data and isinstance(data["Generator"], dict):
-                assert data["Generator"].get("federal_itc_fraction", 0) == 0, f"{f.name} Generator ITC not zero"
+                assert data["Generator"].get("federal_itc_fraction", 0) == 0, (
+                    f"{f.name} Generator ITC not zero"
+                )
 
     def test_all_templates_vietnam_financials(self):
         for f in self._template_files():
@@ -187,7 +203,9 @@ class TestTemplateSmokeTests:
             assert "ElectricUtility" in data, f"{f.name} missing ElectricUtility"
             ef = data["ElectricUtility"]["emissions_factor_series_lb_CO2_per_kwh"]
             if isinstance(ef, (int, float)):
-                assert abs(ef - 1.5013) < 0.001, f"{f.name} wrong emissions factor: {ef}"
+                assert abs(ef - 1.5013) < 0.001, (
+                    f"{f.name} wrong emissions factor: {ef}"
+                )
             elif isinstance(ef, list):
                 assert len(ef) == 8760, f"{f.name} emissions array wrong length"
                 assert abs(ef[0] - 1.5013) < 0.001, f"{f.name} wrong emissions factor"
@@ -202,9 +220,15 @@ class TestTemplateSmokeTests:
     def test_hospital_template_has_resilience(self):
         f = TEMPLATES_DIR / "vn_hospital_resilience.json"
         data = json.loads(f.read_text(encoding="utf-8"))
-        assert data["Site"].get("min_resil_time_steps", 0) > 0, "Hospital template missing min_resil_time_steps"
-        assert "outage_start_time_steps" in data.get("ElectricUtility", {}), "Hospital template missing outage_start_time_steps"
-        assert "outage_durations" in data.get("ElectricUtility", {}), "Hospital template missing outage_durations"
+        assert data["Site"].get("min_resil_time_steps", 0) > 0, (
+            "Hospital template missing min_resil_time_steps"
+        )
+        assert "outage_start_time_steps" in data.get("ElectricUtility", {}), (
+            "Hospital template missing outage_start_time_steps"
+        )
+        assert "outage_durations" in data.get("ElectricUtility", {}), (
+            "Hospital template missing outage_durations"
+        )
 
     def test_apply_vietnam_defaults_on_templates(self, vn):
         """Verify apply_vietnam_defaults runs without error on each template."""
@@ -221,7 +245,8 @@ class TestTemplateSmokeTests:
 
             # Should not raise
             apply_vietnam_defaults(
-                data, vn,
+                data,
+                vn,
                 customer_type=customer_type,
                 voltage_level=voltage_level,
                 region=region,
@@ -230,8 +255,8 @@ class TestTemplateSmokeTests:
             # After applying defaults, tariff series should exist
             assert "ElectricTariff" in data
             et = data["ElectricTariff"]
-            assert "energy_rate_series_per_kwh" in et
-            assert len(et["energy_rate_series_per_kwh"]) == 8760
+            assert "tou_energy_rates_per_kwh" in et
+            assert len(et["tou_energy_rates_per_kwh"]) == 8760
 
 
 # ---------------------------------------------------------------------------
@@ -300,7 +325,8 @@ class TestAPIIntegration:
 
         # Apply Vietnam defaults for TOU tariff
         apply_vietnam_defaults(
-            d, vn,
+            d,
+            vn,
             customer_type="commercial",
             voltage_level="medium_voltage_22kv_to_110kv",
             region="south",
@@ -342,7 +368,8 @@ class TestAPIIntegration:
         ensure_emissions_array(d)
 
         apply_vietnam_defaults(
-            d, vn,
+            d,
+            vn,
             customer_type="commercial",
             voltage_level="medium_voltage_22kv_to_110kv",
             region="south",
@@ -358,8 +385,12 @@ class TestAPIIntegration:
             "storage_size_kwh": outputs.get("ElectricStorage", {}).get("size_kwh", 0),
             "lcc": outputs.get("Financial", {}).get("lcc", 0),
             "npv": outputs.get("Financial", {}).get("npv", 0),
-            "initial_capital_costs": outputs.get("Financial", {}).get("initial_capital_costs", 0),
-            "initial_capital_costs_after_incentives": outputs.get("Financial", {}).get("initial_capital_costs_after_incentives", 0),
+            "initial_capital_costs": outputs.get("Financial", {}).get(
+                "initial_capital_costs", 0
+            ),
+            "initial_capital_costs_after_incentives": outputs.get("Financial", {}).get(
+                "initial_capital_costs_after_incentives", 0
+            ),
         }
 
         if baseline_path.is_file():
@@ -368,9 +399,11 @@ class TestAPIIntegration:
                 base_val = baseline.get(metric)
                 if base_val is None:
                     continue
-                passed, _, _, pct = check_regression(float(act_val), float(base_val), 0.05)
+                passed, _, _, pct = check_regression(
+                    float(act_val), float(base_val), 0.05
+                )
                 assert passed, (
-                    f"{metric}: actual={act_val}, baseline={base_val}, diff={pct*100:.1f}%"
+                    f"{metric}: actual={act_val}, baseline={base_val}, diff={pct * 100:.1f}%"
                 )
         else:
             # Save as new baseline
@@ -407,7 +440,9 @@ class TestJuliaVsAPICrossCheck:
 
         julia_baseline_path = BASELINES_DIR / "industrial_vietnam_baseline.json"
         if not julia_baseline_path.is_file():
-            pytest.skip("Julia baseline not yet generated — run test_integration.jl first")
+            pytest.skip(
+                "Julia baseline not yet generated — run test_integration.jl first"
+            )
 
         julia_baseline = json.loads(julia_baseline_path.read_text(encoding="utf-8"))
 
@@ -418,4 +453,6 @@ class TestJuliaVsAPICrossCheck:
             val = julia_baseline.get(metric)
             assert val is not None, f"Julia baseline missing metric: {metric}"
             # Just verify the baseline has reasonable values
-            assert isinstance(val, (int, float)), f"Julia baseline {metric} is not numeric"
+            assert isinstance(val, (int, float)), (
+                f"Julia baseline {metric} is not numeric"
+            )

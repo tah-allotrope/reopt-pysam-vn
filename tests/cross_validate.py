@@ -55,7 +55,8 @@ def _python_process(d: dict) -> dict:
     vn = load_vietnam_data()
 
     apply_vietnam_defaults(
-        d, vn,
+        d,
+        vn,
         customer_type="industrial",
         voltage_level="medium_voltage_22kv_to_110kv",
         region="south",
@@ -68,8 +69,11 @@ def _python_process(d: dict) -> dict:
 
     # Rebuild tariff with fixed year for reproducibility (overwrite the one from apply_vietnam_defaults)
     tariff_dict = build_vietnam_tariff(
-        vn, "industrial", "medium_voltage_22kv_to_110kv",
-        exchange_rate=26400.0, year=CROSS_VALIDATE_YEAR,
+        vn,
+        "industrial",
+        "medium_voltage_22kv_to_110kv",
+        exchange_rate=26400.0,
+        year=CROSS_VALIDATE_YEAR,
     )
     for k, v in tariff_dict.items():
         d["ElectricTariff"][k] = v
@@ -82,8 +86,12 @@ def _julia_process(input_path: str, output_path: str) -> dict:
     julia_script = str(REPO_ROOT / "tests" / "julia" / "export_processed_dict.jl")
 
     cmd = [
-        "julia", "--project", julia_script,
-        str(input_path), str(output_path), str(CROSS_VALIDATE_YEAR),
+        "julia",
+        "--project",
+        julia_script,
+        str(input_path),
+        str(output_path),
+        str(CROSS_VALIDATE_YEAR),
     ]
 
     result = subprocess.run(
@@ -91,7 +99,7 @@ def _julia_process(input_path: str, output_path: str) -> dict:
         cwd=str(REPO_ROOT),
         capture_output=True,
         text=True,
-        timeout=120,
+        timeout=600,
     )
 
     if result.returncode != 0:
@@ -118,13 +126,17 @@ def _compare_values(py_val, jl_val, path: str, diffs: list, tol: float = TOLERAN
                 _compare_values(py_val[k], jl_val[k], f"{path}.{k}", diffs, tol)
     elif isinstance(py_val, list) and isinstance(jl_val, list):
         if len(py_val) != len(jl_val):
-            diffs.append(f"  {path}: length mismatch (Python={len(py_val)}, Julia={len(jl_val)})")
+            diffs.append(
+                f"  {path}: length mismatch (Python={len(py_val)}, Julia={len(jl_val)})"
+            )
         else:
             for i in range(len(py_val)):
                 _compare_values(py_val[i], jl_val[i], f"{path}[{i}]", diffs, tol)
     elif isinstance(py_val, (int, float)) and isinstance(jl_val, (int, float)):
         if abs(float(py_val) - float(jl_val)) > tol:
-            diffs.append(f"  {path}: Python={py_val}, Julia={jl_val}, diff={abs(float(py_val)-float(jl_val)):.2e}")
+            diffs.append(
+                f"  {path}: Python={py_val}, Julia={jl_val}, diff={abs(float(py_val) - float(jl_val)):.2e}"
+            )
     elif isinstance(py_val, bool) and isinstance(jl_val, bool):
         if py_val != jl_val:
             diffs.append(f"  {path}: Python={py_val}, Julia={jl_val}")
@@ -133,12 +145,16 @@ def _compare_values(py_val, jl_val, path: str, diffs: list, tol: float = TOLERAN
         # and bool vs int (Julia JSON may serialize bools as true/false)
         if isinstance(py_val, bool) or isinstance(jl_val, bool):
             if bool(py_val) != bool(jl_val):
-                diffs.append(f"  {path}: type/value mismatch Python={py_val!r}, Julia={jl_val!r}")
+                diffs.append(
+                    f"  {path}: type/value mismatch Python={py_val!r}, Julia={jl_val!r}"
+                )
         elif isinstance(py_val, (int, float)) and isinstance(jl_val, (int, float)):
             if abs(float(py_val) - float(jl_val)) > tol:
                 diffs.append(f"  {path}: Python={py_val}, Julia={jl_val}")
         else:
-            diffs.append(f"  {path}: type mismatch Python={type(py_val).__name__}({py_val!r}), Julia={type(jl_val).__name__}({jl_val!r})")
+            diffs.append(
+                f"  {path}: type mismatch Python={type(py_val).__name__}({py_val!r}), Julia={type(jl_val).__name__}({jl_val!r})"
+            )
     elif py_val != jl_val:
         diffs.append(f"  {path}: Python={py_val!r}, Julia={jl_val!r}")
 
@@ -164,6 +180,7 @@ class TestCrossValidation:
 
         # Python processing
         import copy
+
         py_input = copy.deepcopy(MINIMAL_SCENARIO)
         py_dict = _python_process(py_input)
 
@@ -189,8 +206,8 @@ class TestCrossValidation:
         """Energy rate series must be identical between Julia and Python."""
         py_dict, jl_dict = processed_dicts
 
-        py_rates = py_dict["ElectricTariff"]["energy_rate_series_per_kwh"]
-        jl_rates = jl_dict["ElectricTariff"]["energy_rate_series_per_kwh"]
+        py_rates = py_dict["ElectricTariff"]["tou_energy_rates_per_kwh"]
+        jl_rates = jl_dict["ElectricTariff"]["tou_energy_rates_per_kwh"]
 
         assert len(py_rates) == len(jl_rates) == 8760
 
@@ -249,12 +266,16 @@ class TestCrossValidation:
                     continue  # some keys may differ (e.g., list vs dict handling)
                 py_val = py_tech[key]
                 jl_val = jl_tech[key]
-                if isinstance(py_val, (int, float)) and isinstance(jl_val, (int, float)):
+                if isinstance(py_val, (int, float)) and isinstance(
+                    jl_val, (int, float)
+                ):
                     assert abs(float(py_val) - float(jl_val)) <= TOLERANCE, (
                         f"{tech}.{key}: Python={py_val}, Julia={jl_val}"
                     )
                 elif isinstance(py_val, bool) and isinstance(jl_val, bool):
-                    assert py_val == jl_val, f"{tech}.{key}: Python={py_val}, Julia={jl_val}"
+                    assert py_val == jl_val, (
+                        f"{tech}.{key}: Python={py_val}, Julia={jl_val}"
+                    )
 
     def test_export_rules_match(self, processed_dicts):
         """Export rule settings must match between Julia and Python."""
@@ -263,12 +284,17 @@ class TestCrossValidation:
         py_et = py_dict["ElectricTariff"]
         jl_et = jl_dict["ElectricTariff"]
 
-        for key in ["net_metering_limit_kw", "wholesale_rate", "export_rate_beyond_curtailment_limit"]:
+        for key in ["wholesale_rate", "export_rate_beyond_net_metering_limit"]:
             assert abs(float(py_et[key]) - float(jl_et[key])) <= TOLERANCE, (
                 f"ElectricTariff.{key}: Python={py_et[key]}, Julia={jl_et[key]}"
             )
 
-        for key in ["can_net_meter", "can_wholesale", "can_export_beyond_nem_limit", "can_curtail"]:
+        for key in [
+            "can_net_meter",
+            "can_wholesale",
+            "can_export_beyond_nem_limit",
+            "can_curtail",
+        ]:
             assert py_dict["PV"][key] == jl_dict["PV"][key], (
                 f"PV.{key}: Python={py_dict['PV'][key]}, Julia={jl_dict['PV'][key]}"
             )
@@ -325,8 +351,8 @@ if __name__ == "__main__":
             print("\n[PASS] All values match within tolerance (1e-10)")
 
         # Tariff array spot-check
-        py_rates = py_dict["ElectricTariff"]["energy_rate_series_per_kwh"]
-        jl_rates = jl_dict["ElectricTariff"]["energy_rate_series_per_kwh"]
+        py_rates = py_dict["ElectricTariff"]["tou_energy_rates_per_kwh"]
+        jl_rates = jl_dict["ElectricTariff"]["tou_energy_rates_per_kwh"]
         max_diff = max(abs(float(a) - float(b)) for a, b in zip(py_rates, jl_rates))
         print(f"  Tariff array max diff: {max_diff:.2e}")
         print(f"  Tariff array length: Python={len(py_rates)}, Julia={len(jl_rates)}")

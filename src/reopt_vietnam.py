@@ -40,27 +40,39 @@ VALID_CUSTOMER_TYPES = ("industrial", "commercial")
 VALID_REGIONS = ("north", "central", "south")
 
 HOURS_PER_YEAR = 8760
+DECREE57_META_KEY = "decree57_max_export_fraction"
 
 REOPT_API_BASE_URL = "https://developer.nlr.gov/api/reopt/stable"
 
 # US incentive fields to zero out, grouped by tech
 PV_WIND_INCENTIVE_FIELDS = [
-    "macrs_option_years", "macrs_bonus_fraction",
-    "federal_itc_fraction", "federal_rebate_per_kw",
-    "state_ibi_fraction", "state_ibi_max", "state_rebate_per_kw",
-    "utility_ibi_fraction", "utility_ibi_max", "utility_rebate_per_kw",
-    "production_incentive_per_kwh", "production_incentive_max_benefit",
+    "macrs_option_years",
+    "macrs_bonus_fraction",
+    "federal_itc_fraction",
+    "federal_rebate_per_kw",
+    "state_ibi_fraction",
+    "state_ibi_max",
+    "state_rebate_per_kw",
+    "utility_ibi_fraction",
+    "utility_ibi_max",
+    "utility_rebate_per_kw",
+    "production_incentive_per_kwh",
+    "production_incentive_max_benefit",
     "production_incentive_years",
 ]
 
 STORAGE_INCENTIVE_FIELDS = [
-    "macrs_option_years", "macrs_bonus_fraction",
-    "total_itc_fraction", "total_rebate_per_kw",
+    "macrs_option_years",
+    "macrs_bonus_fraction",
+    "total_itc_fraction",
+    "total_rebate_per_kw",
 ]
 
 GENERATOR_INCENTIVE_FIELDS = [
-    "macrs_option_years", "macrs_bonus_fraction",
-    "federal_itc_fraction", "federal_rebate_per_kw",
+    "macrs_option_years",
+    "macrs_bonus_fraction",
+    "federal_itc_fraction",
+    "federal_rebate_per_kw",
 ]
 
 # ---------------------------------------------------------------------------
@@ -124,8 +136,8 @@ def load_vietnam_data(manifest_path: Optional[Union[str, Path]] = None) -> VNDat
     export_rules_raw = _load("export_rules")
 
     # Extract exchange rate from tariff _meta (VND-denominated file), with fallback
-    exchange_rate = (
-        tariff_raw.get("_meta", {}).get("exchange_rate_vnd_per_usd", DEFAULT_EXCHANGE_RATE)
+    exchange_rate = tariff_raw.get("_meta", {}).get(
+        "exchange_rate_vnd_per_usd", DEFAULT_EXCHANGE_RATE
     )
 
     return VNData(
@@ -144,14 +156,18 @@ def load_vietnam_data(manifest_path: Optional[Union[str, Path]] = None) -> VNDat
 # ---------------------------------------------------------------------------
 
 
-def convert_vnd_to_usd(value: float, exchange_rate: float = DEFAULT_EXCHANGE_RATE) -> float:
+def convert_vnd_to_usd(
+    value: float, exchange_rate: float = DEFAULT_EXCHANGE_RATE
+) -> float:
     """Convert a value from VND to USD using the given exchange rate (VND per USD)."""
     if exchange_rate <= 0:
         raise ValueError(f"exchange_rate must be positive, got {exchange_rate}")
     return float(value) / float(exchange_rate)
 
 
-def convert_usd_to_vnd(value: float, exchange_rate: float = DEFAULT_EXCHANGE_RATE) -> float:
+def convert_usd_to_vnd(
+    value: float, exchange_rate: float = DEFAULT_EXCHANGE_RATE
+) -> float:
     """Convert a value from USD to VND using the given exchange rate (VND per USD)."""
     if exchange_rate <= 0:
         raise ValueError(f"exchange_rate must be positive, got {exchange_rate}")
@@ -258,7 +274,10 @@ def apply_vietnam_financials(
 
     # If using RE preferential profile with blended tax rate, apply it.
     # Overwrite the profile's raw rate — but only if user didn't set it themselves.
-    if financial_profile == "renewable_energy_preferential" and "tax_holiday" in profile:
+    if (
+        financial_profile == "renewable_energy_preferential"
+        and "tax_holiday" in profile
+    ):
         blended = profile["tax_holiday"].get("effective_blended_rate_25yr")
         if blended is not None and "owner_tax_rate_fraction" not in user_keys:
             fin["owner_tax_rate_fraction"] = blended
@@ -300,30 +319,36 @@ def build_vietnam_tariff(
         if customer_type not in VALID_CUSTOMER_TYPES:
             raise ValueError(
                 f'Unknown customer_type "{customer_type}". '
-                f'Valid: {", ".join(VALID_CUSTOMER_TYPES)}, household'
+                f"Valid: {', '.join(VALID_CUSTOMER_TYPES)}, household"
             )
         if customer_type not in multipliers:
             raise ValueError(f'No rate multipliers for customer_type "{customer_type}"')
         cust_mults = multipliers[customer_type]
+        vl = _resolve_tariff_multiplier_block(customer_type, cust_mults, voltage_level)
 
-        if voltage_level not in cust_mults:
-            raise ValueError(
-                f'Unknown voltage_level "{voltage_level}" for {customer_type}. '
-                f'Available: {", ".join(cust_mults.keys())}'
-            )
-        vl = cust_mults[voltage_level]
+        peak_rate = convert_vnd_to_usd(
+            base_vnd * vl["peak"], exchange_rate=exchange_rate
+        )
+        standard_rate = convert_vnd_to_usd(
+            base_vnd * vl["standard"], exchange_rate=exchange_rate
+        )
+        offpeak_rate = convert_vnd_to_usd(
+            base_vnd * vl["offpeak"], exchange_rate=exchange_rate
+        )
 
-        peak_rate = convert_vnd_to_usd(base_vnd * vl["peak"], exchange_rate=exchange_rate)
-        standard_rate = convert_vnd_to_usd(base_vnd * vl["standard"], exchange_rate=exchange_rate)
-        offpeak_rate = convert_vnd_to_usd(base_vnd * vl["offpeak"], exchange_rate=exchange_rate)
-
-        weekday_rates = _build_hourly_rates(schedule["weekday"], peak_rate, standard_rate, offpeak_rate)
+        weekday_rates = _build_hourly_rates(
+            schedule["weekday"], peak_rate, standard_rate, offpeak_rate
+        )
         sunday_key = "sunday" if "sunday" in schedule else "sunday_and_public_holidays"
-        sunday_rates = _build_hourly_rates(schedule[sunday_key], peak_rate, standard_rate, offpeak_rate)
+        sunday_rates = _build_hourly_rates(
+            schedule[sunday_key], peak_rate, standard_rate, offpeak_rate
+        )
 
         rates = _build_8760_rates(weekday_rates, sunday_rates, year)
 
-    demand_vnd = tariff.get("demand_charge", {}).get("monthly_demand_rate_vnd_per_kw", 0)
+    demand_vnd = tariff.get("demand_charge", {}).get(
+        "monthly_demand_rate_vnd_per_kw", 0
+    )
     demand_usd = convert_vnd_to_usd(demand_vnd, exchange_rate=exchange_rate)
 
     return {
@@ -346,6 +371,70 @@ def _build_hourly_rates(
     for h in schedule_block.get("standard_hours", []):
         rates[int(h)] = standard
     return rates
+
+
+def _resolve_commercial_voltage(voltage_level: str) -> str:
+    if voltage_level in (
+        "medium_voltage_22kv_to_110kv",
+        "medium_voltage_above_1kv_to_35kv",
+        "medium_voltage_and_above_1kv",
+    ):
+        return "medium_voltage_and_above_1kv"
+    if voltage_level in (
+        "low_voltage_below_22kv",
+        "low_voltage_1kv_and_below",
+        "low_voltage",
+    ):
+        return "low_voltage_1kv_and_below"
+    return voltage_level
+
+
+def _resolve_industrial_voltage(voltage_level: str) -> str:
+    if voltage_level == "low_voltage_below_22kv":
+        return "low_voltage_1kv_and_below"
+    if voltage_level == "medium_voltage_above_1kv_to_35kv":
+        return "medium_voltage_22kv_to_110kv"
+    return voltage_level
+
+
+def _resolve_tariff_multiplier_block(
+    customer_type: str, customer_mults: dict, voltage_level: str
+) -> dict:
+    if customer_type != "commercial":
+        normalized_vl = (
+            _resolve_industrial_voltage(voltage_level)
+            if customer_type == "industrial"
+            else voltage_level
+        )
+        if normalized_vl not in customer_mults:
+            raise ValueError(
+                f'Unknown voltage_level "{voltage_level}" for {customer_type}. '
+                f"Available: {', '.join(customer_mults.keys())}"
+            )
+        return customer_mults[normalized_vl]
+
+    if voltage_level in customer_mults:
+        return customer_mults[voltage_level]
+
+    normalized_vl = _resolve_commercial_voltage(voltage_level)
+    subcategories = [
+        key
+        for key, value in customer_mults.items()
+        if isinstance(value, dict) and normalized_vl in value
+    ]
+    if not subcategories:
+        available = ", ".join(
+            key for key, value in customer_mults.items() if isinstance(value, dict)
+        )
+        raise ValueError(
+            f'Unknown voltage_level "{voltage_level}" for commercial. '
+            f"Available subcategories: {available}"
+        )
+
+    selected = (
+        "other_commercial" if "other_commercial" in subcategories else subcategories[0]
+    )
+    return customer_mults[selected][normalized_vl]
 
 
 def _build_8760_rates(
@@ -394,19 +483,39 @@ def apply_vietnam_tech_costs(
         exchange_rate = vn.exchange_rate
 
     if region not in VALID_REGIONS:
-        raise ValueError(f'Unknown region "{region}". Valid: {", ".join(VALID_REGIONS)}')
+        raise ValueError(
+            f'Unknown region "{region}". Valid: {", ".join(VALID_REGIONS)}'
+        )
 
     tc = vn.tech_costs
-    conv = (lambda v: convert_vnd_to_usd(v, exchange_rate=exchange_rate)) if currency == "VND" else (lambda v: v)
+    conv = (
+        (lambda v: convert_vnd_to_usd(v, exchange_rate=exchange_rate))
+        if currency == "VND"
+        else (lambda v: v)
+    )
 
     # --- PV ---
     if "PV" in d:
         pv_data = tc["PV"]
-        pv_block = d["PV"] if isinstance(d["PV"], dict) else (d["PV"][0] if isinstance(d["PV"], list) and len(d["PV"]) > 0 else None)
+        pv_block = (
+            d["PV"]
+            if isinstance(d["PV"], dict)
+            else (
+                d["PV"][0] if isinstance(d["PV"], list) and len(d["PV"]) > 0 else None
+            )
+        )
 
-        if pv_block is not None and pv_type in pv_data and region in pv_data.get(pv_type, {}):
+        if (
+            pv_block is not None
+            and pv_type in pv_data
+            and region in pv_data.get(pv_type, {})
+        ):
             regional = pv_data[pv_type][region]
-            _set_default(pv_block, "installed_cost_per_kw", conv(regional["installed_cost_per_kw"]))
+            _set_default(
+                pv_block,
+                "installed_cost_per_kw",
+                conv(regional["installed_cost_per_kw"]),
+            )
             _set_default(pv_block, "om_cost_per_kw", conv(regional["om_cost_per_kw"]))
 
         if "common_defaults" in pv_data:
@@ -424,7 +533,11 @@ def apply_vietnam_tech_costs(
 
         if wind_type in wind_data and region in wind_data.get(wind_type, {}):
             regional = wind_data[wind_type][region]
-            _set_default(wind_block, "installed_cost_per_kw", conv(regional["installed_cost_per_kw"]))
+            _set_default(
+                wind_block,
+                "installed_cost_per_kw",
+                conv(regional["installed_cost_per_kw"]),
+            )
             _set_default(wind_block, "om_cost_per_kw", conv(regional["om_cost_per_kw"]))
 
         if "common_defaults" in wind_data:
@@ -438,8 +551,16 @@ def apply_vietnam_tech_costs(
 
         if "li_ion" in es_data and region in es_data.get("li_ion", {}):
             regional = es_data["li_ion"][region]
-            _set_default(es_block, "installed_cost_per_kw", conv(regional["installed_cost_per_kw"]))
-            _set_default(es_block, "installed_cost_per_kwh", conv(regional["installed_cost_per_kwh"]))
+            _set_default(
+                es_block,
+                "installed_cost_per_kw",
+                conv(regional["installed_cost_per_kw"]),
+            )
+            _set_default(
+                es_block,
+                "installed_cost_per_kwh",
+                conv(regional["installed_cost_per_kwh"]),
+            )
 
         if "common_defaults" in es_data:
             for k, v in es_data["common_defaults"].items():
@@ -476,11 +597,15 @@ def apply_decree57_export(
     if exchange_rate is None:
         exchange_rate = vn.exchange_rate
 
+    if not 0 <= max_export_fraction <= 1:
+        raise ValueError(
+            f"max_export_fraction must be between 0 and 1, got {max_export_fraction}"
+        )
+
     if max_export_fraction != 0.20:
         warnings.warn(
-            f"max_export_fraction={max_export_fraction} is accepted but NOT enforced as an "
-            "optimization constraint. Decree 57 export cap requires custom JuMP constraints "
-            "(deferred to future phase). The value is stored for reference only.",
+            f"max_export_fraction={max_export_fraction} is stored for Vietnam custom solve wrappers, "
+            "but plain REopt.run_reopt(...) will NOT enforce it automatically.",
             UserWarning,
             stacklevel=2,
         )
@@ -507,6 +632,9 @@ def apply_decree57_export(
             _set_default(pv, "can_wholesale", True)
             _set_default(pv, "can_export_beyond_nem_limit", False)
             _set_default(pv, "can_curtail", True)
+
+    meta = _ensure_block(d, "_meta")
+    _set_default(meta, DECREE57_META_KEY, float(max_export_fraction))
 
     return d
 
@@ -570,8 +698,13 @@ def apply_vietnam_defaults(
     # 5. Tech costs
     if apply_tech_costs:
         apply_vietnam_tech_costs(
-            d, vn, region=region, pv_type=pv_type, wind_type=wind_type,
-            exchange_rate=exchange_rate, currency=currency,
+            d,
+            vn,
+            region=region,
+            pv_type=pv_type,
+            wind_type=wind_type,
+            exchange_rate=exchange_rate,
+            currency=currency,
         )
 
     # 6. Decree 57 export rules
@@ -639,8 +772,12 @@ def run_vietnam_reopt(
             print(f"REopt job completed: optimal (poll {i + 1})")
             return results
         elif status in ("error", "infeasible", "timed_out"):
-            raise RuntimeError(f"REopt job failed with status: {status}. Messages: {results.get('messages', {})}")
+            raise RuntimeError(
+                f"REopt job failed with status: {status}. Messages: {results.get('messages', {})}"
+            )
         else:
             print(f"  Poll {i + 1}/{max_polls}: status={status}")
 
-    raise TimeoutError(f"REopt job {run_uuid} did not complete within {max_polls * poll_interval}s")
+    raise TimeoutError(
+        f"REopt job {run_uuid} did not complete within {max_polls * poll_interval}s"
+    )

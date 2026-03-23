@@ -101,6 +101,44 @@ function check_regression(actual, baseline, tolerance::Float64=0.05)
     return (pct_diff <= tolerance, actual, baseline, pct_diff)
 end
 
+function make_export_cap_scenario()
+    return Dict{String,Any}(
+        "Site" => Dict{String,Any}(
+            "latitude" => 10.8,
+            "longitude" => 106.6,
+        ),
+        "ElectricLoad" => Dict{String,Any}(
+            "loads_kw" => fill(0.05, 8760),
+            "year" => 2025,
+        ),
+        "PV" => Dict{String,Any}(
+            "min_kw" => 100.0,
+            "max_kw" => 100.0,
+            "production_factor_series" => fill(1.0, 8760),
+            "installed_cost_per_kw" => 0.0,
+            "om_cost_per_kw" => 0.0,
+        ),
+        "Financial" => Dict{String,Any}(
+            "analysis_years" => 1,
+            "owner_discount_rate_fraction" => 0.0,
+            "offtaker_discount_rate_fraction" => 0.0,
+            "owner_tax_rate_fraction" => 0.0,
+            "offtaker_tax_rate_fraction" => 0.0,
+            "elec_cost_escalation_rate_fraction" => 0.0,
+            "om_cost_escalation_rate_fraction" => 0.0,
+        ),
+        "ElectricTariff" => Dict{String,Any}(
+            "tou_energy_rates_per_kwh" => fill(0.01, 8760),
+            "wholesale_rate" => 0.2,
+            "export_rate_beyond_net_metering_limit" => 0.0,
+        ),
+        "ElectricUtility" => Dict{String,Any}(
+            "emissions_factor_series_lb_CO2_per_kwh" => fill(0.0, 8760),
+        ),
+        "_meta" => Dict{String,Any}(),
+    )
+end
+
 # ---------------------------------------------------------------------------
 # Load API keys
 # ---------------------------------------------------------------------------
@@ -385,6 +423,32 @@ const VN = load_vietnam_data()
                 end
             else
                 println("  ✗ Industrial solve did not reach optimal status: $status")
+            end
+        end
+
+        @testset "Decree 57 hard export cap" begin
+            d = make_export_cap_scenario()
+            apply_decree57_export!(d, VN; max_export_fraction=0.20)
+
+            println("\n  Running Decree 57 export-cap solve...")
+            results = run_vietnam_reopt([Model(HiGHS.Optimizer), Model(HiGHS.Optimizer)], d)
+
+            status = safe_get(results, ["status"], "error")
+            @test status == "optimal"
+
+            if status == "optimal"
+                pv = results["PV"]
+                exported = Float64(pv["annual_energy_exported_kwh"])
+                produced = Float64(pv["annual_energy_produced_kwh"])
+                ratio = produced > 0 ? exported / produced : 0.0
+
+                println("    Annual PV production: $(round(produced, digits=2)) kWh")
+                println("    Annual PV export: $(round(exported, digits=2)) kWh")
+                println("    Export ratio: $(round(ratio * 100, digits=2))%")
+
+                @test produced > 0
+                @test ratio <= 0.20 + 1e-6
+                @test ratio >= 0.19
             end
         end
 

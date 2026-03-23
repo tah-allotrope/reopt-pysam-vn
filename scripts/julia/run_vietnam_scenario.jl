@@ -121,7 +121,7 @@ else
     println("\nRunning REopt optimization (HiGHS)...")
     m1 = Model(HiGHS.Optimizer)
     m2 = Model(HiGHS.Optimizer)
-    results = run_reopt([m1, m2], d)
+    results = run_vietnam_reopt([m1, m2], d)
 
     status = "unknown"
     if results isa Dict && haskey(results, "status")
