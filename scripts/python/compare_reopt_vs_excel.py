@@ -6,10 +6,10 @@ flags discrepancies beyond tolerance, and writes a markdown comparison report.
 
 Usage:
     python scripts/python/compare_reopt_vs_excel.py \
-        --reopt results/real_project/saigon18_scenario_a_results.json \
-        --extracted data/real_project/saigon18_extracted.json \
+        --reopt artifacts/results/saigon18/2026-03-23_scenario-a_fixed-sizing_evntou_reopt-results.json \
+        --extracted data/interim/saigon18/2026-03-20_saigon18_extracted_inputs.json \
         --excel "path/to/Solar BESS MODEL.xlsx" \
-        --output reports/real_project/saigon18_comparison.md
+        --output artifacts/reports/saigon18/2026-03-22_scenario-a_vs_excel_comparison.md
 """
 
 import argparse
@@ -274,7 +274,7 @@ def main():
     parser.add_argument("--reopt", required=True, help="REopt results JSON file")
     parser.add_argument(
         "--extracted",
-        default="data/real_project/saigon18_extracted.json",
+        default="data/interim/saigon18/2026-03-20_saigon18_extracted_inputs.json",
         help="Extracted Excel data JSON (for scenario context)",
     )
     parser.add_argument(
@@ -284,7 +284,7 @@ def main():
     )
     parser.add_argument(
         "--output",
-        default="reports/real_project/saigon18_comparison.md",
+        default="artifacts/reports/saigon18/2026-03-22_scenario-a_vs_excel_comparison.md",
         help="Output markdown report path",
     )
     args = parser.parse_args()

@@ -1,9 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(julia scripts/julia/run_vietnam_scenario.jl --scenario scenarios/real_project/saigon18_scenario_a.json --no-solve)",
-      "Bash(julia --project=. scripts/julia/run_vietnam_scenario.jl --scenario scenarios/real_project/saigon18_scenario_a.json --no-solve)",
-      "Bash(julia --project=. scripts/julia/run_vietnam_scenario.jl --scenario scenarios/real_project/saigon18_scenario_a.json)",
+      "Bash(julia scripts/julia/run_vietnam_scenario.jl --scenario scenarios/case_studies/saigon18/2026-03-20_scenario-a_fixed-sizing_evntou.json --no-solve)",
+      "Bash(julia --project=. scripts/julia/run_vietnam_scenario.jl --scenario scenarios/case_studies/saigon18/2026-03-20_scenario-a_fixed-sizing_evntou.json --no-solve)",
+      "Bash(julia --project=. scripts/julia/run_vietnam_scenario.jl --scenario scenarios/case_studies/saigon18/2026-03-20_scenario-a_fixed-sizing_evntou.json)",
       "Skill(update-config)"
     ]
   }

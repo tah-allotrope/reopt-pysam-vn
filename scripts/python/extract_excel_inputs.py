@@ -4,8 +4,9 @@ Extract Saigon18 project data from Excel model for use as REopt inputs.
 Usage:
     python scripts/python/extract_excel_inputs.py \
         --excel "path/to/llm 20260129 SOLAR BESS MODEL - Editing - for processing test.xlsx" \
-        --output data/real_project/saigon18_extracted.json
+        --output data/interim/saigon18/2026-03-20_saigon18_extracted_inputs.json
 """
+
 import argparse
 import json
 from pathlib import Path
@@ -18,8 +19,8 @@ import openpyxl
 # ---------------------------------------------------------------------------
 
 PV_KW_RATED = 40_360.0  # fixed design capacity (kW)
-DATA_START_ROW = 9      # first data row in "Data Input" sheet (1-indexed)
-DATA_END_ROW = 8768     # last data row (row 9 + 8759 = row 8768)
+DATA_START_ROW = 9  # first data row in "Data Input" sheet (1-indexed)
+DATA_END_ROW = 8768  # last data row (row 9 + 8759 = row 8768)
 
 
 # ---------------------------------------------------------------------------
@@ -57,10 +58,10 @@ def extract_data_input(data_ws) -> dict:
             f"Check DATA_START_ROW ({DATA_START_ROW}) and sheet structure."
         )
 
-    pv_kw_raw = [_safe_float(r[1]) for r in rows]   # col B
-    loads_kw   = [_safe_float(r[3]) for r in rows]  # col D
-    fmp        = [_safe_float(r[4]) for r in rows]  # col E
-    cfmp       = [_safe_float(r[5]) for r in rows]  # col F
+    pv_kw_raw = [_safe_float(r[1]) for r in rows]  # col B
+    loads_kw = [_safe_float(r[3]) for r in rows]  # col D
+    fmp = [_safe_float(r[4]) for r in rows]  # col E
+    cfmp = [_safe_float(r[5]) for r in rows]  # col F
 
     pv_prod_factor = [v / PV_KW_RATED for v in pv_kw_raw]
 
@@ -90,39 +91,39 @@ def extract_assumption(assump_ws) -> dict:
         return assump_ws.cell(row=row, column=col).value
 
     # Map Excel row → parameter (col B = column 2, col P = column 16)
-    solar_kw       = _safe_float(cell(15, 2), PV_KW_RATED) * 1_000  # MWp → kW
+    solar_kw = _safe_float(cell(15, 2), PV_KW_RATED) * 1_000  # MWp → kW
     # Row 15 col B stores MWp; handle both MWp (<100) and kW (>1000)
     if solar_kw < 1_000:
         solar_kw = solar_kw * 1_000  # was in MWp, convert to kW
     if solar_kw == 0:
         solar_kw = PV_KW_RATED  # fallback
 
-    pr             = _safe_float(cell(16, 2), 0.8086)   # performance ratio
-    annual_yield_gwh = _safe_float(cell(18, 2), 71.808) # GWh — may be in MWh
-    spec_energy    = _safe_float(cell(19, 2), 1779.0)   # kWh/kWp
+    pr = _safe_float(cell(16, 2), 0.8086)  # performance ratio
+    annual_yield_gwh = _safe_float(cell(18, 2), 71.808)  # GWh — may be in MWh
+    spec_energy = _safe_float(cell(19, 2), 1779.0)  # kWh/kWp
 
-    bess_kwh       = _safe_float(cell(25, 2), 66_000.0)
-    bess_kw        = _safe_float(cell(26, 2), 20_000.0)
-    bess_dod       = _safe_float(cell(27, 2), 0.85)
+    bess_kwh = _safe_float(cell(25, 2), 66_000.0)
+    bess_kw = _safe_float(cell(26, 2), 20_000.0)
+    bess_dod = _safe_float(cell(27, 2), 0.85)
     half_cycle_eff = _safe_float(cell(28, 2), 0.95)
     bess_degradation = _safe_float(cell(29, 2), 0.03)
 
     # Financial (col O = column 15, col P = column 16)
     analysis_years = int(_safe_float(cell(10, 15), 20))
-    om_pv_per_kw   = _safe_float(cell(25, 15), 6.0)    # $/kW/yr
-    om_bess_per_kwh = _safe_float(cell(27, 15), 2.0)   # $/kWh/yr
-    opex_esc       = _safe_float(cell(34, 15), 0.04)
-    cit_rate       = _safe_float(cell(62, 15), 0.20)
+    om_pv_per_kw = _safe_float(cell(25, 15), 6.0)  # $/kW/yr
+    om_bess_per_kwh = _safe_float(cell(27, 15), 2.0)  # $/kWh/yr
+    opex_esc = _safe_float(cell(34, 15), 0.04)
+    cit_rate = _safe_float(cell(62, 15), 0.20)
 
     # Tariff (col P = column 16)
     tariff_standard_vnd = _safe_float(cell(14, 16), 1_811.0)
-    tariff_peak_vnd     = _safe_float(cell(15, 16), 3_266.0)
-    tariff_offpeak_vnd  = _safe_float(cell(16, 16), 1_146.0)
-    ppa_discount        = _safe_float(cell(30, 15), 0.15)   # Assumption!O30
+    tariff_peak_vnd = _safe_float(cell(15, 16), 3_266.0)
+    tariff_offpeak_vnd = _safe_float(cell(16, 16), 1_146.0)
+    ppa_discount = _safe_float(cell(30, 15), 0.15)  # Assumption!O30
 
     # CAPEX (col B rows 41-42)
-    pv_capex_per_kw     = _safe_float(cell(41, 2), 750.0)
-    bess_capex_per_kwh  = _safe_float(cell(42, 2), 200.0)
+    pv_capex_per_kw = _safe_float(cell(41, 2), 750.0)
+    bess_capex_per_kwh = _safe_float(cell(42, 2), 200.0)
 
     return {
         "solar_kw_rated": solar_kw if solar_kw >= 1_000 else PV_KW_RATED,
@@ -153,12 +154,15 @@ def validate_extracted(profiles: dict, assumptions: dict) -> list[str]:
     warnings_list = []
 
     pv_raw = profiles["pv_kw_raw"]
-    loads  = profiles["loads_kw"]
+    loads = profiles["loads_kw"]
     pv_prod = profiles["pv_production_factor_series"]
 
     # 8760 length checks
-    for name, arr in [("loads_kw", loads), ("pv_kw_raw", pv_raw),
-                       ("fmp", profiles["fmp_vnd_per_mwh"])]:
+    for name, arr in [
+        ("loads_kw", loads),
+        ("pv_kw_raw", pv_raw),
+        ("fmp", profiles["fmp_vnd_per_mwh"]),
+    ]:
         if len(arr) != 8760:
             warnings_list.append(f"[FAIL] {name}: expected 8760 values, got {len(arr)}")
 
@@ -191,7 +195,9 @@ def validate_extracted(profiles: dict, assumptions: dict) -> list[str]:
                 f"plan target {target_gwh} GWh by {delta_pct:.1f}% (tolerance 2%)"
             )
     else:
-        warnings_list.append("[WARN] PV profile is all zeros — check column B in Data Input sheet")
+        warnings_list.append(
+            "[WARN] PV profile is all zeros — check column B in Data Input sheet"
+        )
 
     # Annual load sanity check (plan: 184.3 GWh)
     annual_load_gwh = sum(loads) / 1e6
@@ -215,13 +221,13 @@ def extract_saigon18_data(excel_path: str) -> dict:
                 f"Required sheet '{s}' not found. Available sheets: {sheet_names}"
             )
 
-    profiles   = extract_data_input(wb["Data Input"])
+    profiles = extract_data_input(wb["Data Input"])
     assumptions = extract_assumption(wb["Assumption"])
 
     warnings_list = validate_extracted(profiles, assumptions)
 
     pv_raw = profiles["pv_kw_raw"]
-    loads  = profiles["loads_kw"]
+    loads = profiles["loads_kw"]
 
     result = {
         # Hourly profiles (8760 values each)
@@ -255,8 +261,8 @@ def main():
     parser.add_argument("--excel", required=True, help="Path to Excel workbook")
     parser.add_argument(
         "--output",
-        default="data/real_project/saigon18_extracted.json",
-        help="Output JSON path (default: data/real_project/saigon18_extracted.json)",
+        default="data/interim/saigon18/2026-03-20_saigon18_extracted_inputs.json",
+        help="Output JSON path (default: data/interim/saigon18/2026-03-20_saigon18_extracted_inputs.json)",
     )
     args = parser.parse_args()
 

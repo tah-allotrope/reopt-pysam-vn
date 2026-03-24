@@ -1,5 +1,14 @@
 # Active Context — Saigon18 REopt Integration
 
+## Reorganization Pass — 2026-03-24
+
+- [x] Move Layer 3 cross-validation to a dedicated `tests/cross_language/` home while preserving old entrypoints
+- [x] Move plan and research docs under `docs/worklog/` with compatibility pointers from old locations
+- [x] Update repository docs and test runner references to the canonical paths
+- [x] Run targeted validation for the moved paths and record results
+
+---
+
 > Last updated: 2026-03-23 (Decree 57 hard export cap + Scenario A/C reruns)
 
 ## Current Execution Checklist
@@ -15,7 +24,7 @@
 
 Mapping the Saigon18 Excel feasibility model (40.36 MWp solar + 66 MWh BESS, southern Vietnam) onto REopt.jl to validate and challenge the Excel outputs (Equity IRR 19.4%, NPV $22M, 6-yr payback).
 
-Plan: `plans/saigon18_reopt_integration_plan.md`
+Plan: `docs/worklog/plans/saigon18_reopt_integration_plan.md`
 
 ---
 
@@ -32,9 +41,9 @@ Plan: `plans/saigon18_reopt_integration_plan.md`
 | `scripts/python/equity_irr.py` | ✅ Done | Levered equity IRR from REopt EBITDA + debt schedule |
 | `scripts/julia/run_vietnam_scenario.jl` | ✅ Done | `--scenario <path>` flag; output path branches per mode |
 | `tests/python/test_saigon18_data.py` | ✅ Done | 19/19 Layer 1 tests pass |
-| `data/real_project/saigon18_extracted.json` | ✅ Done | 71.81 GWh PV, 184.26 GWh load, 30.2 MW peak — all checks passed |
-| `scenarios/real_project/saigon18_scenario_a.json` | ✅ Done | Built; no-solve validation passed |
-| `scenarios/real_project/saigon18_scenario_b.json` | ✅ Done | Built |
+| `data/interim/saigon18/2026-03-20_saigon18_extracted_inputs.json` | ✅ Done | 71.81 GWh PV, 184.26 GWh load, 30.2 MW peak — all checks passed |
+| `scenarios/case_studies/saigon18/2026-03-20_scenario-a_fixed-sizing_evntou.json` | ✅ Done | Built; no-solve validation passed |
+| `scenarios/case_studies/saigon18/2026-03-20_scenario-b_fixed-sizing_ppa-discount.json` | ✅ Done | Built |
 | No-solve validation (`--scenario ... --no-solve`) | ✅ Done | Scenario A passes |
 
 ### Phase 2 — REopt Run & Baseline Comparison ✅ Complete
@@ -62,7 +71,7 @@ Plan: `plans/saigon18_reopt_integration_plan.md`
 | Simple payback | 7.97 yr |
 | Grid purchases (year 1) | 117,705 MWh |
 | PV exported to grid | 549 MWh |
-| Output file | `results/real_project/saigon18_scenario_a_results.json` |
+| Output file | `artifacts/results/saigon18/2026-03-23_scenario-a_fixed-sizing_evntou_reopt-results.json` |
 
 #### Scenario A Re-run with Hard Export Cap (2026-03-23)
 | Metric | REopt Result |
@@ -77,7 +86,7 @@ Plan: `plans/saigon18_reopt_integration_plan.md`
 | NPV | $10.55M |
 | Simple payback | 7.97 yr |
 | Unlevered IRR | 12.6% |
-| Output file | `results/real_project/saigon18_scenario_a_results.json` |
+| Output file | `artifacts/results/saigon18/2026-03-23_scenario-a_fixed-sizing_evntou_reopt-results.json` |
 
 #### Scenario B Results (2026-03-20)
 | Metric | REopt Result |
@@ -87,7 +96,7 @@ Plan: `plans/saigon18_reopt_integration_plan.md`
 | LCC | $118.1M |
 | NPV | $0.89M |
 | Simple payback | 10.2 yr |
-| Output file | `results/real_project/saigon18_scenario_b_results.json` |
+| Output file | `artifacts/results/saigon18/2026-03-20_scenario-b_fixed-sizing_ppa-discount_reopt-results.json` |
 
 #### Scenario C Results (2026-03-23)
 | Metric | REopt Result |
@@ -102,7 +111,7 @@ Plan: `plans/saigon18_reopt_integration_plan.md`
 | NPV | $11.80M |
 | Simple payback | 7.52 yr |
 | Unlevered IRR | 14.2% |
-| Output file | `results/real_project/saigon18_scenario_c_results.json` |
+| Output file | `artifacts/results/saigon18/2026-03-23_scenario-c_optimized-sizing_reopt-results.json` |
 
 #### Phase 2 Comparison: REopt vs Excel
 | Metric | Excel | Scenario A | Scenario B |
@@ -118,9 +127,9 @@ Plan: `plans/saigon18_reopt_integration_plan.md`
 | Equity IRR | 19.4% | 19.8% |
 | Delta | — | +0.4% |
 | Equity NPV @ 10% | — | $24.5M |
-| Output file | — | `reports/real_project/saigon18_equity_irr.json` |
+| Output file | — | `artifacts/reports/saigon18/2026-03-22_equity-irr_summary.json` |
 
-Reports: `reports/real_project/saigon18_scenario_a_comparison.md`, `reports/real_project/saigon18_scenario_b_comparison.md`, `reports/real_project/saigon18_equity_irr.json`
+Reports: `artifacts/reports/saigon18/2026-03-22_scenario-a_vs_excel_comparison.md`, `artifacts/reports/saigon18/2026-03-22_scenario-b_vs_excel_comparison.md`, `artifacts/reports/saigon18/2026-03-22_equity-irr_summary.json`
 
 ### Phase 3 — Custom Constraints & Advanced Scenarios ⏳ In progress
 
@@ -151,7 +160,7 @@ instead of ~$5.93M). This drove equity IRR to −17.9% — a model artifact, not
 `Financial.year_one_total_operating_cost_savings_before_tax` ($5,929,979) as year-1 base,
 grown at `elec_cost_escalation_rate_fraction` (default 5%) each year.
 
-**Rerun result:** `reports/real_project/saigon18_equity_irr.json` now shows
+**Rerun result:** `artifacts/reports/saigon18/2026-03-22_equity-irr_summary.json` now shows
 19.8% equity IRR vs Excel 19.4% (+0.4%), confirming the earlier −17.9% was a script artifact.
 
 ### Bug 2: `compare_reopt_vs_excel.py` — energy flow keys don't match REopt output ✅ FIXED (2026-03-22)
@@ -210,7 +219,7 @@ The tariff v2025.2 schema drift in both Julia and Python test suites was fixed i
 |---|---|
 | `tests/python/test_data_validation.py` | PASS |
 | `tests/python/test_unit.py` | PASS |
-| `tests/cross_validate.py` | PASS |
+| `tests/cross_language/cross_validate.py` | PASS |
 | `tests/python/test_integration.py` | PASS (1 skipped API block) |
 | `tests/julia/test_data_validation.jl` | PASS |
 | `tests/julia/test_unit.jl` | PASS |
@@ -255,6 +264,55 @@ Known environment noise remains on Julia startup from ArchGDAL method-overwrite 
 
 - Scenario comparison/report artifacts have not yet been regenerated for Scenario A/C after the hard export-cap reruns.
 - Julia startup still emits ArchGDAL precompile noise in this environment, but solves and tests complete successfully.
+
+---
+
+## Review / Results — 2026-03-24 Low-Risk Repository Reorganization
+
+### What changed
+
+- Moved Layer 3 cross-validation to the canonical path `tests/cross_language/cross_validate.py` and added `tests/cross_validate.py` as a backward-compatible wrapper for direct script and pytest usage.
+- Moved worklog plan and research notes into `docs/worklog/plans/` and `docs/worklog/research/` to better separate stable docs from active project process material.
+- Added lightweight compatibility markers at `plans/README.md` and `research/README.md` so old folders still explain the new canonical locations.
+- Updated `tests/run_all_tests.ps1`, `README.md`, `docs/testing.md`, and `activeContext.md` to point at the canonical paths.
+
+### Targeted validation
+
+- `python tests/cross_language/cross_validate.py` — PASS
+- `python tests/cross_validate.py` — PASS (legacy wrapper path)
+- `powershell -ExecutionPolicy Bypass -File tests\run_all_tests.ps1 -Layer 3 -JuliaTimeoutSeconds 1200` — PASS
+
+### Compatibility notes
+
+- The old `tests/cross_validate.py` entrypoint still works for both direct execution and pytest collection.
+- Existing `plans/` and `research/` links are preserved by redirect-style README notes rather than broken empty folders.
+
+---
+
+## Review / Results — 2026-03-24 Case-Study Assets and Artifacts Reorganization
+
+### What changed
+
+- Moved the Saigon18 source workbook into `data/raw/saigon18/2026-01-29_saigon18_excel_model_v2.xlsm` and the extracted JSON into `data/interim/saigon18/2026-03-20_saigon18_extracted_inputs.json`.
+- Moved Saigon18 scenario JSON files into `scenarios/case_studies/saigon18/` and renamed them with dates plus descriptive scenario labels to make the work timeline easier to scan.
+- Moved optimization outputs and reports into the canonical `artifacts/results/` and `artifacts/reports/` trees, with timeline-friendly filenames like `2026-03-23_scenario-a_fixed-sizing_evntou_reopt-results.json`.
+- Updated Python script defaults, the Julia scenario runner, `.claude/settings.local.json`, and the Saigon18 regression test to use the new canonical paths.
+- Added redirect-style README files in the legacy `data/real_project/`, `scenarios/real_project/`, `results/`, and `reports/` folders so old locations still point to the current canonical structure.
+- Regenerated the canonical Scenario D JSON and refreshed the canonical comparison and equity-IRR artifacts using the renamed paths.
+
+### Targeted validation
+
+- `python scripts/python/build_saigon18_reopt_input.py` — PASS
+- `python -m pytest tests/python/test_saigon18_data.py -v --tb=short` — PASS
+- `python -m pytest tests/python/test_saigon18_compare.py -v --tb=short` — PASS
+- `python scripts/python/compare_reopt_vs_excel.py --reopt artifacts/results/saigon18/2026-03-23_scenario-a_fixed-sizing_evntou_reopt-results.json --scenario "A (fixed sizing EVN TOU)"` — PASS
+- `python scripts/python/equity_irr.py --reopt artifacts/results/saigon18/2026-03-23_scenario-a_fixed-sizing_evntou_reopt-results.json --capex 49510000` — PASS
+- `JULIA_PKG_PRECOMPILE_AUTO=0 julia --project --compile=min scripts/julia/run_vietnam_scenario.jl --scenario scenarios/case_studies/saigon18/2026-03-20_scenario-a_fixed-sizing_evntou.json --no-solve` — PASS
+
+### Compatibility notes
+
+- Legacy folders remain in place with README pointers, but the canonical locations are now `data/raw`, `data/interim`, `scenarios/case_studies`, and `artifacts/`.
+- Historical artifact filenames now encode both the work date and the scenario/report purpose, which should make the sequence of the Saigon18 analysis easier to follow.
 
 ---
 
@@ -310,20 +368,23 @@ tests/python/
   test_saigon18_data.py         ← Layer 1 data validation ✅
   test_saigon18_compare.py      ← comparison key-mapping regression ✅
 
-data/real_project/
-  20260129 SOLAR BESS MODEL - Editing - V2.xlsm  ← source Excel ✅
-  saigon18_extracted.json                        ← extracted data ✅
+data/raw/saigon18/
+  2026-01-29_saigon18_excel_model_v2.xlsm             ← source Excel ✅
 
-scenarios/real_project/
-  saigon18_scenario_a.json      ✅
-  saigon18_scenario_b.json      ✅
+data/interim/saigon18/
+  2026-03-20_saigon18_extracted_inputs.json           ← extracted data ✅
 
-results/real_project/
-  saigon18_scenario_a_results.json  ✅
-  saigon18_scenario_b_results.json  ✅
+scenarios/case_studies/saigon18/
+  2026-03-20_scenario-a_fixed-sizing_evntou.json         ✅
+  2026-03-20_scenario-b_fixed-sizing_ppa-discount.json   ✅
+  2026-03-23_scenario-c_optimized-sizing.json            ✅
 
-reports/real_project/
-  saigon18_scenario_a_comparison.md  ✅
-  saigon18_scenario_b_comparison.md  ✅
-  saigon18_equity_irr.json          ✅
+artifacts/results/saigon18/
+  2026-03-23_scenario-a_fixed-sizing_evntou_reopt-results.json        ✅
+  2026-03-20_scenario-b_fixed-sizing_ppa-discount_reopt-results.json  ✅
+
+artifacts/reports/saigon18/
+  2026-03-22_scenario-a_vs_excel_comparison.md  ✅
+  2026-03-22_scenario-b_vs_excel_comparison.md  ✅
+  2026-03-22_equity-irr_summary.json            ✅
 ```

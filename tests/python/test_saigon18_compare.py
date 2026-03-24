@@ -19,7 +19,11 @@ from compare_reopt_vs_excel import load_reopt_metrics  # noqa: E402
 
 
 RESULTS_PATH = (
-    REPO_ROOT / "results" / "real_project" / "saigon18_scenario_a_results.json"
+    REPO_ROOT
+    / "artifacts"
+    / "results"
+    / "saigon18"
+    / "2026-03-23_scenario-a_fixed-sizing_evntou_reopt-results.json"
 )
 
 

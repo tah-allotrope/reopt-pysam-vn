@@ -5,7 +5,7 @@ Usage:
     julia --project --compile=min scripts/julia/run_vietnam_scenario.jl
     julia --project --compile=min scripts/julia/run_vietnam_scenario.jl --no-solve
     julia --project --compile=min scripts/julia/run_vietnam_scenario.jl \\
-        --scenario scenarios/real_project/saigon18_scenario_a.json --no-solve
+        --scenario scenarios/case_studies/saigon18/2026-03-20_scenario-a_fixed-sizing_evntou.json --no-solve
 
 Flags:
     --no-solve            Build and validate Scenario() but skip the HiGHS solver.
@@ -149,15 +149,19 @@ else
         println("Capital after incent: \$$(get(fin, "initial_capital_costs_after_incentives", "N/A"))")
     end
 
-    # Save results to results/ directory
+    # Save results to artifacts/results/ directory
     if SCENARIO_PATH !== nothing
         basename_noext = replace(basename(SCENARIO_PATH), r"\.json$" => "")
-        out_dir = joinpath(REPO_ROOT, "results", "real_project")
+        if occursin(joinpath("scenarios", "case_studies", "saigon18"), SCENARIO_PATH)
+            out_dir = joinpath(REPO_ROOT, "artifacts", "results", "saigon18")
+        else
+            out_dir = joinpath(REPO_ROOT, "artifacts", "results")
+        end
         mkpath(out_dir)
-        out_path = joinpath(out_dir, "$(basename_noext)_results.json")
+        out_path = joinpath(out_dir, "$(basename_noext)_reopt-results.json")
     else
-        mkpath(joinpath(REPO_ROOT, "results"))
-        out_path = joinpath(REPO_ROOT, "results", "commercial_rooftop_results.json")
+        mkpath(joinpath(REPO_ROOT, "artifacts", "results", "examples"))
+        out_path = joinpath(REPO_ROOT, "artifacts", "results", "examples", "commercial_rooftop_reopt-results.json")
     end
     open(out_path, "w") do f
         JSON.print(f, results, 2)

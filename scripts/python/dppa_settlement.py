@@ -8,11 +8,12 @@ Vietnam's Decree 57/2025 DPPA involves a CfD structure:
 
 Usage:
     python scripts/python/dppa_settlement.py \
-        --extracted data/real_project/saigon18_extracted.json \
-        --reopt results/real_project/saigon18_scenario_d_results.json \
+        --extracted data/interim/saigon18/2026-03-20_saigon18_extracted_inputs.json \
+        --reopt artifacts/results/saigon18/2026-03-20_scenario-d_dppa-baseline_reopt-results.json \
         --strike-vnd 1800 \
-        --output reports/real_project/saigon18_dppa_settlement.json
+        --output artifacts/reports/saigon18/2026-03-20_scenario-d_dppa-settlement.json
 """
+
 import argparse
 import json
 from pathlib import Path
@@ -44,13 +45,18 @@ def compute_dppa_annual_revenue(
         dict with total settlement, volumes, and per-kWh averages.
     """
     if len(q_delivered_kw) != 8760:
-        raise ValueError(f"q_delivered_kw must have 8760 values, got {len(q_delivered_kw)}")
+        raise ValueError(
+            f"q_delivered_kw must have 8760 values, got {len(q_delivered_kw)}"
+        )
     if len(fmp_vnd_per_mwh) != 8760:
-        raise ValueError(f"fmp_vnd_per_mwh must have 8760 values, got {len(fmp_vnd_per_mwh)}")
+        raise ValueError(
+            f"fmp_vnd_per_mwh must have 8760 values, got {len(fmp_vnd_per_mwh)}"
+        )
 
     # Check ceiling tariff compliance
     if strike_price_vnd_per_kwh > DECREE57_SOUTH_CEILING_VND_PER_KWH:
         import warnings
+
         warnings.warn(
             f"Strike price {strike_price_vnd_per_kwh:.2f} VND/kWh exceeds Decree 57 "
             f"south ceiling {DECREE57_SOUTH_CEILING_VND_PER_KWH:.2f} VND/kWh. "
@@ -60,11 +66,11 @@ def compute_dppa_annual_revenue(
         )
 
     total_settlement_vnd = 0.0
-    total_q_kwh          = 0.0
+    total_q_kwh = 0.0
     hours_with_settlement = 0
 
     for h in range(8760):
-        q_kw  = q_delivered_kw[h] * (1.0 - curtailment_fraction)
+        q_kw = q_delivered_kw[h] * (1.0 - curtailment_fraction)
         q_kwh = q_kw  # 1-hour resolution: kW × 1h = kWh
 
         fmp_per_kwh = fmp_vnd_per_mwh[h] / 1_000.0
@@ -72,7 +78,7 @@ def compute_dppa_annual_revenue(
 
         settlement_h = spread * q_kwh
         total_settlement_vnd += settlement_h
-        total_q_kwh          += q_kwh
+        total_q_kwh += q_kwh
         if settlement_h > 0:
             hours_with_settlement += 1
 
@@ -83,14 +89,17 @@ def compute_dppa_annual_revenue(
     return {
         "strike_price_vnd_per_kwh": strike_price_vnd_per_kwh,
         "total_settlement_vnd": round(total_settlement_vnd, 0),
-        "total_settlement_usd": round(total_settlement_vnd / EXCHANGE_RATE_VND_PER_USD, 2),
+        "total_settlement_usd": round(
+            total_settlement_vnd / EXCHANGE_RATE_VND_PER_USD, 2
+        ),
         "total_q_kwh": round(total_q_kwh, 0),
         "total_q_mwh": round(total_q_kwh / 1_000, 2),
         "avg_settlement_vnd_per_kwh": round(avg_settlement_vnd_per_kwh, 4),
         "hours_with_settlement": hours_with_settlement,
         "curtailment_fraction": curtailment_fraction,
         "decree57_ceiling_vnd_per_kwh": DECREE57_SOUTH_CEILING_VND_PER_KWH,
-        "exceeds_ceiling": strike_price_vnd_per_kwh > DECREE57_SOUTH_CEILING_VND_PER_KWH,
+        "exceeds_ceiling": strike_price_vnd_per_kwh
+        > DECREE57_SOUTH_CEILING_VND_PER_KWH,
     }
 
 
@@ -100,11 +109,14 @@ def load_reopt_delivery_profile(results: dict) -> list[float]:
     Combines PV-to-load + BESS-to-load as the gross delivered quantity.
     If the result fields are missing, returns zeros.
     """
-    pv_to_load   = results.get("PV", {}).get("year_one_to_load_series_kw", [])
-    bess_to_load = results.get("ElectricStorage", {}).get("year_one_to_load_series_kw", [])
+    pv_to_load = results.get("PV", {}).get("year_one_to_load_series_kw", [])
+    bess_to_load = results.get("ElectricStorage", {}).get(
+        "year_one_to_load_series_kw", []
+    )
 
     if not pv_to_load and not bess_to_load:
         import warnings
+
         warnings.warn(
             "REopt results missing PV.year_one_to_load_series_kw and "
             "ElectricStorage.year_one_to_load_series_kw — returning zero delivery profile."
@@ -112,7 +124,7 @@ def load_reopt_delivery_profile(results: dict) -> list[float]:
         return [0.0] * 8760
 
     n = max(len(pv_to_load), len(bess_to_load))
-    pv_to_load   = list(pv_to_load)   + [0.0] * (n - len(pv_to_load))
+    pv_to_load = list(pv_to_load) + [0.0] * (n - len(pv_to_load))
     bess_to_load = list(bess_to_load) + [0.0] * (n - len(bess_to_load))
 
     return [pv_to_load[i] + bess_to_load[i] for i in range(n)]
@@ -124,10 +136,12 @@ def load_reopt_delivery_profile(results: dict) -> list[float]:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Compute Saigon18 DPPA settlement revenue")
+    parser = argparse.ArgumentParser(
+        description="Compute Saigon18 DPPA settlement revenue"
+    )
     parser.add_argument(
         "--extracted",
-        default="data/real_project/saigon18_extracted.json",
+        default="data/interim/saigon18/2026-03-20_saigon18_extracted_inputs.json",
         help="Extracted Excel data JSON (contains fmp_vnd_per_mwh)",
     )
     parser.add_argument(
@@ -150,7 +164,7 @@ def main():
     )
     parser.add_argument(
         "--output",
-        default="reports/real_project/saigon18_dppa_settlement.json",
+        default="artifacts/reports/saigon18/2026-03-20_scenario-d_dppa-settlement.json",
         help="Output JSON path",
     )
     args = parser.parse_args()

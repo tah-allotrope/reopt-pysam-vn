@@ -11,5 +11,5 @@ Scenario: `scenarios/wind/wind_battery_hospital.json`
 - **Year-one utility bill (after tax):** 62,141.76
 
 ## Notes
-- Results saved as JSON in `results/wind_battery_hospital_results.json`.
+- Results saved as JSON in `artifacts/results/examples/wind_battery_hospital_reopt-results.json`.
 - BAU comparison mode used (two HiGHS models) to compute NPV.

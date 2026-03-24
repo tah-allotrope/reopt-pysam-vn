@@ -8,10 +8,11 @@ through a standard project finance debt schedule.
 
 Usage:
     python scripts/python/equity_irr.py \
-        --reopt results/real_project/saigon18_scenario_a_results.json \
+        --reopt artifacts/results/saigon18/2026-03-23_scenario-a_fixed-sizing_evntou_reopt-results.json \
         --capex 49510000 \
-        --output reports/real_project/saigon18_equity_irr.json
+        --output artifacts/reports/saigon18/2026-03-22_equity-irr_summary.json
 """
+
 import argparse
 import json
 from pathlib import Path
@@ -23,12 +24,12 @@ import numpy_financial as npf
 # Constants (from plan Section 7.2 and project summary)
 # ---------------------------------------------------------------------------
 
-TOTAL_CAPEX_USD          = 49_510_000.0  # $49.51M total CAPEX
-DEBT_FRACTION            = 0.70
-INTEREST_RATE            = 0.085         # blended (6.5% base + 2% margin, 50% hedged)
-DEBT_TENOR_YEARS         = 10
-ANALYSIS_YEARS           = 20
-EXCEL_EQUITY_IRR_TARGET  = 0.194         # 19.4% from Excel
+TOTAL_CAPEX_USD = 49_510_000.0  # $49.51M total CAPEX
+DEBT_FRACTION = 0.70
+INTEREST_RATE = 0.085  # blended (6.5% base + 2% margin, 50% hedged)
+DEBT_TENOR_YEARS = 10
+ANALYSIS_YEARS = 20
+EXCEL_EQUITY_IRR_TARGET = 0.194  # 19.4% from Excel
 
 
 # ---------------------------------------------------------------------------
@@ -57,7 +58,9 @@ def extract_annual_ebitda(results: dict, analysis_years: int) -> list[float]:
         )
 
     elec_esc = fin.get("elec_cost_escalation_rate_fraction", 0.05)
-    return [year1_cf * (1 + elec_esc) ** (yr - 1) for yr in range(1, analysis_years + 1)]
+    return [
+        year1_cf * (1 + elec_esc) ** (yr - 1) for yr in range(1, analysis_years + 1)
+    ]
 
 
 # ---------------------------------------------------------------------------
@@ -91,7 +94,7 @@ def compute_equity_irr(
             f"ebitda_series length {len(ebitda_series)} != analysis_years {analysis_years}"
         )
 
-    debt   = total_capex * debt_fraction
+    debt = total_capex * debt_fraction
     equity = total_capex * (1.0 - debt_fraction)
 
     # Constant-payment (mortgage-style) annual debt service
@@ -103,24 +106,26 @@ def compute_equity_irr(
     balance = debt
     for yr in range(1, analysis_years + 1):
         if yr <= debt_tenor_years:
-            interest   = balance * interest_rate
-            principal  = annual_debt_service - interest
-            balance   -= principal
-            ds         = annual_debt_service
+            interest = balance * interest_rate
+            principal = annual_debt_service - interest
+            balance -= principal
+            ds = annual_debt_service
         else:
-            interest  = 0.0
+            interest = 0.0
             principal = 0.0
-            ds        = 0.0
+            ds = 0.0
 
         equity_cf = ebitda_series[yr - 1] - ds
         equity_cashflows.append(equity_cf)
-        debt_schedule.append({
-            "year": yr,
-            "ebitda": round(ebitda_series[yr - 1], 0),
-            "debt_service": round(ds, 0),
-            "equity_cf": round(equity_cf, 0),
-            "debt_balance": round(max(balance, 0), 0),
-        })
+        debt_schedule.append(
+            {
+                "year": yr,
+                "ebitda": round(ebitda_series[yr - 1], 0),
+                "debt_service": round(ds, 0),
+                "equity_cf": round(equity_cf, 0),
+                "debt_balance": round(max(balance, 0), 0),
+            }
+        )
 
     equity_irr = float(npf.irr(equity_cashflows))
     equity_npv = float(npf.npv(0.10, equity_cashflows))  # @ 10% discount rate
@@ -148,7 +153,9 @@ def compute_equity_irr(
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Compute Saigon18 leveraged equity IRR")
+    parser = argparse.ArgumentParser(
+        description="Compute Saigon18 leveraged equity IRR"
+    )
     parser.add_argument("--reopt", required=True, help="REopt results JSON")
     parser.add_argument(
         "--capex",
@@ -178,7 +185,7 @@ def main():
     )
     parser.add_argument(
         "--output",
-        default="reports/real_project/saigon18_equity_irr.json",
+        default="artifacts/reports/saigon18/2026-03-22_equity-irr_summary.json",
         help="Output JSON path",
     )
     args = parser.parse_args()

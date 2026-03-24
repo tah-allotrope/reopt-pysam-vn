@@ -1,6 +1,6 @@
 # Saigon18 REopt vs. Excel Comparison Report
 
-**Scenario:** A
+**Scenario:** A (fixed sizing EVN TOU)
 
 ## Energy Metrics (Year 1)
 

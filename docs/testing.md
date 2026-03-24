@@ -6,7 +6,7 @@
 |---|---|---|---|
 | **1: Data Validation** | Schema compliance, value bounds for all `data/vietnam/` files | <2s | `tests/julia/test_data_validation.jl`, `tests/python/test_data_validation.py` |
 | **2: Unit Tests** | Every exported function, edge cases, error handling, non-destructive merge | <3s | `tests/julia/test_unit.jl`, `tests/python/test_unit.py` |
-| **3: Cross-Validation** | Julia vs Python produce identical dicts (tolerance 1e-10) | <5s | `tests/cross_validate.py`, `tests/julia/export_processed_dict.jl` |
+| **3: Cross-Validation** | Julia vs Python produce identical dicts (tolerance 1e-10) | <5s | `tests/cross_language/cross_validate.py`, `tests/julia/export_processed_dict.jl` |
 | **4: Integration** | Scenario() construction, solver runs, regression baselines, incentive verification, API domain connectivity | ~30-60s/scenario | `tests/julia/test_integration.jl`, `tests/python/test_integration.py` |
 
 **Baselines:** Stored in `tests/baselines/`. Auto-generated on first run; subsequent runs compare within 5% tolerance. Delete baseline file to regenerate.

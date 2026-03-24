@@ -1,14 +1,15 @@
 """
 Build REopt JSON input files for the Saigon18 Vietnam Solar+BESS project.
 
-Reads extracted data from data/real_project/saigon18_extracted.json and produces
+Reads extracted data from data/interim/saigon18/2026-03-20_saigon18_extracted_inputs.json and produces
 scenario-specific REopt input dicts aligned with the Saigon18 Excel feasibility model.
 
 Usage:
     python scripts/python/build_saigon18_reopt_input.py \
-        --extracted data/real_project/saigon18_extracted.json \
-        --outdir scenarios/real_project
+        --extracted data/interim/saigon18/2026-03-20_saigon18_extracted_inputs.json \
+        --outdir scenarios/case_studies/saigon18
 """
+
 import argparse
 import json
 import sys
@@ -25,22 +26,24 @@ from src.reopt_vietnam import load_vietnam_data, apply_vietnam_defaults  # noqa:
 # Project constants (sourced from Excel Assumption sheet / plan Section 4.3)
 # ---------------------------------------------------------------------------
 
-PV_KW            = 40_360.0     # fixed design capacity
-BESS_KW          = 20_000.0     # fixed design power
-BESS_KWH         = 66_000.0     # fixed design energy
+PV_KW = 40_360.0  # fixed design capacity
+BESS_KW = 20_000.0  # fixed design power
+BESS_KWH = 66_000.0  # fixed design energy
 
-PVCAPEX_PER_KW   = 750.0        # $/kW  (Excel: $750k/MWp)
-BESS_CAPEX_PER_KW  = 200.0      # $/kW  (power component; Excel not separated — use 0 override)
-BESS_CAPEX_PER_KWH = 200.0      # $/kWh (Excel: $200k/MWh = $200/kWh)
+PVCAPEX_PER_KW = 750.0  # $/kW  (Excel: $750k/MWp)
+BESS_CAPEX_PER_KW = (
+    200.0  # $/kW  (power component; Excel not separated — use 0 override)
+)
+BESS_CAPEX_PER_KWH = 200.0  # $/kWh (Excel: $200k/MWh = $200/kWh)
 
-ANALYSIS_YEARS   = 20
-EXCHANGE_RATE    = 26_000.0     # VND/USD (Excel Assumption row 9)
+ANALYSIS_YEARS = 20
+EXCHANGE_RATE = 26_000.0  # VND/USD (Excel Assumption row 9)
 
 # Blended effective CIT over 20-year tax holiday:
 # 4yr @ 0% + 9yr @ 5% (50% of 10%) + 7yr @ 10% = (0+0.45+0.70)/20 = 0.0575
 CIT_BLENDED_20YR = 0.0575
 
-VOLTAGE_LEVEL    = "high_voltage_above_35kv_below_220kv"  # 110 kV connection
+VOLTAGE_LEVEL = "high_voltage_above_35kv_below_220kv"  # 110 kV connection
 
 
 # ---------------------------------------------------------------------------
@@ -68,12 +71,14 @@ def build_base_scenario(extracted: dict) -> dict:
         },
         "ElectricLoad": {
             "loads_kw": extracted["loads_kw"],
-            "year": extracted["data_year"],   # required when loads_kw is provided
+            "year": extracted["data_year"],  # required when loads_kw is provided
         },
         "PV": {
             "min_kw": PV_KW,
             "max_kw": PV_KW,
-            "installed_cost_per_kw": assumptions.get("pv_capex_usd_per_kw", PVCAPEX_PER_KW),
+            "installed_cost_per_kw": assumptions.get(
+                "pv_capex_usd_per_kw", PVCAPEX_PER_KW
+            ),
             "om_cost_per_kw": assumptions.get("om_pv_per_kw_per_year", 6.0),
             "production_factor_series": extracted["pv_production_factor_series"],
             "location": "ground",
@@ -88,23 +93,25 @@ def build_base_scenario(extracted: dict) -> dict:
             "min_kwh": BESS_KWH,
             "max_kwh": BESS_KWH,
             "installed_cost_per_kw": BESS_CAPEX_PER_KW,
-            "installed_cost_per_kwh": assumptions.get("bess_capex_usd_per_kwh", BESS_CAPEX_PER_KWH),
-            "installed_cost_constant": 0,          # override US $222k default
+            "installed_cost_per_kwh": assumptions.get(
+                "bess_capex_usd_per_kwh", BESS_CAPEX_PER_KWH
+            ),
+            "installed_cost_constant": 0,  # override US $222k default
             "replace_cost_per_kw": 100.0,
             "replace_cost_per_kwh": 100.0,
-            "battery_replacement_year": 10,        # discrete replacement at mid-life
+            "battery_replacement_year": 10,  # discrete replacement at mid-life
             "inverter_replacement_year": 10,
             "soc_min_fraction": round(
                 1.0 - assumptions.get("bess_dod_fraction", 0.85), 4
-            ),                                     # 1 − DoD = 0.15
+            ),  # 1 − DoD = 0.15
             "charge_efficiency": assumptions.get("bess_half_cycle_efficiency", 0.95),
             "discharge_efficiency": assumptions.get("bess_half_cycle_efficiency", 0.95),
             "om_cost_fraction_of_installed_cost": round(
                 assumptions.get("om_bess_per_kwh_per_year", 2.0)
                 / assumptions.get("bess_capex_usd_per_kwh", BESS_CAPEX_PER_KWH),
                 6,
-            ),                                     # $/kWh/yr ÷ $/kWh capex
-            "can_grid_charge": False,              # grid charging disabled per BESS strategy
+            ),  # $/kWh/yr ÷ $/kWh capex
+            "can_grid_charge": False,  # grid charging disabled per BESS strategy
         },
         "Financial": {
             "analysis_years": assumptions.get("analysis_years", ANALYSIS_YEARS),
@@ -113,21 +120,24 @@ def build_base_scenario(extracted: dict) -> dict:
             "owner_discount_rate_fraction": 0.08,
             "offtaker_discount_rate_fraction": 0.10,
             "elec_cost_escalation_rate_fraction": 0.05,  # 5% EVN price escalation
-            "om_cost_escalation_rate_fraction": assumptions.get("opex_escalation", 0.04),
+            "om_cost_escalation_rate_fraction": assumptions.get(
+                "opex_escalation", 0.04
+            ),
         },
     }
 
     vn = load_vietnam_data()
     apply_vietnam_defaults(
-        d, vn,
+        d,
+        vn,
         customer_type="industrial",
         voltage_level=VOLTAGE_LEVEL,
         region="south",
         pv_type="ground",
-        apply_financials=False,   # Financial block set explicitly above
-        apply_tariff=True,        # inject EVN TOU series
+        apply_financials=False,  # Financial block set explicitly above
+        apply_tariff=True,  # inject EVN TOU series
         apply_emissions=True,
-        apply_tech_costs=False,   # CAPEX set explicitly above
+        apply_tech_costs=False,  # CAPEX set explicitly above
         apply_export_rules=True,
         apply_zero_incentives=True,
     )
@@ -197,8 +207,8 @@ def build_scenario_c(extracted: dict) -> dict:
     # Remove the pre-computed production factor so REopt fetches from NREL
     d["PV"].pop("production_factor_series", None)
 
-    d["ElectricStorage"]["min_kw"]  = 0
-    d["ElectricStorage"]["max_kw"]  = 30_000.0
+    d["ElectricStorage"]["min_kw"] = 0
+    d["ElectricStorage"]["max_kw"] = 30_000.0
     d["ElectricStorage"]["min_kwh"] = 0
     d["ElectricStorage"]["max_kwh"] = 100_000.0
 
@@ -263,12 +273,12 @@ def main():
     )
     parser.add_argument(
         "--extracted",
-        default="data/real_project/saigon18_extracted.json",
+        default="data/interim/saigon18/2026-03-20_saigon18_extracted_inputs.json",
         help="Path to extracted Excel data JSON",
     )
     parser.add_argument(
         "--outdir",
-        default="scenarios/real_project",
+        default="scenarios/case_studies/saigon18",
         help="Output directory for scenario JSON files",
     )
     parser.add_argument(
@@ -297,10 +307,10 @@ def main():
     build_all = "all" in selected
 
     builders = {
-        "a": (build_scenario_a, "saigon18_scenario_a.json"),
-        "b": (build_scenario_b, "saigon18_scenario_b.json"),
-        "c": (build_scenario_c, "saigon18_scenario_c.json"),
-        "d": (build_scenario_d, "saigon18_scenario_d.json"),
+        "a": (build_scenario_a, "2026-03-20_scenario-a_fixed-sizing_evntou.json"),
+        "b": (build_scenario_b, "2026-03-20_scenario-b_fixed-sizing_ppa-discount.json"),
+        "c": (build_scenario_c, "2026-03-23_scenario-c_optimized-sizing.json"),
+        "d": (build_scenario_d, "2026-03-20_scenario-d_dppa-baseline.json"),
     }
 
     print("Building Saigon18 REopt scenarios...")

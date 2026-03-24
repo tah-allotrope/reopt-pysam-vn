@@ -11,25 +11,32 @@ Techno-economic optimization for cost-optimal Solar, Wind, and Battery systems f
 ## Project Structure
 
 ```
-data/vietnam/           Versioned Vietnam-specific data (tariffs, costs, emissions, export rules)
+data/
+  vietnam/             Versioned Vietnam-specific policy data
+  raw/saigon18/        Source workbook for the Saigon18 case study
+  interim/saigon18/    Extracted and transformed Saigon18 inputs
 src/
   REoptVietnam.jl       Julia preprocessing module
   reopt_vietnam.py      Python preprocessing module (mirror)
 scenarios/
   templates/            Pre-filled Vietnam scenario templates (4 templates)
   wind/                 Wind+Battery hospital scenario
+  case_studies/saigon18/ Time-labeled Saigon18 scenario files
 scripts/
   julia/                Julia run scripts (Vietnam analysis)
-results/                Optimization outputs (JSON + markdown summaries)
+artifacts/
+  results/              Canonical optimization outputs
+  reports/              Canonical comparison reports and summaries
 archive/
   colab/                US-benchmark reference scripts and results (archived)
 tests/
+  cross_language/       Julia/Python cross-validation tests
   julia/                Julia tests (data validation, unit, integration)
   python/               Python tests (data validation, unit, integration)
   baselines/            Regression baselines (auto-generated)
   run_all_tests.ps1     Master test runner (all 4 layers)
-  cross_validate.py     Layer 3: Julia vs Python cross-validation
 docs/                   Reference documentation (architecture, data, pitfalls, testing, internals)
+  worklog/              Active plans and research notes
 ```
 
 ## Quick Start

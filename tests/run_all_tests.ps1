@@ -220,7 +220,7 @@ if ($run3) {
     Show-Banner 'Layer 3: Cross-Validation'
 
     Invoke-PythonScript -TestName 'L3-Cross  Julia vs Python' `
-        -Script 'tests\cross_validate.py'
+        -Script 'tests\cross_language\cross_validate.py'
 }
 
 # ===== LAYER 4: Integration / Regression ===================================

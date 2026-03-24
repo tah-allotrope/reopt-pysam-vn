@@ -222,15 +222,15 @@ Python: excel_to_reopt.py
     ├── Call apply_vietnam_defaults() ← from src/reopt_vietnam.py
     ├── Apply project-specific overrides (CAPEX, BESS sizing, analysis_years=20, etc.)
     ├── Apply PPA tariff modification (EVN TOU × 0.85 for Scenario 1)
-    └── Write to scenarios/real_project/saigon18_<scenario>.json
+    └── Write to scenarios/case_studies/saigon18/2026-03-xx_<scenario>.json
     │
     ▼
 REopt (Julia local or API)
     │
-    ├── Julia: run_vietnam_scenario.jl --scenario saigon18_bundled_ppa
-    │       → results/real_project/saigon18_bundled_ppa_results.json
+    ├── Julia: run_vietnam_scenario.jl --scenario scenario-b_fixed-sizing_ppa-discount
+    │       → artifacts/results/saigon18/2026-03-20_scenario-b_fixed-sizing_ppa-discount_reopt-results.json
     └── API: run_vietnam_reopt(d, api_key)
-           → results/real_project/saigon18_<scenario>_api_results.json
+           → artifacts/results/saigon18/2026-03-xx_<scenario>_api-results.json
     │
     ▼
 Python: compare_reopt_vs_excel.py
@@ -239,7 +239,7 @@ Python: compare_reopt_vs_excel.py
     ├── Load Excel outputs (Financial sheet annual rows)
     ├── Compute DPPA settlement from FMP data + REopt dispatch
     ├── Compute leveraged equity IRR from REopt EBITDA + debt schedule
-    └── Write reports/real_project/saigon18_comparison_report.md + .html
+    └── Write artifacts/reports/saigon18/2026-03-xx_<report>.md + .html
 ```
 
 ### 4.2 Excel Extraction Script
@@ -253,7 +253,7 @@ Extract Saigon18 project data from Excel model for use as REopt inputs.
 Usage:
     python scripts/python/extract_excel_inputs.py \
         --excel "path/to/llm 20260129 SOLAR BESS MODEL - Editing - for processing test.xlsx" \
-        --output data/real_project/saigon18_extracted.json
+        --output data/interim/saigon18/2026-03-20_saigon18_extracted_inputs.json
 """
 import json
 import argparse
@@ -518,9 +518,9 @@ Compare REopt results against Saigon18 Excel model outputs.
 
 Usage:
     python scripts/python/compare_reopt_vs_excel.py \
-        --reopt results/real_project/saigon18_scenario_a_results.json \
+        --reopt artifacts/results/saigon18/2026-03-23_scenario-a_fixed-sizing_evntou_reopt-results.json \
         --excel "path/to/Solar BESS MODEL.xlsx" \
-        --output reports/real_project/saigon18_comparison.md
+        --output artifacts/reports/saigon18/2026-03-22_scenario-a_vs_excel_comparison.md
 """
 import json
 from pathlib import Path
@@ -696,18 +696,18 @@ total_export = sum(
    - Extract 8760 load profile, 8760 PV production profile, 8760 FMP values
    - Extract financial and technical assumptions from Assumption sheet
    - Validate: 8760 rows, no negative values, solar sum matches annual yield (±1%)
-   - Save to `data/real_project/saigon18_extracted.json`
+   - Save to `data/interim/saigon18/2026-03-20_saigon18_extracted_inputs.json`
 
 2. Implement `scripts/python/build_saigon18_reopt_input.py`
    - Build Scenario A and Scenario B JSON inputs
    - Apply Vietnam defaults via `apply_vietnam_defaults()`
    - Apply project-specific overrides (sizing, costs, analysis years)
-   - Save to `scenarios/real_project/saigon18_scenario_a.json` and `saigon18_scenario_b.json`
+   - Save to `scenarios/case_studies/saigon18/2026-03-20_scenario-a_fixed-sizing_evntou.json` and `2026-03-20_scenario-b_fixed-sizing_ppa-discount.json`
 
 3. Validate inputs (no-solve mode):
    ```powershell
    julia --project --compile=min scripts/julia/run_vietnam_scenario.jl `
-       --scenario scenarios/real_project/saigon18_scenario_a.json `
+       --scenario scenarios/case_studies/saigon18/2026-03-20_scenario-a_fixed-sizing_evntou.json `
        --no-solve
    ```
    Expected: `Scenario()` construction succeeds with no fatal errors. Warnings about AVERT/Cambium/EASIUR are expected for Vietnam locations.
@@ -718,9 +718,9 @@ total_export = sum(
    ```
 
 **Deliverables:**
-- `data/real_project/saigon18_extracted.json`
-- `scenarios/real_project/saigon18_scenario_a.json`
-- `scenarios/real_project/saigon18_scenario_b.json`
+- `data/interim/saigon18/2026-03-20_saigon18_extracted_inputs.json`
+- `scenarios/case_studies/saigon18/2026-03-20_scenario-a_fixed-sizing_evntou.json`
+- `scenarios/case_studies/saigon18/2026-03-20_scenario-b_fixed-sizing_ppa-discount.json`
 - Validation test passing
 
 ---
@@ -734,9 +734,9 @@ total_export = sum(
    ```powershell
    $env:JULIA_PKG_PRECOMPILE_AUTO="0"
    julia --project --compile=min scripts/julia/run_vietnam_scenario.jl `
-       --scenario scenarios/real_project/saigon18_scenario_a.json
+       --scenario scenarios/case_studies/saigon18/2026-03-20_scenario-a_fixed-sizing_evntou.json
    ```
-   Save results to `results/real_project/saigon18_scenario_a_results.json`
+   Save results to `artifacts/results/saigon18/2026-03-23_scenario-a_fixed-sizing_evntou_reopt-results.json`
 
 2. Run Scenario B (PPA tariff × 0.85, fixed sizing)
 
@@ -752,7 +752,7 @@ total_export = sum(
 
 5. Generate comparison report:
    ```
-   reports/real_project/saigon18_comparison_report.md
+   artifacts/reports/saigon18/2026-03-22_scenario-a_vs_excel_comparison.md
    ```
 
 **Deliverables:**
@@ -815,7 +815,7 @@ total_export = sum(
    - Rerun Scenario A with two-part tariff from year 5
    - Quantify BESS peak-shaving value under capacity charge regime
 
-3. Final comparison report (`reports/real_project/saigon18_final_report.md`):
+3. Final comparison report (`artifacts/reports/saigon18/2026-03-xx_final-report.md`):
    - Executive summary: REopt vs. Excel alignment scorecard
    - Energy performance comparison table
    - Financial metrics comparison table
@@ -837,15 +837,17 @@ total_export = sum(
 reopt-julia-VNanalysis/
 ├── data/
 │   ├── vietnam/             (existing)
-│   └── real_project/
-│       └── saigon18_extracted.json       ← Phase 1 output
+│   ├── raw/saigon18/
+│   │   └── 2026-01-29_saigon18_excel_model_v2.xlsm
+│   └── interim/saigon18/
+│       └── 2026-03-20_saigon18_extracted_inputs.json   ← Phase 1 output
 ├── scenarios/
 │   ├── templates/           (existing)
-│   └── real_project/
-│       ├── saigon18_scenario_a.json      ← Phase 1 output (EVN TOU, fixed sizing)
-│       ├── saigon18_scenario_b.json      ← Phase 1 output (PPA tariff 15% disc.)
-│       ├── saigon18_scenario_c.json      ← Phase 3 output (optimized sizing)
-│       └── saigon18_scenario_d.json      ← Phase 3 output (DPPA baseline)
+│   └── case_studies/saigon18/
+│       ├── 2026-03-20_scenario-a_fixed-sizing_evntou.json      ← Phase 1 output
+│       ├── 2026-03-20_scenario-b_fixed-sizing_ppa-discount.json ← Phase 1 output
+│       ├── 2026-03-23_scenario-c_optimized-sizing.json         ← Phase 3 output
+│       └── 2026-03-20_scenario-d_dppa-baseline.json            ← Phase 3 output
 ├── scripts/
 │   ├── julia/               (existing)
 │   └── python/
@@ -855,20 +857,20 @@ reopt-julia-VNanalysis/
 │       ├── dppa_settlement.py            ← Phase 2
 │       ├── equity_irr.py                 ← Phase 3
 │       └── run_saigon18_sensitivity.py   ← Phase 4
-├── results/
-│   └── real_project/
-│       ├── saigon18_scenario_a_results.json
-│       ├── saigon18_scenario_b_results.json
-│       └── saigon18_scenario_c_results.json
-├── reports/
-│   └── real_project/
-│       ├── saigon18_comparison_report.md
-│       └── saigon18_final_report.md
+├── artifacts/
+│   ├── results/saigon18/
+│   │   ├── 2026-03-23_scenario-a_fixed-sizing_evntou_reopt-results.json
+│   │   ├── 2026-03-20_scenario-b_fixed-sizing_ppa-discount_reopt-results.json
+│   │   └── 2026-03-23_scenario-c_optimized-sizing_reopt-results.json
+│   └── reports/saigon18/
+│       ├── 2026-03-22_scenario-a_vs_excel_comparison.md
+│       ├── 2026-03-22_equity-irr_summary.json
+│       └── 2026-03-xx_final-report.md
 ├── tests/
 │   └── python/
 │       ├── test_saigon18_data.py         ← Phase 1
 │       └── test_saigon18_integration.py  ← Phase 3
-└── plans/
+└── docs/worklog/plans/
     └── saigon18_reopt_integration_plan.md  ← This document
 ```
 
