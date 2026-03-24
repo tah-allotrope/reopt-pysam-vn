@@ -9,6 +9,11 @@ __pycache__/
 *.pyo
 *.pyd
 .pytest_cache/
+.ruff_cache/
+.hypothesis/
+.coverage
+coverage.xml
+htmlcov/
 
 # Julia
 *.jl.cov
@@ -26,6 +31,9 @@ deps/build.log
 # OS
 Thumbs.db
 .DS_Store
+
+# Temporary generated reports
+artifacts/reports/test_runs/*.html
 
 # Regression baselines (auto-generated on first solver run)
 tests/baselines/*.json

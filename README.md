@@ -37,6 +37,7 @@ tests/
   run_all_tests.ps1     Master test runner (all 4 layers)
 docs/                   Reference documentation (architecture, data, pitfalls, testing, internals)
   worklog/              Active plans and research notes
+legacy/                 Old-to-new path map for retired folders
 ```
 
 ## Quick Start
@@ -52,6 +53,31 @@ julia --project --compile=min scripts/julia/run_vietnam_scenario.jl --no-solve
 
 # 3. Run full optimization (HiGHS solver, ~60s first run)
 julia --project --compile=min scripts/julia/run_vietnam_scenario.jl
+
+# Output lands in artifacts/results/examples/commercial-rooftop_reopt-results.json
+```
+
+## Saigon18 Workflow
+
+```powershell
+# 1. Extract the case-study workbook into canonical interim JSON
+python scripts/python/extract_excel_inputs.py `
+  --excel data/raw/saigon18/2026-01-29_saigon18_excel_model_v2.xlsm
+
+# 2. Build canonical Saigon18 scenarios
+python scripts/python/build_saigon18_reopt_input.py
+
+# 3. Validate a canonical scenario without solving
+$env:JULIA_PKG_PRECOMPILE_AUTO = "0"
+julia --project --compile=min scripts/julia/run_vietnam_scenario.jl `
+  --scenario scenarios/case_studies/saigon18/2026-03-20_scenario-a_fixed-sizing_evntou.json `
+  --no-solve
+
+# 4. Solve a canonical scenario
+julia --project --compile=min scripts/julia/run_vietnam_scenario.jl `
+  --scenario scenarios/case_studies/saigon18/2026-03-20_scenario-a_fixed-sizing_evntou.json
+
+# Result lands in artifacts/results/saigon18/2026-03-20_scenario-a_fixed-sizing_evntou_reopt-results.json
 ```
 
 ## Vietnam Preprocessing Tool
@@ -132,6 +158,12 @@ Pre-filled Vietnam templates in `scenarios/templates/` — override only Site/Lo
 | **2: Unit Tests** | All exported functions, edge cases | <3s |
 | **3: Cross-Validation** | Julia vs Python identical output | <5s |
 | **4: Integration** | Scenario construction, solver runs, regression baselines | ~30-60s/scenario |
+
+## Generated Outputs
+
+- Canonical solve outputs live under `artifacts/results/`
+- Canonical comparison and summary reports live under `artifacts/reports/`
+- Historical path changes are documented in `legacy/README.md`
 
 ## Vietnam-Specific Notes
 

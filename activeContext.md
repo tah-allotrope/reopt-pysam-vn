@@ -273,7 +273,6 @@ Known environment noise remains on Julia startup from ArchGDAL method-overwrite 
 
 - Moved Layer 3 cross-validation to the canonical path `tests/cross_language/cross_validate.py` and added `tests/cross_validate.py` as a backward-compatible wrapper for direct script and pytest usage.
 - Moved worklog plan and research notes into `docs/worklog/plans/` and `docs/worklog/research/` to better separate stable docs from active project process material.
-- Added lightweight compatibility markers at `plans/README.md` and `research/README.md` so old folders still explain the new canonical locations.
 - Updated `tests/run_all_tests.ps1`, `README.md`, `docs/testing.md`, and `activeContext.md` to point at the canonical paths.
 
 ### Targeted validation
@@ -285,7 +284,7 @@ Known environment noise remains on Julia startup from ArchGDAL method-overwrite 
 ### Compatibility notes
 
 - The old `tests/cross_validate.py` entrypoint still works for both direct execution and pytest collection.
-- Existing `plans/` and `research/` links are preserved by redirect-style README notes rather than broken empty folders.
+- Worklog material now lives only under `docs/worklog/`; the temporary redirect folders were removed in the follow-up cleanup pass.
 
 ---
 
@@ -297,7 +296,7 @@ Known environment noise remains on Julia startup from ArchGDAL method-overwrite 
 - Moved Saigon18 scenario JSON files into `scenarios/case_studies/saigon18/` and renamed them with dates plus descriptive scenario labels to make the work timeline easier to scan.
 - Moved optimization outputs and reports into the canonical `artifacts/results/` and `artifacts/reports/` trees, with timeline-friendly filenames like `2026-03-23_scenario-a_fixed-sizing_evntou_reopt-results.json`.
 - Updated Python script defaults, the Julia scenario runner, `.claude/settings.local.json`, and the Saigon18 regression test to use the new canonical paths.
-- Added redirect-style README files in the legacy `data/real_project/`, `scenarios/real_project/`, `results/`, and `reports/` folders so old locations still point to the current canonical structure.
+- Consolidated old placeholder-folder notes into `legacy/README.md` and prepared the redundant empty legacy directories for removal.
 - Regenerated the canonical Scenario D JSON and refreshed the canonical comparison and equity-IRR artifacts using the renamed paths.
 
 ### Targeted validation
@@ -311,8 +310,54 @@ Known environment noise remains on Julia startup from ArchGDAL method-overwrite 
 
 ### Compatibility notes
 
-- Legacy folders remain in place with README pointers, but the canonical locations are now `data/raw`, `data/interim`, `scenarios/case_studies`, and `artifacts/`.
+- Legacy path guidance now lives in `legacy/README.md`, and the redundant empty placeholder folders have been removed.
 - Historical artifact filenames now encode both the work date and the scenario/report purpose, which should make the sequence of the Saigon18 analysis easier to follow.
+
+---
+
+## Review / Results — 2026-03-24 Legacy Folder Consolidation
+
+### What changed
+
+- Removed the redundant empty compatibility folders under the old `data/real_project/`, `scenarios/real_project/`, `results/`, and `reports/` locations.
+- Consolidated the old-to-new folder mapping into one place: `legacy/README.md`.
+- Updated `README.md` and `activeContext.md` so they point to the consolidated legacy index instead of scattered placeholder README files.
+
+### Validation
+
+- Verified the repo root no longer contains the redundant `results/` or `reports/` placeholder trees.
+- Verified no code, docs, or tests still depend on those removed folders.
+
+---
+
+## Review / Results — 2026-03-24 Final Root Cleanup
+
+### What changed
+
+- Removed the last redirect-only root folder, `plans/`, after confirming all references already pointed at `docs/worklog/plans/`.
+- Confirmed `research/` had already been fully removed and no longer needed a compatibility marker.
+- Kept `legacy/README.md` as the single consolidated place for old-to-new path guidance.
+
+### Validation
+
+- Verified the root now uses canonical folders only for active content, with no remaining redirect-only `plans/` or `research/` folders.
+- Verified no remaining code or docs depend on the removed redirect folder.
+
+---
+
+## Review / Results — 2026-03-24 Final Polish Pass
+
+### What changed
+
+- Expanded `.gitignore` to cover local Python quality/test artifacts like `.ruff_cache/`, `.hypothesis/`, and coverage outputs.
+- Updated `README.md` quick-start guidance to use the canonical `artifacts/`, `data/raw`, `data/interim`, and `scenarios/case_studies` paths.
+- Added a dedicated Saigon18 workflow section to `README.md` so the current case-study process is discoverable from the repo entry point.
+- Standardized the default example output filename in `scripts/julia/run_vietnam_scenario.jl` to `commercial-rooftop_reopt-results.json` for better naming consistency.
+
+### Validation
+
+- Verified README examples point only at current canonical paths.
+- Verified the final root structure remains clean after the polish updates.
 
 ---
 

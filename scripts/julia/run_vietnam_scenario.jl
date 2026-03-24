@@ -161,7 +161,7 @@ else
         out_path = joinpath(out_dir, "$(basename_noext)_reopt-results.json")
     else
         mkpath(joinpath(REPO_ROOT, "artifacts", "results", "examples"))
-        out_path = joinpath(REPO_ROOT, "artifacts", "results", "examples", "commercial_rooftop_reopt-results.json")
+        out_path = joinpath(REPO_ROOT, "artifacts", "results", "examples", "commercial-rooftop_reopt-results.json")
     end
     open(out_path, "w") do f
         JSON.print(f, results, 2)
