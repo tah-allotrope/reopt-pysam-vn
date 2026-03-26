@@ -11,6 +11,11 @@ Usage:
         --reopt artifacts/results/saigon18/2026-03-23_scenario-a_fixed-sizing_evntou_reopt-results.json \
         --capex 49510000 \
         --output artifacts/reports/saigon18/2026-03-22_equity-irr_summary.json
+
+    python scripts/python/equity_irr.py \
+        --reopt artifacts/results/saigon18/2026-03-20_scenario-d_dppa-baseline_reopt-results.json \
+        --settlement artifacts/reports/saigon18/2026-03-26_scenario-d_dppa-settlement.json \
+        --output artifacts/reports/saigon18/2026-03-26_scenario-d_equity-irr_summary.json
 """
 
 import argparse
@@ -61,6 +66,41 @@ def extract_annual_ebitda(results: dict, analysis_years: int) -> list[float]:
     return [
         year1_cf * (1 + elec_esc) ** (yr - 1) for yr in range(1, analysis_years + 1)
     ]
+
+
+def load_settlement_cashflows(
+    settlement: dict | None, analysis_years: int
+) -> tuple[list[float], dict | None]:
+    if settlement is None:
+        return [0.0] * analysis_years, None
+
+    annual_cashflows = settlement.get("annual_cashflows_usd", [])
+    if not annual_cashflows:
+        year1 = settlement.get("total_settlement_usd", 0.0) or 0.0
+        escalation = settlement.get("escalation_rate_fraction", 0.05)
+        annual_cashflows = [
+            year1 * (1 + escalation) ** (yr - 1) for yr in range(1, analysis_years + 1)
+        ]
+
+    if len(annual_cashflows) < analysis_years:
+        annual_cashflows = list(annual_cashflows) + [0.0] * (
+            analysis_years - len(annual_cashflows)
+        )
+
+    return list(annual_cashflows[:analysis_years]), {
+        "year_one_settlement_usd": round(float(annual_cashflows[0]), 2)
+        if annual_cashflows
+        else 0.0,
+        "settlement_npv_usd": settlement.get("settlement_npv_usd"),
+        "contract_type": settlement.get("contract_type"),
+        "strike_price_vnd_per_kwh": settlement.get("strike_price_vnd_per_kwh"),
+    }
+
+
+def combine_cashflows(base_series: list[float], adders: list[float]) -> list[float]:
+    if len(base_series) != len(adders):
+        raise ValueError("base_series and adders must have the same length")
+    return [base + add for base, add in zip(base_series, adders)]
 
 
 # ---------------------------------------------------------------------------
@@ -158,6 +198,10 @@ def main():
     )
     parser.add_argument("--reopt", required=True, help="REopt results JSON")
     parser.add_argument(
+        "--settlement",
+        help="Optional DPPA settlement JSON to add on top of REopt EBITDA",
+    )
+    parser.add_argument(
         "--capex",
         type=float,
         default=TOTAL_CAPEX_USD,
@@ -193,7 +237,16 @@ def main():
     with open(args.reopt, encoding="utf-8") as f:
         results = json.load(f)
 
-    ebitda = extract_annual_ebitda(results, args.years)
+    settlement = None
+    if args.settlement:
+        with open(args.settlement, encoding="utf-8") as f:
+            settlement = json.load(f)
+
+    base_ebitda = extract_annual_ebitda(results, args.years)
+    settlement_cashflows, settlement_summary = load_settlement_cashflows(
+        settlement, args.years
+    )
+    ebitda = combine_cashflows(base_ebitda, settlement_cashflows)
     irr_result = compute_equity_irr(
         ebitda_series=ebitda,
         total_capex=args.capex,
@@ -201,6 +254,12 @@ def main():
         interest_rate=args.interest_rate,
         analysis_years=args.years,
     )
+    irr_result["base_year_one_ebitda_usd"] = round(base_ebitda[0], 2)
+    irr_result["year_one_settlement_usd"] = round(settlement_cashflows[0], 2)
+    irr_result["combined_year_one_ebitda_usd"] = round(ebitda[0], 2)
+    irr_result["scenario_type"] = "dppa" if settlement else "avoided_cost_only"
+    if settlement_summary is not None:
+        irr_result["settlement_summary"] = settlement_summary
 
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -212,6 +271,10 @@ def main():
     print(f"  Equity IRR (Excel target)  : {EXCEL_EQUITY_IRR_TARGET:.1%}")
     print(f"  Delta                       : {irr_result['delta_vs_excel']:+.1%}")
     print(f"  Equity NPV @ 10%           : ${irr_result['equity_npv_usd']:,.0f}")
+    if settlement:
+        print(
+            f"  Year-1 DPPA settlement     : ${irr_result['year_one_settlement_usd']:,.0f}"
+        )
 
 
 if __name__ == "__main__":

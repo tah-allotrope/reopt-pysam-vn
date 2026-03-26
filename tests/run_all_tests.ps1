@@ -242,6 +242,11 @@ if ($run4) {
 
     Invoke-Pytest -TestName 'L4-Python Integration tests' `
         -Script 'tests\python\test_integration.py' -Extra $pyExtra
+
+    if (-not $SmokeOnly) {
+        Invoke-Pytest -TestName 'L4-Python Saigon18 regression tests' `
+            -Script 'tests\python\test_saigon18_phase3.py'
+    }
 }
 
 # ===== SUMMARY =============================================================

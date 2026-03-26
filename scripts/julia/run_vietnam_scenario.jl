@@ -38,6 +38,7 @@ const NO_SOLVE = "--no-solve" in ARGS
 # Parse --scenario flag
 const SCENARIO_IDX = findfirst(==("--scenario"), ARGS)
 const SCENARIO_PATH = SCENARIO_IDX !== nothing ? ARGS[SCENARIO_IDX + 1] : nothing
+const SAIGON18_SCENARIO_MARKER = joinpath("scenarios", "case_studies", "saigon18")
 
 # ---------------------------------------------------------------------------
 # Load NREL API keys from NREL_API.env if present
@@ -152,7 +153,8 @@ else
     # Save results to artifacts/results/ directory
     if SCENARIO_PATH !== nothing
         basename_noext = replace(basename(SCENARIO_PATH), r"\.json$" => "")
-        if occursin(joinpath("scenarios", "case_studies", "saigon18"), SCENARIO_PATH)
+        normalized_scenario_path = replace(normpath(SCENARIO_PATH), '/' => Base.Filesystem.path_separator)
+        if occursin(SAIGON18_SCENARIO_MARKER, normalized_scenario_path)
             out_dir = joinpath(REPO_ROOT, "artifacts", "results", "saigon18")
         else
             out_dir = joinpath(REPO_ROOT, "artifacts", "results")

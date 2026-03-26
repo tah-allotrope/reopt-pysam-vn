@@ -9,9 +9,28 @@
 
 ---
 
-> Last updated: 2026-03-23 (Decree 57 hard export cap + Scenario A/C reruns)
+> Last updated: 2026-03-26 (Phase 3 completion + final consolidated HTML report)
 
 ## Current Execution Checklist
+
+- [x] Fix Scenario D DPPA post-processing so it uses the actual REopt result schema and explicit settlement assumptions
+- [x] Solve Scenario D and produce canonical DPPA settlement + equity artifacts
+- [x] Refresh Scenario A/C comparison artifacts after the hard export-cap reruns
+- [x] Add tariff-period BESS dispatch disaggregation to the Saigon18 comparison workflow
+- [x] Add Saigon18 regression coverage to Layer 4 and wire it into the test runner
+- [x] Generate the final consolidated HTML report after Scenario D is complete
+- [x] Run targeted validation and record review/results for this completion pass
+
+## Phase 3 Completion Pass — 2026-03-26
+
+- [x] Audit the current Scenario D, comparison, test, and report pipeline against the canonical repo paths
+- [x] Repair the DPPA settlement and equity workflow so Scenario D can produce a final finance result
+- [x] Extend the comparison tooling with tariff-period BESS breakdown and refreshed scenario outputs
+- [x] Add Saigon18 regression coverage to the Layer 4 execution path
+- [x] Generate the final self-contained HTML report after Scenario D artifacts are in place
+- [x] Run targeted validation and capture the completion review notes
+
+---
 
 - [x] Implement Decree 57 hard export-cap support in `src/REoptVietnam.jl`
 - [x] Add regression/integration coverage for the export cap
@@ -433,3 +452,50 @@ artifacts/reports/saigon18/
   2026-03-22_scenario-b_vs_excel_comparison.md  ✅
   2026-03-22_equity-irr_summary.json            ✅
 ```
+
+---
+
+## Review / Results — 2026-03-26 Phase 3 Completion + Final HTML Report
+
+### What changed
+
+- Rewrote `scripts/python/dppa_settlement.py` to use the actual REopt result schema (`PV.electric_to_load_series_kw` + `ElectricStorage.storage_to_load_series_kw`) and to normalize the extracted FMP series safely before computing Scenario D settlement revenue.
+- Extended `scripts/python/equity_irr.py` so Scenario D can add DPPA settlement cash flows on top of the base REopt EBITDA and emit a dedicated Scenario D equity summary.
+- Replaced `scripts/python/compare_reopt_vs_excel.py` with a version that supports tariff-period BESS disaggregation, Scenario D settlement/equity adders, and refreshed A/C/D markdown comparison artifacts.
+- Added `tests/python/test_saigon18_phase3.py` for the Scenario D schema, tariff-period BESS split, and DPPA finance-adder regression path.
+- Updated `tests/run_all_tests.ps1` so the Saigon18 Phase 3 regression test runs in the Layer 4 path during full validation.
+- Fixed `scripts/julia/run_vietnam_scenario.jl` output path detection so Saigon18 scenario solves write to the canonical `artifacts/results/saigon18/` tree even when invoked from bash on Windows.
+- Added `scripts/python/generate_html_report.py` and generated the final consolidated HTML report at `artifacts/reports/saigon18/2026-03-26_saigon18-full-analysis.html`.
+
+### Scenario D final outputs
+
+- Canonical solve result: `artifacts/results/saigon18/2026-03-20_scenario-d_dppa-baseline_reopt-results.json`
+- DPPA settlement artifact: `artifacts/reports/saigon18/2026-03-26_scenario-d_dppa-settlement.json`
+- Scenario D equity artifact: `artifacts/reports/saigon18/2026-03-26_scenario-d_equity-irr_summary.json`
+- Scenario D comparison report: `artifacts/reports/saigon18/2026-03-26_scenario-d_vs_excel_comparison.md`
+- Final consolidated HTML report: `artifacts/reports/saigon18/2026-03-26_saigon18-full-analysis.html`
+
+### Key results locked for the final report
+
+- Scenario D contract assumption used in the final report: `grid_connected`
+- Scenario D strike price: `1,800 VND/kWh`
+- Scenario D year-1 DPPA settlement: `$1.10M`
+- Scenario D settlement NPV adder: `$15.80M`
+- Scenario D total unlevered NPV (base REopt + settlement adder): `$26.35M`
+- Scenario D equity IRR: `25.4%`
+- Scenario A tariff-period BESS discharge: `17,543 MWh peak`, `413 MWh standard`, `0 MWh off-peak`
+
+### Validation
+
+- `python -m pytest tests/python/test_saigon18_compare.py tests/python/test_saigon18_phase3.py -v --tb=short` — PASS
+- `julia --project --compile=min scripts/julia/run_vietnam_scenario.jl --scenario scenarios/case_studies/saigon18/2026-03-20_scenario-d_dppa-baseline.json --no-solve` — PASS
+- `julia --project --compile=min scripts/julia/run_vietnam_scenario.jl --scenario scenarios/case_studies/saigon18/2026-03-20_scenario-d_dppa-baseline.json` — PASS
+- `python scripts/python/dppa_settlement.py --reopt artifacts/results/saigon18/2026-03-20_scenario-d_dppa-baseline_reopt-results.json ...` — PASS
+- `python scripts/python/equity_irr.py --reopt artifacts/results/saigon18/2026-03-20_scenario-d_dppa-baseline_reopt-results.json --settlement ...` — PASS
+- `python scripts/python/compare_reopt_vs_excel.py ...` for Scenario A/C/D — PASS
+- `python scripts/python/generate_html_report.py` — PASS
+- `powershell -ExecutionPolicy Bypass -File "tests/run_all_tests.ps1" -Layer 4 -SmokeOnly` — PASS
+
+### Remaining note
+
+- Full Layer 4 rerun through `tests/run_all_tests.ps1 -Layer 4` started successfully and entered the long Julia integration section, but the CLI command timed out before completion in this session; the pre-existing Python API payload failures documented in `docs/testing.md` still apply to the repo-wide Layer 4 scope.
