@@ -9,7 +9,7 @@ Usage:
     python scripts/python/dppa_settlement.py \
         --extracted data/interim/saigon18/2026-03-20_saigon18_extracted_inputs.json \
         --reopt artifacts/results/saigon18/2026-03-20_scenario-d_dppa-baseline_reopt-results.json \
-        --strike-vnd 1800 \
+        --strike-vnd 1100 --contract-type private_wire \
         --output artifacts/reports/saigon18/2026-03-26_scenario-d_dppa-settlement.json
 """
 
@@ -23,7 +23,7 @@ EXCHANGE_RATE_VND_PER_USD = 26_000.0
 DEFAULT_ANALYSIS_YEARS = 20
 DEFAULT_ESCALATION = 0.05
 DEFAULT_DISCOUNT_RATE = 0.08
-DEFAULT_CONTRACT_TYPE = "grid_connected"
+DEFAULT_CONTRACT_TYPE = "private_wire"
 DEFAULT_DELIVERY_FACTOR = 0.98
 PRIVATE_WIRE_SOUTH_CEILING_VND_PER_KWH = 1_149.86
 
@@ -103,6 +103,14 @@ def compute_dppa_annual_revenue(
     `delivery_factor` is the net multiplier applied to hourly delivery before
     settlement. For this repo, it is the explicit combined delivery assumption used
     instead of undocumented `k_factor`/`kpp` spreadsheet terms.
+
+    Contract-type settlement formulas:
+      private_wire  — developer sells directly to factory at strike price;
+                      no FMP exposure. Revenue = strike × net_delivery_kwh
+                      per hour (all hours with non-zero delivery settle).
+                      Strike must be ≤ PRIVATE_WIRE_SOUTH_CEILING_VND_PER_KWH.
+      grid_connected — CfD differential: revenue = max(0, strike − FMP) ×
+                      net_delivery_kwh. Settles only in hours when FMP < strike.
     """
     q_delivered_kw = _pad_to_8760(q_delivered_kw)
     fmp_vnd_per_kwh = _pad_to_8760(fmp_vnd_per_kwh)
@@ -131,8 +139,17 @@ def compute_dppa_annual_revenue(
 
     for q_kw, fmp in zip(q_delivered_kw, fmp_vnd_per_kwh):
         net_q_kwh = q_kw * delivery_factor
-        spread = max(0.0, strike_price_vnd_per_kwh - fmp)
-        settlement_h = spread * net_q_kwh
+        if contract_type == "private_wire":
+            # Direct sale: factory pays developer at strike for all delivered kWh.
+            # No spot-market exposure; settlement is positive for every hour with
+            # non-zero delivery regardless of the prevailing FMP.
+            settlement_h = strike_price_vnd_per_kwh * net_q_kwh
+            spread = strike_price_vnd_per_kwh  # spread = full strike (no FMP netting)
+        else:
+            # Grid-connected CfD: developer receives positive settlement only when
+            # spot price (FMP) is below the contracted strike.
+            spread = max(0.0, strike_price_vnd_per_kwh - fmp)
+            settlement_h = spread * net_q_kwh
         total_settlement_vnd += settlement_h
         total_q_kwh += net_q_kwh
         avg_spread_vnd_per_kwh += spread
@@ -201,9 +218,9 @@ def main():
     parser.add_argument(
         "--strike-vnd",
         type=float,
-        default=1_800.0,
+        default=1_100.0,
         dest="strike_vnd",
-        help="DPPA strike price in VND/kWh (default: 1800)",
+        help="DPPA strike price in VND/kWh (default: 1100 — private-wire south-ceiling assumption)",
     )
     parser.add_argument(
         "--contract-type",
@@ -237,7 +254,7 @@ def main():
     )
     parser.add_argument(
         "--output",
-        default="artifacts/reports/saigon18/2026-03-26_scenario-d_dppa-settlement.json",
+        default="artifacts/reports/saigon18/2026-03-29_scenario-d_dppa-settlement.json",
         help="Output JSON path",
     )
     args = parser.parse_args()

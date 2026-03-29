@@ -160,8 +160,10 @@ def main():
     )
 
     equity_a = load_json(REPORTS_DIR / "2026-03-22_equity-irr_summary.json")
-    settlement_d = load_json(REPORTS_DIR / "2026-03-26_scenario-d_dppa-settlement.json")
-    equity_d = load_json(REPORTS_DIR / "2026-03-26_scenario-d_equity-irr_summary.json")
+    settlement_d = load_json(REPORTS_DIR / "2026-03-29_scenario-d_dppa-settlement.json")
+    equity_d = load_json(REPORTS_DIR / "2026-03-29_scenario-d_equity-irr_summary.json")
+    tariff_sens = load_json(REPORTS_DIR / "2026-03-29_two-part-tariff-sensitivity.json")
+    bess_analysis = load_json(REPORTS_DIR / "2026-03-29_bess-dispatch-analysis.json")
 
     summary_a = build_scenario_summary(
         "A - Baseline EVN TOU", result_a, equity=equity_a
@@ -169,7 +171,7 @@ def main():
     summary_b = build_scenario_summary("B - Bundled PPA", result_b)
     summary_c = build_scenario_summary("C - Optimized sizing", result_c)
     summary_d = build_scenario_summary(
-        "D - DPPA grid-connected", result_d, settlement_d, equity_d
+        "D - DPPA private-wire", result_d, settlement_d, equity_d
     )
     scenarios = [summary_a, summary_b, summary_c, summary_d]
 
@@ -181,7 +183,7 @@ def main():
     excel_payback = 6.0
     excel_year1 = 5_056_418.0
 
-    out_path = REPORTS_DIR / "2026-03-26_saigon18-full-analysis.html"
+    out_path = REPORTS_DIR / "2026-03-29_saigon18-phase5.html"
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -248,22 +250,24 @@ def main():
 <body>
 <div class="page">
   <div class="hero">
-    <h1>Saigon18 Final REopt Analysis</h1>
-    <p>40.36 MWp solar + 66 MWh BESS, southern Vietnam. Final consolidated Phase 3 report after Scenario D DPPA completion.</p>
+    <h1>Saigon18 REopt Analysis — Phase 5</h1>
+    <p>40.36 MWp solar + 66 MWh BESS, Ninh Sim, Khanh Hoa. Phase 5 adds Decree 146/2025 two-part tariff sensitivity and BESS dispatch Option B comparison to the Phase 4 private-wire foundation.</p>
     <div class="hero-pills">
       <span class="pill">4 scenarios analyzed</span>
       <span class="pill">Decree 57 export cap enforced</span>
-      <span class="pill">Scenario D solved with DPPA post-processing</span>
-      <span class="pill">Generated 2026-03-26</span>
+      <span class="pill">Scenario D: private-wire DPPA @ 1,100 VND/kWh</span>
+      <span class="pill">Phase 5: Decree 146/2025 capacity charge + BESS dispatch Option B</span>
+      <span class="pill">Site: Ninh Sim, Khanh Hoa (12.48°N, 109.09°E proxy)</span>
+      <span class="pill">Generated 2026-03-29</span>
     </div>
   </div>
 
   <h2>Project Overview</h2>
   <div class="grid-4">
     <div class="card"><div class="eyebrow">Project</div><div class="big">Saigon18</div><div class="sub">40.36 MWp PV + 66 MWh BESS</div></div>
-    <div class="card"><div class="eyebrow">Location</div><div class="big">10.9577, 106.8426</div><div class="sub">HCMC area; coordinate confirmation still pending</div></div>
+    <div class="card"><div class="eyebrow">Location</div><div class="big">Ninh Sim, Khanh Hoa</div><div class="sub">Proxy coords 12.48°N, 109.09°E — confirm actuals with site team</div></div>
     <div class="card"><div class="eyebrow">Excel Headline</div><div class="big">19.4%</div><div class="sub">Equity IRR, $22.0M NPV, 6-year payback</div></div>
-    <div class="card"><div class="eyebrow">Method</div><div class="big">REopt + Python</div><div class="sub">Julia solve, DPPA settlement, equity DCF, HTML synthesis</div></div>
+    <div class="card"><div class="eyebrow">Method</div><div class="big">REopt + Python</div><div class="sub">Julia solve, private-wire DPPA settlement, equity DCF, HTML synthesis</div></div>
   </div>
 
   <h2>Scenario Dashboard</h2>
@@ -293,11 +297,11 @@ def main():
   <div class="grid-4">
     <div class="card"><div class="eyebrow">Excel Equity IRR</div><div class="big">19.4%</div><div class="sub">Workbook headline return</div></div>
     <div class="card"><div class="eyebrow">Scenario A Equity IRR</div><div class="big">19.8%</div><div class="sub">REopt avoided-cost only; +0.4% vs Excel</div></div>
-    <div class="card"><div class="eyebrow">Scenario D Equity IRR</div><div class="big">25.4%</div><div class="sub">Adds DPPA top-up settlement to the debt waterfall</div></div>
-    <div class="card"><div class="eyebrow">Scenario D Year-1 Top-Up</div><div class="big">{fmt_money(settlement_d["total_settlement_usd"])}</div><div class="sub">Grid-connected DPPA assumption at 1,800 VND/kWh</div></div>
+    <div class="card"><div class="eyebrow">Scenario D Equity IRR</div><div class="big">{fmt_pct(summary_d["equity_irr"])}</div><div class="sub">Private-wire DPPA @ 1,100 VND/kWh — strike × matched volume</div></div>
+    <div class="card"><div class="eyebrow">Scenario D Year-1 DPPA Revenue</div><div class="big">{fmt_money(settlement_d["total_settlement_usd"])}</div><div class="sub">Private-wire: 1,100 VND/kWh × {settlement_d["total_q_mwh"]:,.0f} MWh delivery</div></div>
   </div>
   <div class="callout" style="margin-top:14px;">
-    The equity IRR workflow uses REopt year-1 operating savings as the base EBITDA, then layers in the Scenario D DPPA settlement cash flows and the same 70% debt, 8.5% interest, 10-year tenor assumption used in the earlier Saigon18 finance check.
+    <strong>Phase 4 change:</strong> Scenario D now uses the confirmed private-wire contract type. Settlement formula changed from CfD differential (max(0, strike − FMP) × kWh) to direct revenue (strike × kWh). Strike lowered from 1,800 to 1,100 VND/kWh to comply with the south private-wire ceiling (1,149.86 VND/kWh). Combined EBITDA = REopt base + DPPA revenue; in private-wire, the settlement represents the developer's contracted receipt, a portion of which is already embedded in the REopt avoided-cost base.
   </div>
 
   <h2>Decree 57 Compliance</h2>
@@ -306,14 +310,14 @@ def main():
     <div class="card"><div class="eyebrow">Scenario C export fraction</div><div class="big">{summary_c["export_fraction"] * 100:.2f}%</div><div class="sub">Still below the cap after optimized sizing</div></div>
   </div>
   <div class="callout" style="margin-top:14px;">
-    Scenario D is modeled as <strong>grid-connected</strong> for the final report because the 1,800 VND/kWh strike exceeds the documented south private-wire ceiling of 1,149.86 VND/kWh for ground-mounted solar with BESS. The settlement artifact explicitly flags that ceiling mismatch.
+    Scenario D is now modeled as <strong>private-wire</strong> at 1,100 VND/kWh — confirmed by the site owner. The prior grid-connected assumption at 1,800 VND/kWh exceeded the documented south private-wire ceiling (1,149.86 VND/kWh) and has been corrected in Phase 4.
   </div>
 
   <h2>Where REopt Differs From Excel</h2>
   <table>
     <tr><th>Metric</th><th>Excel</th><th>REopt</th><th>Gap</th><th>Explanation</th></tr>
     <tr><td>Scenario A NPV</td><td>{fmt_money(excel_npv)}</td><td>{fmt_money(summary_a["npv_usd"])}</td><td>-52%</td><td>Pure avoided-cost framing is much lower than the workbook's blended contract + financing headline.</td></tr>
-    <tr><td>Scenario D NPV</td><td>{fmt_money(excel_npv)}</td><td>{fmt_money(summary_d["npv_usd"])}</td><td>+20%</td><td>The grid-connected DPPA top-up adds about {fmt_money(settlement_d["settlement_npv_usd"])} of unlevered value on top of Scenario A.</td></tr>
+    <tr><td>Scenario D NPV</td><td>{fmt_money(excel_npv)}</td><td>{fmt_money(summary_d["npv_usd"])}</td><td>+{(summary_d["npv_usd"]/excel_npv-1)*100:.0f}%</td><td>Private-wire DPPA settlement NPV ({fmt_money(settlement_d["settlement_npv_usd"])}) added to base REopt project value.</td></tr>
     <tr><td>BESS dispatch</td><td>Peak 7,364 / Standard 1,227 MWh</td><td>Peak {bess_a["peak"]:,.0f} / Standard {bess_a["standard"]:,.0f} MWh</td><td>Higher peak, lower standard</td><td>REopt concentrates battery value into peak periods instead of following the workbook's fixed standard-hour discharge target.</td></tr>
     <tr><td>PV export</td><td>1,087 MWh</td><td>{summary_a["pv_export_mwh"]:,.0f} MWh</td><td>-50%</td><td>The hard export cap path and dispatch decisions keep exports low, so Decree 57 is not binding for the fixed-size case.</td></tr>
   </table>
@@ -321,21 +325,77 @@ def main():
   <h2>Findings And Recommendations</h2>
   <div class="checklist">
     <div class="check"><strong>1.</strong> The original equity-IRR validation holds up: Scenario A still lands at 19.8% versus the workbook's 19.4%.</div>
-    <div class="check"><strong>2.</strong> Scenario D is now fully closed for this repo's current assumptions, and the grid-connected DPPA top-up lifts year-1 project value from {fmt_money(summary_a["year1_revenue_usd"])} to {fmt_money(summary_d["year1_revenue_usd"])}.</div>
-    <div class="check"><strong>3.</strong> Under those same assumptions, Scenario D pushes unlevered NPV to {fmt_money(summary_d["npv_usd"])} and equity IRR to {fmt_pct(summary_d["equity_irr"])}, which is stronger than both Excel and the baseline EVN TOU case.</div>
+    <div class="check"><strong>2.</strong> Phase 4 corrects Scenario D from grid-connected (illegal 1,800 VND/kWh strike) to private-wire at 1,100 VND/kWh. Settlement formula is now strike × matched delivery — no FMP exposure — lifting year-1 DPPA revenue from $1.1M to {fmt_money(settlement_d["total_settlement_usd"])}.</div>
+    <div class="check"><strong>3.</strong> Combined project + DPPA NPV reaches {fmt_money(summary_d["npv_usd"])} and equity IRR {fmt_pct(summary_d["equity_irr"])} under private-wire. Note: the settlement is additive to the REopt base for framework consistency; in practice, private-wire revenue partially overlaps with avoided-cost savings already captured by REopt.</div>
     <div class="check"><strong>4.</strong> Scenario C still shows that pure REopt cost optimization prefers more PV and no battery, so the fixed battery design needs a non-energy rationale if it is to be retained.</div>
-    <div class="check"><strong>5.</strong> The biggest unresolved commercial question is legal, not technical: whether the project can actually use the 1,800 VND/kWh strike under the intended DPPA structure.</div>
+    <div class="check"><strong>5.</strong> Site coordinates updated to Ninh Sim, Khanh Hoa proxy (12.48°N, 109.09°E). All four scenario JSONs updated. Actual site coords to be confirmed with survey team.</div>
   </div>
 
   <h2>Outstanding Items</h2>
   <div class="checklist">
-    <div class="check">[ ] Confirm the site coordinates used in the case study.</div>
-    <div class="check">[ ] Confirm the intended DPPA legal structure and strike-price compliance.</div>
-    <div class="check">[ ] Decide whether the report should also include a private-wire sensitivity at the documented south ceiling tariff.</div>
-    <div class="check">[ ] Decide whether to add the deferred two-part tariff sensitivity from Decree 146/2025.</div>
+    <div class="check">[~] Site: Ninh Sim, Khanh Hoa confirmed. Proxy coords 12.48°N, 109.09°E applied — confirm actuals with survey team for precise NREL API solar data.</div>
+    <div class="check">[x] DPPA legal structure: private-wire confirmed. Strike set to 1,100 VND/kWh (below south ceiling 1,149.86 VND/kWh). Actual negotiated strike TBD.</div>
+    <div class="check">[x] Phase 5: Decree 146/2025 two-part tariff sensitivity — at pilot rate 60 kVND/kW-month, demand savings add $32K–$98K/yr to base energy savings.</div>
+    <div class="check">[x] Phase 5: BESS dispatch Option B comparison — REopt free optimisation outperforms Excel fixed-window by +88.8% in annual dispatch value ($1.92M vs $1.02M target).</div>
+    <div class="check">[ ] Phase 5: Full Layer 4 Julia integration test run (separate from Python suite).</div>
+    <div class="check">[ ] Phase 6: Staff validation — North Thuan Wind+Solar+BESS (Scenario 3 re-run).</div>
   </div>
 
-  <div class="footer">Generated by <code>scripts/python/generate_html_report.py</code> from canonical Saigon18 scenario, result, settlement, and equity artifacts.</div>
+  <h2>Phase 5 — Decree 146/2025 Two-Part Tariff Sensitivity</h2>
+  <div class="callout">
+    Decree 146/2025 pilots a capacity charge (VND/kW-month) for industrial customers (Jan–Jun 2026).
+    A capacity charge rewards assets that reduce peak demand. Saigon18's solar+BESS reduces the annual
+    grid-import peak from {tariff_sens["bau_annual_peak_kw"]:,.0f} kW (BAU) to {tariff_sens["solar_bess_annual_peak_kw"]:,.0f} kW
+    (current REopt dispatch) — a {tariff_sens["peak_reduction_current_kw"]:,.0f} kW reduction.
+    With demand-shaving optimisation the estimated achievable peak is {tariff_sens["demand_shaved_annual_peak_kw"]:,.0f} kW
+    (additional {tariff_sens["peak_reduction_shaved_kw"] - tariff_sens["peak_reduction_current_kw"]:,.0f} kW via BESS dispatch re-tuning).
+  </div>
+  <table style="margin-top:14px;">
+    <tr><th>Capacity charge rate (VND/kW-month)</th><th>Demand savings — current dispatch ($/yr)</th><th>Demand savings — shaved dispatch ($/yr)</th><th>Total year-1 savings — current ($)</th><th>Total year-1 savings — shaved ($)</th></tr>
+    {"".join(f'<tr><td>{"Decree 146 pilot →" if r["rate_vnd_per_kw_month"] == tariff_sens["decree_146_pilot_rate_vnd_per_kw_month"] else ""} {r["rate_vnd_per_kw_month"]:,}</td><td>${r["current_dispatch"]["demand_savings_usd"]:,.0f}</td><td>${r["demand_shaving_optimised"]["demand_savings_usd"]:,.0f}</td><td class="{"good" if r["rate_vnd_per_kw_month"] > 0 else ""}">${r["total_savings_current_usd"]:,.0f}</td><td class="{"good" if r["rate_vnd_per_kw_month"] > 0 else ""}">${r["total_savings_shaved_usd"]:,.0f}</td></tr>' for r in tariff_sens["sweep"])}
+  </table>
+  <div class="callout" style="margin-top:10px;">
+    At the {tariff_sens["decree_146_pilot_rate_vnd_per_kw_month"]:,} VND/kW-month pilot rate, demand savings add
+    ${tariff_sens["pilot_case"]["current_dispatch"]["demand_savings_usd"]:,.0f}/yr (current dispatch) to
+    ${tariff_sens["pilot_case"]["demand_shaving_optimised"]["demand_savings_usd"]:,.0f}/yr (demand-shaving estimate) on top of base energy savings.
+    This is modest relative to the ${tariff_sens["year1_energy_savings_usd"]:,.0f} energy saving but becomes material at higher rates.
+    A full demand-charge re-optimisation in REopt would capture the upper bound.
+  </div>
+
+  <h2>Phase 5 — BESS Dispatch: REopt Free vs Option B Time-Locked</h2>
+  <div class="grid-2" style="margin-top:12px;">
+    <div class="chart-card">
+      <div class="chart-title">Dispatch by tariff period (MWh)</div>
+      {bar_rows([
+        ("REopt peak", bess_analysis["reopt_free_optimization"]["peak_discharge_mwh"], "blue"),
+        ("REopt standard", bess_analysis["reopt_free_optimization"]["standard_discharge_mwh"], "amber"),
+        ("Excel target peak", bess_analysis["excel_option_b_fixed_window"]["peak_discharge_mwh"], "green"),
+        ("Excel target std", bess_analysis["excel_option_b_fixed_window"]["standard_discharge_mwh"], "red"),
+      ], "MWh")}
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Annual dispatch value (USD)</div>
+      {bar_rows([
+        ("REopt free optimisation", bess_analysis["reopt_free_optimization"]["annual_value_usd"], "blue"),
+        ("Simulated Option B (grid-charge)", bess_analysis["simulated_option_b"]["annual_value_usd"], "green"),
+        ("Excel Option B target", bess_analysis["excel_option_b_fixed_window"]["annual_value_usd"], "amber"),
+      ], "USD")}
+    </div>
+  </div>
+  <table style="margin-top:12px;">
+    <tr><th>Strategy</th><th>Peak discharge (MWh)</th><th>Standard (MWh)</th><th>Total throughput (MWh)</th><th>Annual dispatch value</th></tr>
+    <tr><td>REopt free optimisation</td><td>{bess_analysis["reopt_free_optimization"]["peak_discharge_mwh"]:,.0f}</td><td>{bess_analysis["reopt_free_optimization"]["standard_discharge_mwh"]:,.0f}</td><td>{bess_analysis["reopt_free_optimization"]["total_discharge_mwh"]:,.0f}</td><td class="good">{fmt_money(bess_analysis["reopt_free_optimization"]["annual_value_usd"])}</td></tr>
+    <tr><td>Simulated Option B (time-locked, grid-charge)</td><td>{bess_analysis["simulated_option_b"]["peak_discharge_mwh"]:,.0f}</td><td>{bess_analysis["simulated_option_b"]["standard_discharge_mwh"]:,.0f}</td><td>{bess_analysis["simulated_option_b"]["total_discharge_mwh"]:,.0f}</td><td class="warn">{fmt_money(bess_analysis["simulated_option_b"]["annual_value_usd"])}</td></tr>
+    <tr><td>Excel Option B (target)</td><td>{bess_analysis["excel_option_b_fixed_window"]["peak_discharge_mwh"]:,.0f}</td><td>{bess_analysis["excel_option_b_fixed_window"]["standard_discharge_mwh"]:,.0f}</td><td>{bess_analysis["excel_option_b_fixed_window"]["total_discharge_mwh"]:,.0f}</td><td class="warn">{fmt_money(bess_analysis["excel_option_b_fixed_window"]["annual_value_usd"])}</td></tr>
+  </table>
+  <div class="callout" style="margin-top:10px;">
+    REopt free optimisation outperforms the Excel Option B target by {bess_analysis["reopt_vs_excel_delta_pct"]:+.1f}%
+    (${bess_analysis["reopt_vs_excel_delta_usd"]:+,.0f}/yr) by concentrating more volume into peak hours through
+    active TOU arbitrage rather than a fixed charge/discharge window. The {bess_analysis["tariff_rates_vnd_per_kwh"]["peak"]:,.0f}/{bess_analysis["tariff_rates_vnd_per_kwh"]["standard"]:,.0f}/{bess_analysis["tariff_rates_vnd_per_kwh"]["offpeak"]:,.0f} VND/kWh
+    (peak/standard/offpeak) spread rewards peak-concentrated dispatch.
+  </div>
+
+  <div class="footer">Generated by <code>scripts/python/generate_html_report.py</code> — Phase 5 report includes Decree 146/2025 two-part tariff sensitivity and BESS dispatch Option B analysis.</div>
 </div>
 </body>
 </html>

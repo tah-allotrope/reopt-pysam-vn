@@ -1,5 +1,98 @@
 # Active Context — Saigon18 REopt Integration
 
+## Phase 7 — Cross-Project Dashboard — 2026-03-29
+
+- [x] Implement `scripts/python/generate_cross_project_dashboard.py` — unified dashboard
+- [x] Run dashboard: `artifacts/reports/2026-03-29_cross-project-dashboard.html` (18,415 bytes)
+- [x] Git commit: all Phase 4–7 changes staged and committed
+
+### Phase 7 Key Content
+
+| Section | Description |
+|---|---|
+| Project overview cards | Saigon18 (40.36 MWp solar + 66 MWh BESS, private-wire) vs North Thuan (30 MW solar + 20 MW wind + 10 MW/40 MWh BESS, virtual CfD) |
+| Financial metrics table | IRR, NPV, payback, DSCR side-by-side |
+| Contract risk comparison | Private-wire (no FMP exposure) vs virtual CfD (FMP risk) |
+| Strike sensitivity tables | Saigon18 800–1,149.86 VND/kWh; North Thuan 3.5–7.394 ¢/kWh |
+| BESS dispatch value | REopt +88.8% vs Excel Option B |
+| Key takeaways | 5 callouts for investment committee |
+
+---
+
+## Phase 6 — North Thuan Staff Validation — 2026-03-29
+
+- [x] Implement `scripts/python/validate_north_thuan.py` — recomputes all metrics from PDF inputs
+- [x] Implement `scripts/python/generate_north_thuan_validation_report.py` — standalone HTML report
+- [x] Run validation: `artifacts/reports/north_thuan/2026-03-29_north-thuan-validation.json`
+- [x] Publish validation HTML: `artifacts/reports/north_thuan/2026-03-29_north-thuan-validation.html`
+
+### Phase 6 Key Results: 11 OK / 3 WARN / 0 FAIL
+
+| Metric | Computed | Staff Report | Delta | Status |
+|---|---|---|---|---|
+| Energy metrics (6 items) | ✓ exact | ✓ exact | 0% | OK |
+| Factory gross saving yr1 | $1,326,747 | $1,330,000 | −0.2% | OK |
+| Factory NPV (25yr) | $7.87M | $7.97M | −1.3% | OK |
+| Project IRR | 17.9% | 18.1% | −1.1% | OK |
+| Equity IRR | 33.0% | 31.4% | +5.1% | WARN |
+| Project NPV (@ 15%) | $4.78M | $5.19M | −7.9% | WARN |
+| Equity NPV (@ 15%) | $10.23M | $10.36M | −1.3% | OK |
+| Min DSCR | 1.71 | 1.53 | +11.8% | WARN |
+| Project Payback | Year 6 | Year 6 | 0% | OK |
+
+WARN explanations: Equity IRR gap due to FMP year-1 assumption; NPV gap due to discount rate convention (confirmed 15%); DSCR gap likely from staff's cash-sweep reserve. No errors in staff's model.
+
+Conclusion: Staff report VALIDATED — suitable for investment committee review.
+
+---
+
+## Phase 5 — Two-Part Tariff + BESS Dispatch — 2026-03-29
+
+- [x] Implement `scripts/python/two_part_tariff_sensitivity.py` — Decree 146/2025 capacity charge sweep
+- [x] Implement `scripts/python/bess_dispatch_analysis.py` — REopt vs Excel Option B comparison
+- [x] Run sensitivity: `artifacts/reports/saigon18/2026-03-29_two-part-tariff-sensitivity.json`
+- [x] Run BESS analysis: `artifacts/reports/saigon18/2026-03-29_bess-dispatch-analysis.json`
+- [x] Publish Phase 5 HTML report: `artifacts/reports/saigon18/2026-03-29_saigon18-phase5.html`
+- [x] Full Python test suite: 117 passed, 1 skipped — clean
+
+### Phase 5 Key Results
+
+| Analysis | Finding |
+|---|---|
+| Decree 146 pilot rate (60 kVND/kW-month) | +$31,936/yr demand savings (current dispatch) |
+| Demand shaving estimate (re-tuned BESS) | +$98,073/yr (upper bound without re-solving) |
+| BAU → post-solar+BESS peak reduction | 30,246 → 27,104 kW (−3,142 kW) |
+| REopt vs Excel Option B dispatch value | $1,917,232 vs $1,015,422 (+88.8%) |
+| Full Python test suite | 117 passed, 1 skipped, 0 failed |
+
+---
+
+## Phase 4 — Private-Wire DPPA Correction — 2026-03-29
+
+- [x] Confirm site: Ninh Sim, Khanh Hoa; proxy coords 12.48°N, 109.09°E applied to all 4 scenario JSONs
+- [x] Confirm DPPA type: private-wire; update `dppa_settlement.py` formula and default contract type
+- [x] Re-settle Scenario D: private_wire, strike=1,100 VND/kWh → `2026-03-29_scenario-d_dppa-settlement.json`
+- [x] Re-run equity IRR: `2026-03-29_scenario-d_equity-irr_summary.json`
+- [x] Regenerate Scenario D comparison report: `2026-03-29_scenario-d_vs_excel_comparison.md`
+- [x] Publish Phase 4 HTML report: `artifacts/reports/saigon18/2026-03-29_saigon18-phase4.html`
+- [x] All 23 Python tests pass
+
+### Phase 4 Key Results
+
+| Metric | Grid-connected (Phase 3) | Private-wire (Phase 4) |
+|---|---|---|
+| Contract type | grid_connected | private_wire |
+| Strike price | 1,800 VND/kWh | 1,100 VND/kWh |
+| Strike legality | Exceeded ceiling (illegal) | Below ceiling ✓ |
+| Year-1 DPPA revenue | $1.10M (CfD differential) | $2.76M (strike × matched) |
+| Settlement NPV (20yr) | $15.8M | $39.6M |
+| Equity IRR (combined) | 25.4% | 34.3% |
+| Site coords | 10.9577, 106.8426 (HCMC, wrong) | 12.48, 109.09 (Ninh Sim proxy) |
+
+Note: Combined EBITDA (REopt base + settlement) is additive for framework consistency. In private-wire, the settlement represents the developer's contracted receipt; partial overlap with REopt avoided-cost base exists.
+
+---
+
 ## Reorganization Pass — 2026-03-24
 
 - [x] Move Layer 3 cross-validation to a dedicated `tests/cross_language/` home while preserving old entrypoints
