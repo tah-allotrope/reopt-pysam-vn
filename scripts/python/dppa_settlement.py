@@ -179,6 +179,49 @@ def compute_dppa_annual_revenue(
     }
 
 
+def compute_virtual_dppa_developer_revenue(
+    matched_series_kw: list[float],
+    generation_series_kw: list[float],
+    strike_price_usd_per_kwh: float,
+    fmp_usd_per_kwh: list[float],
+) -> dict:
+    """Compute annual developer revenue for a virtual DPPA proxy.
+
+    Matched energy is settled at the strike price. Unmatched generation is sold
+    at the market price proxy (FMP).
+    """
+    matched_series_kw = _pad_to_8760(matched_series_kw)
+    generation_series_kw = _pad_to_8760(generation_series_kw)
+    fmp_usd_per_kwh = _pad_to_8760(fmp_usd_per_kwh)
+
+    matched_kwh = sum(max(0.0, value) for value in matched_series_kw)
+    generation_kwh = sum(max(0.0, value) for value in generation_series_kw)
+    unmatched_kwh = max(0.0, generation_kwh - matched_kwh)
+
+    strike_revenue_usd = matched_kwh * strike_price_usd_per_kwh
+    merchant_revenue_usd = 0.0
+
+    if generation_kwh > 0 and unmatched_kwh > 0:
+        for generation_kw, fmp in zip(generation_series_kw, fmp_usd_per_kwh):
+            generation_share = max(0.0, generation_kw) / generation_kwh
+            merchant_revenue_usd += unmatched_kwh * generation_share * fmp
+
+    total_revenue_usd = strike_revenue_usd + merchant_revenue_usd
+
+    return {
+        "strike_price_usd_per_kwh": strike_price_usd_per_kwh,
+        "matched_volume_mwh": matched_kwh / 1_000.0,
+        "unmatched_volume_mwh": unmatched_kwh / 1_000.0,
+        "total_generation_mwh": generation_kwh / 1_000.0,
+        "revenue_from_matched_usd": strike_revenue_usd,
+        "revenue_from_unmatched_usd": merchant_revenue_usd,
+        "developer_revenue_yr1_usd": total_revenue_usd,
+        "avg_realized_price_usd_per_kwh": (
+            total_revenue_usd / generation_kwh if generation_kwh else 0.0
+        ),
+    }
+
+
 def project_dppa_cashflows(
     year_one_settlement_usd: float,
     analysis_years: int = DEFAULT_ANALYSIS_YEARS,

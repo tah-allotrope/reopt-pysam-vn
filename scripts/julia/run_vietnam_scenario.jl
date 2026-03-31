@@ -39,6 +39,7 @@ const NO_SOLVE = "--no-solve" in ARGS
 const SCENARIO_IDX = findfirst(==("--scenario"), ARGS)
 const SCENARIO_PATH = SCENARIO_IDX !== nothing ? ARGS[SCENARIO_IDX + 1] : nothing
 const SAIGON18_SCENARIO_MARKER = joinpath("scenarios", "case_studies", "saigon18")
+const NORTH_THUAN_SCENARIO_MARKER = joinpath("scenarios", "case_studies", "north_thuan")
 
 # ---------------------------------------------------------------------------
 # Load NREL API keys from NREL_API.env if present
@@ -156,6 +157,8 @@ else
         normalized_scenario_path = replace(normpath(SCENARIO_PATH), '/' => Base.Filesystem.path_separator)
         if occursin(SAIGON18_SCENARIO_MARKER, normalized_scenario_path)
             out_dir = joinpath(REPO_ROOT, "artifacts", "results", "saigon18")
+        elseif occursin(NORTH_THUAN_SCENARIO_MARKER, normalized_scenario_path)
+            out_dir = joinpath(REPO_ROOT, "artifacts", "results", "north_thuan")
         else
             out_dir = joinpath(REPO_ROOT, "artifacts", "results")
         end

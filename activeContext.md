@@ -1,5 +1,72 @@
 # Active Context — Saigon18 REopt Integration
 
+## North Thuan REopt Validation Plan — 2026-03-31
+
+- [x] Phase 1 - Create North Thuan extracted inputs and synthetic 8760 load builder
+- [x] Phase 2 - Build North Thuan REopt scenario JSON generator for scenarios A/B/C
+- [x] Phase 3 - Update Julia runner/output routing and add North Thuan orchestration path
+- [x] Phase 4 - Implement REopt-vs-staff comparison extraction and regression tests
+- [x] Phase 5 - Add DPPA settlement post-processing from REopt dispatch outputs
+- [x] Phase 6 - Generate North Thuan REopt HTML report artifacts
+- [x] Validation - Run targeted Python tests and at least no-solve North Thuan scenario validation
+- [x] Review / Results - Record outcomes and generated report paths after completion
+
+### Notes
+
+- User requested HTML report generation at the end of each phase via the `report` skill.
+- This pass should reuse existing Saigon18 and North Thuan report conventions where possible.
+
+### Outputs Generated
+
+- `data/interim/north_thuan/north_thuan_extracted_inputs.json`
+- `scenarios/case_studies/north_thuan/north_thuan_scenario_a.json`
+- `scenarios/case_studies/north_thuan/north_thuan_scenario_b.json`
+- `scenarios/case_studies/north_thuan/north_thuan_scenario_c.json`
+- `artifacts/results/north_thuan/north_thuan_scenario_a_reopt-results.json`
+- `artifacts/results/north_thuan/north_thuan_scenario_b_reopt-results.json`
+- `artifacts/results/north_thuan/north_thuan_scenario_c_reopt-results.json`
+- `artifacts/reports/north_thuan/2026-03-31_north-thuan-reopt-validation.json`
+- `artifacts/reports/north_thuan/2026-03-31_north-thuan-reopt-validation.html`
+- `reports/2026-03-31-north-thuan-phase-1-environment-and-data-preparation.html`
+- `reports/2026-03-31-north-thuan-phase-2-reopt-scenario-construction.html`
+- `reports/2026-03-31-north-thuan-phase-3-local-julia-runner-and-solve-path.html`
+- `reports/2026-03-31-north-thuan-phase-4-energy-comparison-extraction.html`
+- `reports/2026-03-31-north-thuan-phase-5-dppa-settlement-post-processing.html`
+- `reports/2026-03-31-north-thuan-phase-6-html-report-synthesis.html`
+
+### Review / Results
+
+- Added `scripts/python/build_north_thuan_load_profile.py` to create a deterministic 8760 industrial load profile, derived FMP proxy, and synthetic wind production-factor fallback from the staff PDF summary inputs.
+- Added `scripts/python/build_north_thuan_reopt_input.py` and `scripts/python/run_north_thuan_reopt.py` so North Thuan now has the same build/run workflow shape as Saigon18.
+- Updated `scripts/julia/run_vietnam_scenario.jl` so `scenarios/case_studies/north_thuan/` solves save into `artifacts/results/north_thuan/` automatically.
+- Added `scripts/python/compare_north_thuan_reopt_vs_staff.py`, `scripts/python/generate_north_thuan_reopt_report.py`, and `tests/python/test_north_thuan_reopt.py` for solved-result comparison, HTML reporting, and regression coverage.
+- Extended `scripts/python/dppa_settlement.py` with `compute_virtual_dppa_developer_revenue()` for the North Thuan virtual-DPPA revenue check without breaking the existing Saigon18 settlement path.
+- Generated six report-skill-style phase reports in `reports/` using `scripts/python/generate_north_thuan_phase_reports.py` and the shared `report-template.html` shell.
+
+### Validation
+
+- `python -m pytest tests/python/test_north_thuan_reopt.py -v --tb=short` - PASS
+- `python scripts/python/run_north_thuan_reopt.py --scenarios a --no-solve` - PASS
+- `python scripts/python/run_north_thuan_reopt.py --scenarios a` - PASS after switching Wind to a synthetic `production_factor_series` fallback
+- `python scripts/python/run_north_thuan_reopt.py --scenarios b c` - PASS
+- `python scripts/python/compare_north_thuan_reopt_vs_staff.py ...` - PASS
+- `python scripts/python/generate_north_thuan_reopt_report.py` - PASS
+- `python scripts/python/generate_north_thuan_phase_reports.py --template ... --outdir reports` - PASS
+- `python -m pytest tests/python/test_saigon18_compare.py tests/python/test_saigon18_phase3.py tests/python/test_north_thuan_reopt.py -v --tb=short` - PASS
+
+### Key Results
+
+- Scenario A solved optimally at fixed 30 MW solar + 20 MW wind + 10 MW / 40 MWh BESS.
+- Scenario A energy comparison vs staff: solar 45.87 GWh (-10.1%, WARN), wind 66.58 GWh (-0.0%, OK), total RE 112.44 GWh (-4.4%, OK), matched volume 110.32 GWh (+57.5%, WARN), RE penetration 46.68% (-4.4%, OK), self-consumption 98.11% (+64.6%, WARN), factory NPV proxy $6.51M (-18.4%, WARN).
+- Scenario B optimized to 24.59 MW solar, 50.00 MW wind, and no storage with factory NPV proxy $35.04M.
+- Scenario C no-BESS baseline solved at the staff generation sizes with factory NPV proxy $18.66M.
+- DPPA settlement post-processing landed at $6.07M year-1 developer revenue versus the staff $6.0M claim (+1.1%, OK).
+
+### Known Limitations From This Pass
+
+- The North Thuan proxy coordinate remains outside the NREL wind-resource coverage used by REopt's default Wind Toolkit fetch, so the workflow now intentionally uses a synthetic `Wind.production_factor_series` fallback.
+- The synthetic load profile and flat year-1 FMP proxy materially affect matched volume and self-consumption, so those WARNs should be treated as model-input sensitivity rather than final project conclusions.
+
 ## Phase 7 — Cross-Project Dashboard — 2026-03-29
 
 - [x] Implement `scripts/python/generate_cross_project_dashboard.py` — unified dashboard
