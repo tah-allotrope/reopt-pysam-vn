@@ -1,5 +1,44 @@
 # Active Context — Saigon18 REopt Integration
 
+## Phase 8 — Case Study Offtaker Physical Match Ranking — 2026-04-01
+
+- [x] Phase 1 - Build a reproducible case-study physical-fit ranking script for a 30 MWp solar + 6 MW BESS offtaker screen
+- [x] Phase 2 - Generate ranked outputs and persist artifacts for all six case studies
+- [x] Phase 3 - Publish a report-skill-style HTML phase report for the physical-match ranking pass
+- [x] Validation - Run targeted regression coverage for the ranking workflow
+- [x] Review / Results - Record ranking, caveats, and generated report paths after completion
+
+### Notes
+
+- User requested ranking for pure physical load matching, not contract-structure preference.
+- The screening basis is a 30 MWp solar project in Ninh Thuan with BESS capped at 20% of solar capacity, treated here as 6 MW BESS power.
+
+### Outputs Generated
+
+- `scripts/python/rank_case_study_offtakers.py`
+- `tests/python/test_case_study_ranking.py`
+- `artifacts/reports/case_studies/2026-04-01_offtaker-physical-match-ranking.json`
+- `reports/2026-04-01-case-study-offtaker-physical-match-ranking.html`
+- `lessons.md`
+
+### Review / Results
+
+- Added `scripts/python/rank_case_study_offtakers.py` to normalize mixed CSV, XLSX, and JSON case-study inputs and rank them for pure physical absorption of a common 30 MWp solar profile with a 6 MW BESS headroom proxy.
+- Reused the embedded `PV.production_factor_series` in `scenarios/case_studies/saigon18/2026-03-20_scenario-a_fixed-sizing_evntou.json` as the shared south-central Vietnam hourly solar shape because the North Thuan case-study JSON does not store an explicit hourly PV factor series.
+- Added cleaning logic that interpolates missing placeholder cells and clips negative hourly loads to zero without changing the 8760-hour record count.
+- Persisted the machine-readable ranking artifact in `artifacts/reports/case_studies/2026-04-01_offtaker-physical-match-ranking.json` and a report-skill-style HTML review page in `reports/2026-04-01-case-study-offtaker-physical-match-ranking.html`.
+- Final physical-fit ranking: `north_thuan` (fit score 95.8), `ninhsim` (93.4), `saigon18` (89.4), `verdant` (38.9), `emivest` (32.4), `regina` (30.7).
+- `north_thuan` is the cleanest physical match because it absorbs 100.0% of the replayed solar profile with the 6 MW BESS proxy and effectively eliminates curtailment in the screening model.
+- `ninhsim` and `saigon18` both absorb nearly all annual solar energy with the 6 MW proxy, but `saigon18` falls behind `ninhsim` because its solar-hour minimum load reaches 0 MW while `ninhsim` maintains a healthier floor around 11.74 MW.
+- `verdant`, `emivest`, and `regina` remain poor direct offtaker fits for a 30 MWp plant because even with the 6 MW proxy they leave large residual curtailment volumes.
+
+### Validation
+
+- `python -m pytest tests/python/test_case_study_ranking.py -v --tb=short` - PASS
+- `python scripts/python/rank_case_study_offtakers.py` - PASS
+
+---
+
 ## North Thuan REopt Validation Plan — 2026-03-31
 
 - [x] Phase 1 - Create North Thuan extracted inputs and synthetic 8760 load builder
