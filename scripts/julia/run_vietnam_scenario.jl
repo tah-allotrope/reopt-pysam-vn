@@ -40,6 +40,7 @@ const SCENARIO_IDX = findfirst(==("--scenario"), ARGS)
 const SCENARIO_PATH = SCENARIO_IDX !== nothing ? ARGS[SCENARIO_IDX + 1] : nothing
 const SAIGON18_SCENARIO_MARKER = joinpath("scenarios", "case_studies", "saigon18")
 const NORTH_THUAN_SCENARIO_MARKER = joinpath("scenarios", "case_studies", "north_thuan")
+const NINHSIM_SCENARIO_MARKER = joinpath("scenarios", "case_studies", "ninhsim")
 
 # ---------------------------------------------------------------------------
 # Load NREL API keys from NREL_API.env if present
@@ -159,6 +160,8 @@ else
             out_dir = joinpath(REPO_ROOT, "artifacts", "results", "saigon18")
         elseif occursin(NORTH_THUAN_SCENARIO_MARKER, normalized_scenario_path)
             out_dir = joinpath(REPO_ROOT, "artifacts", "results", "north_thuan")
+        elseif occursin(NINHSIM_SCENARIO_MARKER, normalized_scenario_path)
+            out_dir = joinpath(REPO_ROOT, "artifacts", "results", "ninhsim")
         else
             out_dir = joinpath(REPO_ROOT, "artifacts", "results")
         end
