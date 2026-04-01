@@ -1,5 +1,85 @@
 # Active Context — Saigon18 REopt Integration
 
+## Phase 11 — Ninhsim Developer Revenue and Offtaker Cost Path — 2026-04-02
+
+- [x] Phase 1 - Add failing regression coverage for multi-year Ninhsim developer-revenue and offtaker-cost views derived from the escalated CPPA path
+- [x] Phase 2 - Extend the Ninhsim pricing analysis summary with developer revenue, customer cost, and screening NPV views
+- [x] Phase 3 - Validate the refreshed Ninhsim financial-view artifact and persist machine-readable outputs
+- [x] Phase 4 - Publish the next Ninhsim HTML phase report via the `report` skill flow
+- [x] Review / Results - Record outputs, validation, and next-step seeds after completion
+
+### Notes
+
+- This phase implements the second open seed from Phase 10 by extending the multi-year CPPA pricing path into developer-revenue and offtaker-cost screening views without re-solving REopt.
+- The implementation should stay explicit about scope: this is a post-processed contract-screening view, not a full project finance model.
+
+### Outputs Generated
+
+- `scripts/python/analyze_ninhsim_cppa.py`
+- `tests/python/test_ninhsim_cppa.py`
+- `artifacts/reports/ninhsim/2026-04-02_ninhsim-cppa-financial-screening.json`
+- `reports/2026-04-02-ninhsim-developer-revenue-and-offtaker-cost-path.html`
+- `lessons.md`
+
+### Review / Results
+
+- Extended `scripts/python/analyze_ninhsim_cppa.py` with a `financial_screening_view` that projects annual developer revenue, offtaker renewable payment, residual EVN cost, and total customer cost directly from the already-solved multi-year bundled-CPPA path.
+- Kept the scope intentionally narrow and explicit: this pass still replays the solved year-one renewable delivery and residual grid volumes, then discounts the annual screening values using the REopt financial discount rates already present in the result JSON.
+- Added discounted screening outputs to the summary payload: `developer_revenue_npv_usd`, `offtaker_cost_npv_usd`, `benchmark_evn_cost_npv_usd`, and `offtaker_savings_npv_usd`.
+- Refreshed the machine-readable artifact at `artifacts/reports/ninhsim/2026-04-02_ninhsim-cppa-financial-screening.json`; the current screening view yields developer revenue NPV about `$153.03M`, offtaker cost NPV about `$170.69M`, and benchmark EVN cost NPV essentially the same because the strike path stays at the customer-equivalent ceiling.
+- Added two new regressions in `tests/python/test_ninhsim_cppa.py` that lock the annual finance-view math and the presence of the new NPV fields in the summary.
+- Recorded a repo lesson in `lessons.md` after the user-found report bug: future Chart.js report canvases should always sit inside explicit-height containers and be browser-verified over HTTP.
+- Published the synchronized HTML artifact at `reports/2026-04-02-ninhsim-developer-revenue-and-offtaker-cost-path.html` via the report skill flow.
+
+### Validation
+
+- `python -m pytest tests/python/test_ninhsim_cppa.py -v --tb=short` - PASS
+- `python scripts/python/analyze_ninhsim_cppa.py --reopt artifacts/results/ninhsim/2026-04-01_ninhsim_scenario-b_optimized-cppa_reopt-results.json --extracted data/interim/ninhsim/ninhsim_extracted_inputs.json --output artifacts/reports/ninhsim/2026-04-02_ninhsim-cppa-financial-screening.json` - PASS
+
+### Next-Step Seeds
+
+- Add sensitivity bands around the customer-equivalent strike ceiling so the Ninhsim workflow can show offtaker savings or premium tradeoffs, not just the zero-savings screening point.
+- Replace the fixed-volume replay with a more finance-grade path that captures degradation, load drift, and any merchant handling for unmatched renewable output.
+
+## Phase 10 — Ninhsim Escalated CPPA Strike Path — 2026-04-02
+
+- [x] Phase 1 - Add failing regression coverage for a full multi-year Ninhsim bundled-CPPA strike path tied to EVN tariff escalation
+- [x] Phase 2 - Extend the Ninhsim CPPA analysis workflow to compute the annual escalated strike and customer blended price path
+- [x] Phase 3 - Validate the updated Ninhsim pricing analysis and persist refreshed machine-readable artifacts
+- [x] Phase 4 - Publish the next Ninhsim HTML phase report via the `report` skill flow
+- [x] Review / Results - Record outputs, validation, and follow-up notes after completion
+
+### Notes
+
+- This phase implements the first next-step seed from Phase 9 by extending the customer-equivalent strike logic beyond year 1 into a full escalated path aligned with EVN tariff growth assumptions already embedded in the Ninhsim REopt inputs.
+- The report should be generated promptly after validation so the HTML artifact stays in sync with the refreshed JSON analysis output.
+
+### Outputs Generated
+
+- `scripts/python/analyze_ninhsim_cppa.py`
+- `tests/python/test_ninhsim_cppa.py`
+- `artifacts/reports/ninhsim/2026-04-02_ninhsim-cppa-escalated-analysis.json`
+- `reports/2026-04-02-ninhsim-escalated-cppa-strike-path.html`
+
+### Review / Results
+
+- Added a multi-year bundled-CPPA pricing path to `scripts/python/analyze_ninhsim_cppa.py` so the Ninhsim post-processing now carries the year-1 customer-equivalent strike forward across the full 20-year analysis horizon using the scenario's `elec_cost_escalation_rate_fraction`.
+- Kept this pass intentionally simple and explicit: the solved year-one renewable delivery and residual EVN supply volumes stay fixed while the CPPA strike, residual EVN unit price, and weighted EVN benchmark all escalate together at `5%` per year.
+- Embedded the new `multi_year_cppa_path` block directly in the JSON summary so downstream scripts and reports can consume the full annual strike path without re-deriving it.
+- Refreshed the machine-readable Ninhsim pricing artifact at `artifacts/reports/ninhsim/2026-04-02_ninhsim-cppa-escalated-analysis.json`; the year-1 maximum equivalent bundled strike remains `2036.31 VND/kWh`, and the year-20 escalated strike reaches `5145.66 VND/kWh` while the blended customer price tracks the escalated EVN benchmark each year.
+- Added two regression tests: one locks the annual escalation math, and one locks the presence of the new `multi_year_cppa_path` in the summary payload.
+- Published the synchronized HTML phase report at `reports/2026-04-02-ninhsim-escalated-cppa-strike-path.html` using the report skill template flow.
+
+### Validation
+
+- `python -m pytest tests/python/test_ninhsim_cppa.py -v --tb=short` - PASS
+- `python scripts/python/analyze_ninhsim_cppa.py --reopt artifacts/results/ninhsim/2026-04-01_ninhsim_scenario-b_optimized-cppa_reopt-results.json --extracted data/interim/ninhsim/ninhsim_extracted_inputs.json --output artifacts/reports/ninhsim/2026-04-02_ninhsim-cppa-escalated-analysis.json` - PASS
+
+### Next-Step Seeds
+
+- Replace the fixed-volume annual replay with a richer multi-year path that captures degradation, load drift, or changing renewable output if the pricing study needs a more finance-grade escalation model.
+- Extend the same multi-year framing into settlement, developer cash flow, or offtaker savings views so the escalated strike path can feed investment-decision artifacts directly.
+
 ## Phase 9 — Ninhsim CPPA Optimization Workflow — 2026-04-01
 
 - [x] Phase 1 - Build Ninhsim extracted-input workflow with cleaned 8760 load, benchmark EVN tariff, and CPPA target metadata

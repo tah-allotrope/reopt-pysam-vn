@@ -14,6 +14,8 @@ from analyze_ninhsim_cppa import (  # noqa: E402
     build_summary,
     calculate_customer_bill_breakdown,
     calculate_customer_equivalent_strike,
+    calculate_financial_screening_view,
+    calculate_multi_year_cppa_path,
 )
 from build_ninhsim_extracted_inputs import (  # noqa: E402
     PROJECT_SITE,
@@ -131,3 +133,80 @@ def test_build_summary_accepts_wind_annual_energy_key():
     summary = build_summary(results, extracted)
 
     assert math.isclose(summary["year_one_energy"]["wind_gwh"], 32.0, abs_tol=1e-9)
+
+
+def test_multi_year_cppa_path_escalates_with_evn_tariff_growth():
+    extracted = build_extracted_inputs()
+    results = _synthetic_results()
+
+    path = calculate_multi_year_cppa_path(results, extracted, analysis_years=4)
+
+    assert path[0]["year"] == 1
+    assert math.isclose(
+        path[0]["cPPA_strike_usd_per_kwh"],
+        calculate_customer_equivalent_strike(results, extracted)[
+            "max_cppa_strike_usd_per_kwh"
+        ],
+        rel_tol=0,
+        abs_tol=1e-12,
+    )
+    assert math.isclose(
+        path[1]["weighted_evn_benchmark_usd_per_kwh"],
+        path[0]["weighted_evn_benchmark_usd_per_kwh"] * 1.05,
+        rel_tol=0,
+        abs_tol=1e-12,
+    )
+    assert math.isclose(
+        path[3]["cPPA_strike_usd_per_kwh"],
+        path[0]["cPPA_strike_usd_per_kwh"] * (1.05**3),
+        rel_tol=0,
+        abs_tol=1e-12,
+    )
+    for year in path:
+        assert math.isclose(
+            year["customer_blended_price_usd_per_kwh"],
+            year["weighted_evn_benchmark_usd_per_kwh"],
+            rel_tol=0,
+            abs_tol=1e-12,
+        )
+
+
+def test_build_summary_includes_multi_year_cppa_path():
+    extracted = build_extracted_inputs()
+    results = _synthetic_results()
+
+    summary = build_summary(results, extracted)
+
+    assert summary["multi_year_cppa_path"]
+    assert summary["multi_year_cppa_path"][0]["year"] == 1
+    assert summary["multi_year_cppa_path"][-1]["year"] == 20
+
+
+def test_financial_screening_view_projects_customer_cost_and_developer_revenue():
+    extracted = build_extracted_inputs()
+    results = _synthetic_results()
+
+    view = calculate_financial_screening_view(results, extracted, analysis_years=3)
+
+    assert view[0]["year"] == 1
+    assert view[0]["developer_revenue_usd"] > 0.0
+    assert math.isclose(
+        view[0]["customer_total_cost_usd"],
+        extracted["benchmark"]["annual_load_kwh"]
+        * extracted["benchmark"]["weighted_evn_price_usd_per_kwh"],
+        rel_tol=0,
+        abs_tol=1e-6,
+    )
+    assert view[2]["developer_revenue_usd"] > view[0]["developer_revenue_usd"]
+    assert view[2]["customer_savings_vs_evn_usd"] == 0.0
+
+
+def test_build_summary_includes_financial_screening_view_and_npv_fields():
+    extracted = build_extracted_inputs()
+    results = _synthetic_results()
+
+    summary = build_summary(results, extracted)
+
+    assert summary["financial_screening_view"]
+    assert summary["financial"]["developer_revenue_npv_usd"] > 0.0
+    assert summary["financial"]["offtaker_cost_npv_usd"] > 0.0
