@@ -2,6 +2,155 @@
 
 ## Phase 11 — Ninhsim Developer Revenue and Offtaker Cost Path — 2026-04-02
 
+## Phase 14 — Ninhsim Commercial Candidate Memo — 2026-04-02
+
+- [x] Phase 1 - Add failing regression coverage for a shortlist commercial memo with advance / hold / discard candidate statuses
+- [x] Phase 2 - Extend the Ninhsim analysis summary with a commercial candidate memo view built from the accepted customer-first band and the remaining shortlist options
+- [x] Phase 3 - Validate the refreshed Ninhsim memo artifact and persist machine-readable outputs
+- [x] Phase 4 - Publish the next Ninhsim HTML phase report via the `report` skill flow
+- [x] Review / Results - Record outputs, validation, and the final shortlist review endpoint
+
+### Notes
+
+- This phase implements the first open seed from Phase 13 by turning the accepted customer-first annual-path result into a compact decision memo for commercial review.
+- The memo should preserve the customer-first framing while still showing why the alternative shortlist bands are marked advance, hold, or discard.
+
+### Outputs Generated
+
+- `scripts/python/analyze_ninhsim_cppa.py`
+- `scripts/python/generate_ninhsim_phase14_report.py`
+- `tests/python/test_ninhsim_cppa.py`
+- `artifacts/reports/ninhsim/2026-04-02_ninhsim-commercial-candidate-memo.json`
+- `reports/2026-04-02-ninhsim-commercial-candidate-memo.html`
+
+### Review / Results
+
+- Extended `scripts/python/analyze_ninhsim_cppa.py` with a `commercial_candidate_memo` decision layer that converts the already-accepted customer-first band and the remaining shortlist into direct `advance`, `hold`, and `discard` actions.
+- Kept the memo logic intentionally simple and policy-driven: the accepted customer-first band is marked `advance`, any non-premium fallback band is marked `hold`, and any shortlist band with positive customer premium is marked `discard`.
+- Added regression coverage in `tests/python/test_ninhsim_cppa.py` that first failed on the missing memo API, then locked the exact shortlist status mapping and the presence of `commercial_candidate_memo` in the summary payload.
+- Refreshed the machine-readable artifact at `artifacts/reports/ninhsim/2026-04-02_ninhsim-commercial-candidate-memo.json`; the final memo decision is to advance `5% below ceiling` as the primary commercial candidate, keep `ceiling` only as fallback, and discard `5% above ceiling` because it creates explicit customer premium.
+- The memo now gives the shortlist in one place: `5% below ceiling` -> `advance` at about `1934.50 VND/kWh` with customer savings NPV about `$6.45M`; `ceiling` -> `hold` at about `2036.31 VND/kWh` with parity economics; `5% above ceiling` -> `discard` at about `2138.13 VND/kWh` because it adds customer premium NPV about `$6.45M`.
+- Published the synchronized HTML artifact at `reports/2026-04-02-ninhsim-commercial-candidate-memo.html` via the report-template flow so the final shortlist can be reviewed visually without opening raw JSON.
+
+### Validation
+
+- `python -m pytest tests/python/test_ninhsim_cppa.py -v --tb=short` - PASS
+- `python scripts/python/analyze_ninhsim_cppa.py --reopt artifacts/results/ninhsim/2026-04-01_ninhsim_scenario-b_optimized-cppa_reopt-results.json --extracted data/interim/ninhsim/ninhsim_extracted_inputs.json --output artifacts/reports/ninhsim/2026-04-02_ninhsim-commercial-candidate-memo.json` - PASS
+- `python scripts/python/generate_ninhsim_phase14_report.py` - PASS
+
+### Clear Review Endpoint
+
+- Review `artifacts/reports/ninhsim/2026-04-02_ninhsim-commercial-candidate-memo.json` or `reports/2026-04-02-ninhsim-commercial-candidate-memo.html` and confirm the final shortlist action labels.
+- The decision question for this phase is no longer which band is best; it is whether you agree to carry `5% below ceiling` forward as the lead commercial candidate, with `ceiling` as fallback and `5% above ceiling` removed from the active commercial path.
+
+### Next-Step Seeds
+
+- Package the `advance` candidate into a shorter external-facing negotiation memo or slide page that strips away the internal modeling detail and focuses on the commercial ask, customer protection, and fallback path.
+- If commercial stakeholders want more downside stress testing before outreach, run a merchant-price scenario range around the accepted candidate and refresh the memo only if the advance / hold / discard statuses change.
+
+---
+
+## Phase 13 — Ninhsim Customer-First Finance-Grade Annual Path — 2026-04-02
+
+- [x] Phase 1 - Add failing regression coverage for a customer-first annual path with degradation, load drift, and unmatched-energy treatment
+- [x] Phase 2 - Extend the Ninhsim pricing analysis summary with a finance-grade annual path that preserves the customer-preferred strike band and shows customer-risk tradeoffs explicitly
+- [x] Phase 3 - Validate the refreshed Ninhsim finance-grade artifact and persist machine-readable outputs
+- [x] Phase 4 - Publish the next Ninhsim HTML phase report via the `report` skill flow
+- [x] Review / Results - Record outputs, validation, and the final customer-first review endpoint
+
+### Notes
+
+- This phase implements the second open seed from Phase 12 by carrying the customer-preferred shortlist into a richer annual path that includes degradation, load drift, and unmatched-energy handling.
+- Customer best interest should drive the defaults for this pass, so the annual path should center the best savings-positive shortlist band unless the refreshed volume model proves it stops being customer-favorable.
+
+### Outputs Generated
+
+- `scripts/python/analyze_ninhsim_cppa.py`
+- `scripts/python/generate_ninhsim_phase13_report.py`
+- `tests/python/test_ninhsim_cppa.py`
+- `artifacts/reports/ninhsim/2026-04-02_ninhsim-customer-first-annual-path.json`
+- `reports/2026-04-02-ninhsim-customer-first-annual-path.html`
+
+### Review / Results
+
+- Extended `scripts/python/analyze_ninhsim_cppa.py` with a `customer_first_recommendation` selector and a `customer_first_annual_path` that replays the solved Ninhsim delivery plus export shapes under a richer annual path instead of the prior fixed-volume simplification.
+- Kept the default recommendation customer-protective by design: from the Phase 12 shortlist, the analyzer now selects the highest developer-revenue band that still leaves positive customer savings in the screening view, which keeps `5% below ceiling` as the recommended band instead of drifting up to parity or premium pricing.
+- Added new annual-path assumptions explicitly to the summary payload: renewable degradation `0.5%/yr`, load growth `1.0%/yr`, and unmatched-energy monetization at about `33.2%` of the EVN benchmark, using the extracted wholesale-to-retail ratio as a merchant-price proxy.
+- Implemented the finance-grade annual path so unmatched renewable energy is handled outside the customer bill and credited only to developer merchant revenue, which keeps the customer-cost side conservative and aligned with the user instruction to prioritize customer best interest.
+- Added regression coverage in `tests/python/test_ninhsim_cppa.py` that first failed on the missing annual-path API, then locked the degradation, load drift, unmatched-energy treatment, and the presence of the customer-first recommendation in the summary payload.
+- Refreshed the machine-readable artifact at `artifacts/reports/ninhsim/2026-04-02_ninhsim-customer-first-annual-path.json`; the recommended `5% below ceiling` band stays at year-one strike about `1934.50 VND/kWh`, screening savings NPV about `$6.45M`, and finance-grade customer savings NPV about `$6.47M` with zero customer premium.
+- The richer annual path shows year-one unmatched renewable energy about `3.42 GWh`, declining to about `0.19 GWh` by year 20 as load growth absorbs more production even while renewable output degrades modestly.
+- Under the customer-first annual path, year-one customer savings remain about `$0.53M`, year-20 customer savings rise to about `$1.32M`, year-one developer revenue is about `$10.22M`, and only about `$0.10M` of that year-one developer revenue comes from merchant handling of unmatched output.
+- Published the synchronized HTML artifact at `reports/2026-04-02-ninhsim-customer-first-annual-path.html` via the report-template flow so the customer-first economics and annual volume path can be reviewed visually.
+
+### Validation
+
+- `python -m pytest tests/python/test_ninhsim_cppa.py -v --tb=short` - PASS
+- `python scripts/python/analyze_ninhsim_cppa.py --reopt artifacts/results/ninhsim/2026-04-01_ninhsim_scenario-b_optimized-cppa_reopt-results.json --extracted data/interim/ninhsim/ninhsim_extracted_inputs.json --output artifacts/reports/ninhsim/2026-04-02_ninhsim-customer-first-annual-path.json` - PASS
+- `python scripts/python/generate_ninhsim_phase13_report.py` - PASS
+
+### Clear Review Endpoint
+
+- Review `artifacts/reports/ninhsim/2026-04-02_ninhsim-customer-first-annual-path.json` or `reports/2026-04-02-ninhsim-customer-first-annual-path.html` and confirm whether the recommended `5% below ceiling` band is acceptable as the customer-first commercial position.
+- The key review question is now narrower than in Phase 12: do you want to carry forward a band that still preserves about `$6.47M` customer savings NPV under the richer annual path, or do you want to revert to exact parity for negotiation simplicity even though the customer-favorable band still holds up?
+
+### Next-Step Seeds
+
+- Turn the recommended `5% below ceiling` band into a compact commercial memo view with advance / hold / discard framing, now that the customer-first annual path has stayed savings-positive under richer assumptions.
+- If the merchant-price proxy needs more confidence, replace the wholesale-ratio shortcut with a project-specific merchant scenario range so the customer-first recommendation can be stress-tested further.
+
+---
+
+## Phase 12 — Ninhsim Strike Sensitivity Bands — 2026-04-02
+
+- [x] Phase 1 - Add failing regression coverage for strike sensitivity bands around the customer-equivalent CPPA ceiling
+- [x] Phase 2 - Extend the Ninhsim pricing analysis summary with developer-revenue and offtaker-savings sensitivity views
+- [x] Phase 3 - Validate the refreshed Ninhsim sensitivity artifact and persist machine-readable outputs
+- [x] Phase 4 - Publish the next Ninhsim HTML phase report via the `report` skill flow
+- [x] Review / Results - Record outputs, validation, and the clear review endpoint for user decision
+
+### Notes
+
+- This phase implements the first open seed from Phase 11 by turning the current zero-savings screening point into a strike-band decision screen around the customer-equivalent ceiling.
+- The endpoint for user review should be a compact shortlist view that makes it easy to compare developer revenue upside against offtaker savings or premium tradeoffs without re-solving REopt.
+
+### Outputs Generated
+
+- `scripts/python/analyze_ninhsim_cppa.py`
+- `scripts/python/generate_ninhsim_phase12_report.py`
+- `tests/python/test_ninhsim_cppa.py`
+- `artifacts/reports/ninhsim/2026-04-02_ninhsim-cppa-strike-sensitivity.json`
+- `reports/2026-04-02-ninhsim-strike-sensitivity-bands.html`
+
+### Review / Results
+
+- Extended `scripts/python/analyze_ninhsim_cppa.py` with explicit `strike_sensitivity_bands` output built around the customer-equivalent CPPA ceiling, using default strike adjustments of `-15%`, `-10%`, `-5%`, `0%`, and `+5%` without re-solving REopt.
+- Kept the scope aligned with the prior Ninhsim passes: each band still replays the solved year-one renewable delivery and residual EVN supply volumes across the 20-year horizon while escalating prices at the existing `elec_cost_escalation_rate_fraction` and discounting with the REopt owner/offtaker discount rates already present in the result JSON.
+- Added regression coverage in `tests/python/test_ninhsim_cppa.py` that first failed on the missing sensitivity-band API, then locked the savings/parity/premium tradeoff behavior and the presence of `strike_sensitivity_bands` in the summary payload.
+- Fixed an implementation bug during the phase: the first sensitivity pass showed a tiny false premium at the ceiling because the benchmark comparison used replayed delivered volume instead of total load and carried floating-point residue; the analyzer now benchmarks against total load and clamps near-zero deltas to keep the parity band exactly neutral.
+- Refreshed the machine-readable artifact at `artifacts/reports/ninhsim/2026-04-02_ninhsim-cppa-strike-sensitivity.json`; the current band sweep yields developer revenue NPV about `$130.07M` at `15% below ceiling`, `$145.38M` at `5% below ceiling`, `$153.03M` at `ceiling`, and `$160.68M` at `5% above ceiling`.
+- The corresponding customer economics now create a clean tradeoff ladder: offtaker savings NPV about `$19.36M` at `15% below ceiling`, `$12.91M` at `10% below ceiling`, `$6.45M` at `5% below ceiling`, exact parity at `ceiling`, and customer premium NPV about `$6.45M` at `5% above ceiling`.
+- Added an explicit `review_endpoint` block to the artifact and synchronized HTML report so the immediate shortlist for user review is `5% below ceiling`, `ceiling`, and `5% above ceiling`.
+- Published the synchronized HTML artifact at `reports/2026-04-02-ninhsim-strike-sensitivity-bands.html` via the report-template flow with explicit-height Chart.js containers so the report stays browser-safe.
+
+### Validation
+
+- `python -m pytest tests/python/test_ninhsim_cppa.py -v --tb=short` - PASS
+- `python scripts/python/analyze_ninhsim_cppa.py --reopt artifacts/results/ninhsim/2026-04-01_ninhsim_scenario-b_optimized-cppa_reopt-results.json --extracted data/interim/ninhsim/ninhsim_extracted_inputs.json --output artifacts/reports/ninhsim/2026-04-02_ninhsim-cppa-strike-sensitivity.json` - PASS
+- `python scripts/python/generate_ninhsim_phase12_report.py` - PASS
+
+### Clear Review Endpoint
+
+- Review `artifacts/reports/ninhsim/2026-04-02_ninhsim-cppa-strike-sensitivity.json` or `reports/2026-04-02-ninhsim-strike-sensitivity-bands.html` and choose one of the three shortlist bands: `5% below ceiling`, `ceiling`, or `5% above ceiling`.
+- The decision question for the next phase is whether the team wants to prioritize customer savings, exact parity, or higher developer revenue with an explicit customer premium before investing in a more finance-grade multi-year volume model.
+
+### Next-Step Seeds
+
+- Carry the chosen shortlist band into a finance-grade annual path that includes degradation, load drift, and unmatched-energy treatment so the preferred commercial position is tested against more realistic volume assumptions.
+- If the user wants a more negotiation-ready output before that richer model, add a compact candidate-comparison memo view that turns the three shortlist bands into a direct advance / hold / discard screen.
+
+---
+
 - [x] Phase 1 - Add failing regression coverage for multi-year Ninhsim developer-revenue and offtaker-cost views derived from the escalated CPPA path
 - [x] Phase 2 - Extend the Ninhsim pricing analysis summary with developer revenue, customer cost, and screening NPV views
 - [x] Phase 3 - Validate the refreshed Ninhsim financial-view artifact and persist machine-readable outputs

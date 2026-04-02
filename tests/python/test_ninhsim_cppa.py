@@ -11,7 +11,10 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "python"))
 
 from analyze_ninhsim_cppa import (  # noqa: E402
+    build_commercial_candidate_memo,
     build_summary,
+    calculate_customer_first_annual_path,
+    calculate_cppa_sensitivity_bands,
     calculate_customer_bill_breakdown,
     calculate_customer_equivalent_strike,
     calculate_financial_screening_view,
@@ -210,3 +213,118 @@ def test_build_summary_includes_financial_screening_view_and_npv_fields():
     assert summary["financial_screening_view"]
     assert summary["financial"]["developer_revenue_npv_usd"] > 0.0
     assert summary["financial"]["offtaker_cost_npv_usd"] > 0.0
+
+
+def test_cppa_sensitivity_bands_capture_savings_and_premium_tradeoffs():
+    extracted = build_extracted_inputs()
+    results = _synthetic_results()
+
+    bands = calculate_cppa_sensitivity_bands(
+        results,
+        extracted,
+        strike_adjustment_fractions=[-0.10, -0.05, 0.0, 0.05],
+        analysis_years=2,
+    )
+
+    assert [band["band_label"] for band in bands] == [
+        "10% below ceiling",
+        "5% below ceiling",
+        "ceiling",
+        "5% above ceiling",
+    ]
+    assert bands[0]["customer_savings_npv_usd"] > 0.0
+    assert bands[0]["customer_premium_npv_usd"] == 0.0
+    assert bands[2]["customer_savings_npv_usd"] == 0.0
+    assert bands[2]["customer_premium_npv_usd"] == 0.0
+    assert bands[3]["customer_premium_npv_usd"] > 0.0
+    assert bands[3]["developer_revenue_npv_usd"] > bands[2]["developer_revenue_npv_usd"]
+
+
+def test_build_summary_includes_strike_sensitivity_band_view():
+    extracted = build_extracted_inputs()
+    results = _synthetic_results()
+
+    summary = build_summary(results, extracted)
+
+    assert summary["strike_sensitivity_bands"]
+    assert summary["strike_sensitivity_bands"][0]["relative_to_ceiling_fraction"] < 0.0
+    assert summary["strike_sensitivity_bands"][-1]["relative_to_ceiling_fraction"] > 0.0
+
+
+def test_customer_first_annual_path_applies_degradation_load_drift_and_caps_customer_exposure():
+    extracted = build_extracted_inputs()
+    results = _synthetic_results()
+
+    annual_path = calculate_customer_first_annual_path(
+        results,
+        extracted,
+        strike_adjustment_fraction=-0.05,
+        analysis_years=3,
+        annual_generation_degradation_fraction=0.01,
+        annual_load_growth_fraction=0.02,
+        unmatched_energy_price_fraction_of_evn=0.35,
+    )
+
+    assert annual_path[0]["band_label"] == "5% below ceiling"
+    assert (
+        annual_path[1]["renewable_delivered_kwh"]
+        < annual_path[0]["renewable_delivered_kwh"]
+    )
+    assert annual_path[1]["total_load_kwh"] > annual_path[0]["total_load_kwh"]
+    assert (
+        annual_path[1]["unmatched_renewable_kwh"]
+        >= annual_path[0]["unmatched_renewable_kwh"]
+    )
+    assert annual_path[0]["customer_savings_vs_evn_usd"] > 0.0
+    assert (
+        annual_path[0]["merchant_price_usd_per_kwh"]
+        < annual_path[0]["residual_grid_price_usd_per_kwh"]
+    )
+    assert (
+        annual_path[0]["customer_total_cost_usd"]
+        < annual_path[0]["benchmark_evn_cost_usd"]
+    )
+
+
+def test_build_summary_includes_customer_first_recommendation_and_annual_path():
+    extracted = build_extracted_inputs()
+    results = _synthetic_results()
+
+    summary = build_summary(results, extracted)
+
+    assert (
+        summary["customer_first_recommendation"]["recommended_band_label"]
+        == "5% below ceiling"
+    )
+    assert summary["customer_first_annual_path"]
+    assert summary["customer_first_annual_path"][0]["band_label"] == "5% below ceiling"
+
+
+def test_commercial_candidate_memo_marks_shortlist_as_advance_hold_discard():
+    extracted = build_extracted_inputs()
+    results = _synthetic_results()
+    summary = build_summary(results, extracted)
+
+    memo = build_commercial_candidate_memo(summary)
+
+    candidates = {
+        candidate["band_label"]: candidate for candidate in memo["candidates"]
+    }
+    assert memo["recommended_band_label"] == "5% below ceiling"
+    assert candidates["5% below ceiling"]["status"] == "advance"
+    assert candidates["ceiling"]["status"] == "hold"
+    assert candidates["5% above ceiling"]["status"] == "discard"
+    assert candidates["5% above ceiling"]["customer_premium_npv_usd"] > 0.0
+
+
+def test_build_summary_includes_commercial_candidate_memo():
+    extracted = build_extracted_inputs()
+    results = _synthetic_results()
+
+    summary = build_summary(results, extracted)
+
+    assert summary["commercial_candidate_memo"]
+    assert (
+        summary["commercial_candidate_memo"]["recommended_band_label"]
+        == "5% below ceiling"
+    )
