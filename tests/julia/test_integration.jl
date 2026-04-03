@@ -21,7 +21,7 @@ using REopt
 using DelimitedFiles
 
 const REPO_ROOT = abspath(joinpath(@__DIR__, "..", ".."))
-include(joinpath(REPO_ROOT, "src", "REoptVietnam.jl"))
+include(joinpath(REPO_ROOT, "src", "julia", "REoptVietnam.jl"))
 using .REoptVietnam
 
 const TEMPLATES_DIR = joinpath(REPO_ROOT, "scenarios", "templates")

@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    REopt Vietnam - Master Test Runner.
+    REopt PySAM VN - Master Test Runner.
     Runs all 4 test layers in order with summary report.
 
 .DESCRIPTION
@@ -177,7 +177,7 @@ function Invoke-PythonScript {
 $totalSw = [System.Diagnostics.Stopwatch]::StartNew()
 
 Write-Host ''
-Write-Host '  REopt Vietnam - Test Suite' -ForegroundColor White
+Write-Host '  REopt PySAM VN - Test Suite' -ForegroundColor White
 Write-Host ('  Repo: ' + $script:REPO_ROOT) -ForegroundColor DarkGray
 Write-Host ''
 
@@ -201,7 +201,7 @@ if ($run1) {
         -Script 'tests\julia\test_data_validation.jl'
 
     Invoke-Pytest -TestName 'L1-Python Data validation' `
-        -Script 'tests\python\test_data_validation.py'
+        -Script 'tests\python\reopt\test_data_validation.py'
 }
 
 # ===== LAYER 2: Unit Tests ================================================
@@ -212,7 +212,7 @@ if ($run2) {
         -Script 'tests\julia\test_unit.jl'
 
     Invoke-Pytest -TestName 'L2-Python Unit tests' `
-        -Script 'tests\python\test_unit.py'
+        -Script 'tests\python\reopt\test_unit.py'
 }
 
 # ===== LAYER 3: Cross-Validation ==========================================
@@ -241,11 +241,11 @@ if ($run4) {
     if ($SmokeOnly) { $pyExtra += '-k'; $pyExtra += 'smoke' }
 
     Invoke-Pytest -TestName 'L4-Python Integration tests' `
-        -Script 'tests\python\test_integration.py' -Extra $pyExtra
+        -Script 'tests\python\reopt\test_integration.py' -Extra $pyExtra
 
     if (-not $SmokeOnly) {
         Invoke-Pytest -TestName 'L4-Python Saigon18 regression tests' `
-            -Script 'tests\python\test_saigon18_phase3.py'
+            -Script 'tests\python\integration\test_saigon18_phase3.py'
     }
 }
 

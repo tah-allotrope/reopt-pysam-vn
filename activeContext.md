@@ -1,5 +1,68 @@
 # Active Context — Saigon18 REopt Integration
 
+## Phase 15 — PySAM Integration Reorganization Plan — 2026-04-03
+
+- [x] Phase 1 - Audit the current repository structure and identify rename, folder-move, and PySAM landing-zone requirements
+- [x] Phase 2 - Draft a multi-phase PySAM integration and repository reorganization plan in a root-level `plans/` directory
+- [x] Phase 3 - Capture open questions, assumptions, risks, and migration checkpoints directly in the markdown plan for offline review
+- [x] Review / Results - Record the generated planning artifact path and the recommended implementation order
+
+### Notes
+
+- This phase is planning-only and should not rename the repository or relocate production files beyond creating the new planning home requested by the user.
+- The plan should treat PySAM as a Python-layer extension that complements, rather than replaces, the existing REopt.jl and Python preprocessing workflow.
+
+### Outputs Generated
+
+- `plans/pysam_integration_reorg_plan.md`
+
+### Review / Results
+
+- Created a new root-level planning home and placed the PySAM roadmap at `plans/pysam_integration_reorg_plan.md` so future review can happen outside `docs/worklog/`.
+- The plan recommends renaming the repository to `reopt-pysam-vn` first, then restructuring the repo into explicit REopt, PySAM, and integration domains rather than mixing new finance code into the current script-first Python layout.
+- The roadmap is split into seven implementation phases: rename and planning cleanup, structural reorganization, Python packaging, PySAM MVP, REopt-plus-PySAM strike search, contract and risk extensions, and final documentation plus hardening.
+- Open questions were embedded directly in the markdown plan with recommended defaults so the user can review asynchronously without interrupting the workflow.
+
+---
+
+## Phase 16 — PySAM Reorganization Execution (Phases 1-3) — 2026-04-03
+
+- [x] Phase 1 - Rename the repository surfaces and relocate planning docs into the new root `plans/` structure
+- [x] Phase 2 - Reorganize `src/`, `scripts/`, and `tests/` into explicit REopt, PySAM, and integration domains with compatibility shims
+- [x] Phase 3 - Add Python packaging, PySAM dependency scaffolding, setup docs, and optional-test support
+- [x] Validation - Run targeted checks for packaging, imports, moved paths, and test discovery
+- [x] Review / Results - Record the final moved paths, rename status, validation commands, and any deferred cleanup
+
+### Notes
+
+- This execution pass implements the first three phases from `plans/pysam_integration_reorg_plan.md`.
+- The safest migration path is to preserve old entry points where practical while moving code into the new canonical structure.
+
+### Outputs Expected
+
+- Repo metadata updated for `reopt-pysam-vn`
+- Archived legacy plans under `plans/archive/`
+- Active plans under `plans/active/`
+- Python package skeleton under `src/python/reopt_pysam_vn/`
+- Reorganized script and test folders with compatibility shims
+- `pyproject.toml` and updated Python dependency documentation
+
+### Interim Notes
+
+- GitHub repository rename to `reopt-pysam-vn` succeeded and the local `origin` remote now points to the renamed repo.
+- The local folder rename is still pending because a live process is holding `C:\Users\tukum\Downloads\reopt-julia-VNanalysis` open.
+
+### Review / Results
+
+- Moved historical planning docs into `plans/archive/`, moved the active PySAM roadmap to `plans/active/pysam_integration_reorg_plan.md`, and added `plans/README.md` plus `docs/worklog/README.md` to document the new planning home.
+- Reorganized code into canonical domains: `src/julia/REoptVietnam.jl`, `src/python/reopt_pysam_vn/`, `scripts/python/reopt/`, `scripts/python/integration/`, `scripts/python/pysam/`, and mirrored Python test suites under `tests/python/reopt/`, `tests/python/integration/`, and `tests/python/pysam/`.
+- Preserved backward compatibility by leaving thin wrapper entrypoints at the old top-level `scripts/python/*.py` paths and shim modules at `src/reopt_vietnam.py` plus `src/REoptVietnam.jl`.
+- Added Phase 3 packaging and PySAM scaffolding through `pyproject.toml`, updated `requirements.txt`, `docs/pysam.md`, a PySAM smoke script at `scripts/python/pysam/run_single_owner_smoke.py`, and initial package modules under `src/python/reopt_pysam_vn/pysam/` plus `src/python/reopt_pysam_vn/integration/`.
+- Validation passed on the reorganized Python and PySAM scaffolding: `python -m pytest tests/python/reopt/test_unit.py -q`, `python -m pytest tests/python/reopt/test_integration.py -q -k smoke`, `python tests/cross_language/cross_validate.py`, `python -m pytest tests/python/pysam -q`, and `python scripts/python/pysam/run_single_owner_smoke.py`.
+- The only incomplete Phase 1 item is the local folder rename from `reopt-julia-VNanalysis` to `reopt-pysam-vn`, which failed because another process currently has the directory open; GitHub and git remote rename work are complete.
+
+---
+
 ## Phase 11 — Ninhsim Developer Revenue and Offtaker Cost Path — 2026-04-02
 
 ## Phase 14 — Ninhsim Commercial Candidate Memo — 2026-04-02
@@ -17,25 +80,25 @@
 
 ### Outputs Generated
 
-- `scripts/python/analyze_ninhsim_cppa.py`
+- `scripts/python/integration/analyze_ninhsim_cppa.py`
 - `scripts/python/generate_ninhsim_phase14_report.py`
-- `tests/python/test_ninhsim_cppa.py`
+- `tests/python/integration/test_ninhsim_cppa.py`
 - `artifacts/reports/ninhsim/2026-04-02_ninhsim-commercial-candidate-memo.json`
 - `reports/2026-04-02-ninhsim-commercial-candidate-memo.html`
 
 ### Review / Results
 
-- Extended `scripts/python/analyze_ninhsim_cppa.py` with a `commercial_candidate_memo` decision layer that converts the already-accepted customer-first band and the remaining shortlist into direct `advance`, `hold`, and `discard` actions.
+- Extended `scripts/python/integration/analyze_ninhsim_cppa.py` with a `commercial_candidate_memo` decision layer that converts the already-accepted customer-first band and the remaining shortlist into direct `advance`, `hold`, and `discard` actions.
 - Kept the memo logic intentionally simple and policy-driven: the accepted customer-first band is marked `advance`, any non-premium fallback band is marked `hold`, and any shortlist band with positive customer premium is marked `discard`.
-- Added regression coverage in `tests/python/test_ninhsim_cppa.py` that first failed on the missing memo API, then locked the exact shortlist status mapping and the presence of `commercial_candidate_memo` in the summary payload.
+- Added regression coverage in `tests/python/integration/test_ninhsim_cppa.py` that first failed on the missing memo API, then locked the exact shortlist status mapping and the presence of `commercial_candidate_memo` in the summary payload.
 - Refreshed the machine-readable artifact at `artifacts/reports/ninhsim/2026-04-02_ninhsim-commercial-candidate-memo.json`; the final memo decision is to advance `5% below ceiling` as the primary commercial candidate, keep `ceiling` only as fallback, and discard `5% above ceiling` because it creates explicit customer premium.
 - The memo now gives the shortlist in one place: `5% below ceiling` -> `advance` at about `1934.50 VND/kWh` with customer savings NPV about `$6.45M`; `ceiling` -> `hold` at about `2036.31 VND/kWh` with parity economics; `5% above ceiling` -> `discard` at about `2138.13 VND/kWh` because it adds customer premium NPV about `$6.45M`.
 - Published the synchronized HTML artifact at `reports/2026-04-02-ninhsim-commercial-candidate-memo.html` via the report-template flow so the final shortlist can be reviewed visually without opening raw JSON.
 
 ### Validation
 
-- `python -m pytest tests/python/test_ninhsim_cppa.py -v --tb=short` - PASS
-- `python scripts/python/analyze_ninhsim_cppa.py --reopt artifacts/results/ninhsim/2026-04-01_ninhsim_scenario-b_optimized-cppa_reopt-results.json --extracted data/interim/ninhsim/ninhsim_extracted_inputs.json --output artifacts/reports/ninhsim/2026-04-02_ninhsim-commercial-candidate-memo.json` - PASS
+- `python -m pytest tests/python/integration/test_ninhsim_cppa.py -v --tb=short` - PASS
+- `python scripts/python/integration/analyze_ninhsim_cppa.py --reopt artifacts/results/ninhsim/2026-04-01_ninhsim_scenario-b_optimized-cppa_reopt-results.json --extracted data/interim/ninhsim/ninhsim_extracted_inputs.json --output artifacts/reports/ninhsim/2026-04-02_ninhsim-commercial-candidate-memo.json` - PASS
 - `python scripts/python/generate_ninhsim_phase14_report.py` - PASS
 
 ### Clear Review Endpoint
@@ -65,19 +128,19 @@
 
 ### Outputs Generated
 
-- `scripts/python/analyze_ninhsim_cppa.py`
+- `scripts/python/integration/analyze_ninhsim_cppa.py`
 - `scripts/python/generate_ninhsim_phase13_report.py`
-- `tests/python/test_ninhsim_cppa.py`
+- `tests/python/integration/test_ninhsim_cppa.py`
 - `artifacts/reports/ninhsim/2026-04-02_ninhsim-customer-first-annual-path.json`
 - `reports/2026-04-02-ninhsim-customer-first-annual-path.html`
 
 ### Review / Results
 
-- Extended `scripts/python/analyze_ninhsim_cppa.py` with a `customer_first_recommendation` selector and a `customer_first_annual_path` that replays the solved Ninhsim delivery plus export shapes under a richer annual path instead of the prior fixed-volume simplification.
+- Extended `scripts/python/integration/analyze_ninhsim_cppa.py` with a `customer_first_recommendation` selector and a `customer_first_annual_path` that replays the solved Ninhsim delivery plus export shapes under a richer annual path instead of the prior fixed-volume simplification.
 - Kept the default recommendation customer-protective by design: from the Phase 12 shortlist, the analyzer now selects the highest developer-revenue band that still leaves positive customer savings in the screening view, which keeps `5% below ceiling` as the recommended band instead of drifting up to parity or premium pricing.
 - Added new annual-path assumptions explicitly to the summary payload: renewable degradation `0.5%/yr`, load growth `1.0%/yr`, and unmatched-energy monetization at about `33.2%` of the EVN benchmark, using the extracted wholesale-to-retail ratio as a merchant-price proxy.
 - Implemented the finance-grade annual path so unmatched renewable energy is handled outside the customer bill and credited only to developer merchant revenue, which keeps the customer-cost side conservative and aligned with the user instruction to prioritize customer best interest.
-- Added regression coverage in `tests/python/test_ninhsim_cppa.py` that first failed on the missing annual-path API, then locked the degradation, load drift, unmatched-energy treatment, and the presence of the customer-first recommendation in the summary payload.
+- Added regression coverage in `tests/python/integration/test_ninhsim_cppa.py` that first failed on the missing annual-path API, then locked the degradation, load drift, unmatched-energy treatment, and the presence of the customer-first recommendation in the summary payload.
 - Refreshed the machine-readable artifact at `artifacts/reports/ninhsim/2026-04-02_ninhsim-customer-first-annual-path.json`; the recommended `5% below ceiling` band stays at year-one strike about `1934.50 VND/kWh`, screening savings NPV about `$6.45M`, and finance-grade customer savings NPV about `$6.47M` with zero customer premium.
 - The richer annual path shows year-one unmatched renewable energy about `3.42 GWh`, declining to about `0.19 GWh` by year 20 as load growth absorbs more production even while renewable output degrades modestly.
 - Under the customer-first annual path, year-one customer savings remain about `$0.53M`, year-20 customer savings rise to about `$1.32M`, year-one developer revenue is about `$10.22M`, and only about `$0.10M` of that year-one developer revenue comes from merchant handling of unmatched output.
@@ -85,8 +148,8 @@
 
 ### Validation
 
-- `python -m pytest tests/python/test_ninhsim_cppa.py -v --tb=short` - PASS
-- `python scripts/python/analyze_ninhsim_cppa.py --reopt artifacts/results/ninhsim/2026-04-01_ninhsim_scenario-b_optimized-cppa_reopt-results.json --extracted data/interim/ninhsim/ninhsim_extracted_inputs.json --output artifacts/reports/ninhsim/2026-04-02_ninhsim-customer-first-annual-path.json` - PASS
+- `python -m pytest tests/python/integration/test_ninhsim_cppa.py -v --tb=short` - PASS
+- `python scripts/python/integration/analyze_ninhsim_cppa.py --reopt artifacts/results/ninhsim/2026-04-01_ninhsim_scenario-b_optimized-cppa_reopt-results.json --extracted data/interim/ninhsim/ninhsim_extracted_inputs.json --output artifacts/reports/ninhsim/2026-04-02_ninhsim-customer-first-annual-path.json` - PASS
 - `python scripts/python/generate_ninhsim_phase13_report.py` - PASS
 
 ### Clear Review Endpoint
@@ -116,17 +179,17 @@
 
 ### Outputs Generated
 
-- `scripts/python/analyze_ninhsim_cppa.py`
+- `scripts/python/integration/analyze_ninhsim_cppa.py`
 - `scripts/python/generate_ninhsim_phase12_report.py`
-- `tests/python/test_ninhsim_cppa.py`
+- `tests/python/integration/test_ninhsim_cppa.py`
 - `artifacts/reports/ninhsim/2026-04-02_ninhsim-cppa-strike-sensitivity.json`
 - `reports/2026-04-02-ninhsim-strike-sensitivity-bands.html`
 
 ### Review / Results
 
-- Extended `scripts/python/analyze_ninhsim_cppa.py` with explicit `strike_sensitivity_bands` output built around the customer-equivalent CPPA ceiling, using default strike adjustments of `-15%`, `-10%`, `-5%`, `0%`, and `+5%` without re-solving REopt.
+- Extended `scripts/python/integration/analyze_ninhsim_cppa.py` with explicit `strike_sensitivity_bands` output built around the customer-equivalent CPPA ceiling, using default strike adjustments of `-15%`, `-10%`, `-5%`, `0%`, and `+5%` without re-solving REopt.
 - Kept the scope aligned with the prior Ninhsim passes: each band still replays the solved year-one renewable delivery and residual EVN supply volumes across the 20-year horizon while escalating prices at the existing `elec_cost_escalation_rate_fraction` and discounting with the REopt owner/offtaker discount rates already present in the result JSON.
-- Added regression coverage in `tests/python/test_ninhsim_cppa.py` that first failed on the missing sensitivity-band API, then locked the savings/parity/premium tradeoff behavior and the presence of `strike_sensitivity_bands` in the summary payload.
+- Added regression coverage in `tests/python/integration/test_ninhsim_cppa.py` that first failed on the missing sensitivity-band API, then locked the savings/parity/premium tradeoff behavior and the presence of `strike_sensitivity_bands` in the summary payload.
 - Fixed an implementation bug during the phase: the first sensitivity pass showed a tiny false premium at the ceiling because the benchmark comparison used replayed delivered volume instead of total load and carried floating-point residue; the analyzer now benchmarks against total load and clamps near-zero deltas to keep the parity band exactly neutral.
 - Refreshed the machine-readable artifact at `artifacts/reports/ninhsim/2026-04-02_ninhsim-cppa-strike-sensitivity.json`; the current band sweep yields developer revenue NPV about `$130.07M` at `15% below ceiling`, `$145.38M` at `5% below ceiling`, `$153.03M` at `ceiling`, and `$160.68M` at `5% above ceiling`.
 - The corresponding customer economics now create a clean tradeoff ladder: offtaker savings NPV about `$19.36M` at `15% below ceiling`, `$12.91M` at `10% below ceiling`, `$6.45M` at `5% below ceiling`, exact parity at `ceiling`, and customer premium NPV about `$6.45M` at `5% above ceiling`.
@@ -135,8 +198,8 @@
 
 ### Validation
 
-- `python -m pytest tests/python/test_ninhsim_cppa.py -v --tb=short` - PASS
-- `python scripts/python/analyze_ninhsim_cppa.py --reopt artifacts/results/ninhsim/2026-04-01_ninhsim_scenario-b_optimized-cppa_reopt-results.json --extracted data/interim/ninhsim/ninhsim_extracted_inputs.json --output artifacts/reports/ninhsim/2026-04-02_ninhsim-cppa-strike-sensitivity.json` - PASS
+- `python -m pytest tests/python/integration/test_ninhsim_cppa.py -v --tb=short` - PASS
+- `python scripts/python/integration/analyze_ninhsim_cppa.py --reopt artifacts/results/ninhsim/2026-04-01_ninhsim_scenario-b_optimized-cppa_reopt-results.json --extracted data/interim/ninhsim/ninhsim_extracted_inputs.json --output artifacts/reports/ninhsim/2026-04-02_ninhsim-cppa-strike-sensitivity.json` - PASS
 - `python scripts/python/generate_ninhsim_phase12_report.py` - PASS
 
 ### Clear Review Endpoint
@@ -164,26 +227,26 @@
 
 ### Outputs Generated
 
-- `scripts/python/analyze_ninhsim_cppa.py`
-- `tests/python/test_ninhsim_cppa.py`
+- `scripts/python/integration/analyze_ninhsim_cppa.py`
+- `tests/python/integration/test_ninhsim_cppa.py`
 - `artifacts/reports/ninhsim/2026-04-02_ninhsim-cppa-financial-screening.json`
 - `reports/2026-04-02-ninhsim-developer-revenue-and-offtaker-cost-path.html`
 - `lessons.md`
 
 ### Review / Results
 
-- Extended `scripts/python/analyze_ninhsim_cppa.py` with a `financial_screening_view` that projects annual developer revenue, offtaker renewable payment, residual EVN cost, and total customer cost directly from the already-solved multi-year bundled-CPPA path.
+- Extended `scripts/python/integration/analyze_ninhsim_cppa.py` with a `financial_screening_view` that projects annual developer revenue, offtaker renewable payment, residual EVN cost, and total customer cost directly from the already-solved multi-year bundled-CPPA path.
 - Kept the scope intentionally narrow and explicit: this pass still replays the solved year-one renewable delivery and residual grid volumes, then discounts the annual screening values using the REopt financial discount rates already present in the result JSON.
 - Added discounted screening outputs to the summary payload: `developer_revenue_npv_usd`, `offtaker_cost_npv_usd`, `benchmark_evn_cost_npv_usd`, and `offtaker_savings_npv_usd`.
 - Refreshed the machine-readable artifact at `artifacts/reports/ninhsim/2026-04-02_ninhsim-cppa-financial-screening.json`; the current screening view yields developer revenue NPV about `$153.03M`, offtaker cost NPV about `$170.69M`, and benchmark EVN cost NPV essentially the same because the strike path stays at the customer-equivalent ceiling.
-- Added two new regressions in `tests/python/test_ninhsim_cppa.py` that lock the annual finance-view math and the presence of the new NPV fields in the summary.
+- Added two new regressions in `tests/python/integration/test_ninhsim_cppa.py` that lock the annual finance-view math and the presence of the new NPV fields in the summary.
 - Recorded a repo lesson in `lessons.md` after the user-found report bug: future Chart.js report canvases should always sit inside explicit-height containers and be browser-verified over HTTP.
 - Published the synchronized HTML artifact at `reports/2026-04-02-ninhsim-developer-revenue-and-offtaker-cost-path.html` via the report skill flow.
 
 ### Validation
 
-- `python -m pytest tests/python/test_ninhsim_cppa.py -v --tb=short` - PASS
-- `python scripts/python/analyze_ninhsim_cppa.py --reopt artifacts/results/ninhsim/2026-04-01_ninhsim_scenario-b_optimized-cppa_reopt-results.json --extracted data/interim/ninhsim/ninhsim_extracted_inputs.json --output artifacts/reports/ninhsim/2026-04-02_ninhsim-cppa-financial-screening.json` - PASS
+- `python -m pytest tests/python/integration/test_ninhsim_cppa.py -v --tb=short` - PASS
+- `python scripts/python/integration/analyze_ninhsim_cppa.py --reopt artifacts/results/ninhsim/2026-04-01_ninhsim_scenario-b_optimized-cppa_reopt-results.json --extracted data/interim/ninhsim/ninhsim_extracted_inputs.json --output artifacts/reports/ninhsim/2026-04-02_ninhsim-cppa-financial-screening.json` - PASS
 
 ### Next-Step Seeds
 
@@ -205,14 +268,14 @@
 
 ### Outputs Generated
 
-- `scripts/python/analyze_ninhsim_cppa.py`
-- `tests/python/test_ninhsim_cppa.py`
+- `scripts/python/integration/analyze_ninhsim_cppa.py`
+- `tests/python/integration/test_ninhsim_cppa.py`
 - `artifacts/reports/ninhsim/2026-04-02_ninhsim-cppa-escalated-analysis.json`
 - `reports/2026-04-02-ninhsim-escalated-cppa-strike-path.html`
 
 ### Review / Results
 
-- Added a multi-year bundled-CPPA pricing path to `scripts/python/analyze_ninhsim_cppa.py` so the Ninhsim post-processing now carries the year-1 customer-equivalent strike forward across the full 20-year analysis horizon using the scenario's `elec_cost_escalation_rate_fraction`.
+- Added a multi-year bundled-CPPA pricing path to `scripts/python/integration/analyze_ninhsim_cppa.py` so the Ninhsim post-processing now carries the year-1 customer-equivalent strike forward across the full 20-year analysis horizon using the scenario's `elec_cost_escalation_rate_fraction`.
 - Kept this pass intentionally simple and explicit: the solved year-one renewable delivery and residual EVN supply volumes stay fixed while the CPPA strike, residual EVN unit price, and weighted EVN benchmark all escalate together at `5%` per year.
 - Embedded the new `multi_year_cppa_path` block directly in the JSON summary so downstream scripts and reports can consume the full annual strike path without re-deriving it.
 - Refreshed the machine-readable Ninhsim pricing artifact at `artifacts/reports/ninhsim/2026-04-02_ninhsim-cppa-escalated-analysis.json`; the year-1 maximum equivalent bundled strike remains `2036.31 VND/kWh`, and the year-20 escalated strike reaches `5145.66 VND/kWh` while the blended customer price tracks the escalated EVN benchmark each year.
@@ -221,8 +284,8 @@
 
 ### Validation
 
-- `python -m pytest tests/python/test_ninhsim_cppa.py -v --tb=short` - PASS
-- `python scripts/python/analyze_ninhsim_cppa.py --reopt artifacts/results/ninhsim/2026-04-01_ninhsim_scenario-b_optimized-cppa_reopt-results.json --extracted data/interim/ninhsim/ninhsim_extracted_inputs.json --output artifacts/reports/ninhsim/2026-04-02_ninhsim-cppa-escalated-analysis.json` - PASS
+- `python -m pytest tests/python/integration/test_ninhsim_cppa.py -v --tb=short` - PASS
+- `python scripts/python/integration/analyze_ninhsim_cppa.py --reopt artifacts/results/ninhsim/2026-04-01_ninhsim_scenario-b_optimized-cppa_reopt-results.json --extracted data/interim/ninhsim/ninhsim_extracted_inputs.json --output artifacts/reports/ninhsim/2026-04-02_ninhsim-cppa-escalated-analysis.json` - PASS
 
 ### Next-Step Seeds
 
@@ -246,11 +309,11 @@
 
 ### Outputs Generated
 
-- `scripts/python/build_ninhsim_extracted_inputs.py`
-- `scripts/python/build_ninhsim_reopt_input.py`
-- `scripts/python/analyze_ninhsim_cppa.py`
+- `scripts/python/integration/build_ninhsim_extracted_inputs.py`
+- `scripts/python/integration/build_ninhsim_reopt_input.py`
+- `scripts/python/integration/analyze_ninhsim_cppa.py`
 - `scripts/python/run_ninhsim_cppa.py`
-- `tests/python/test_ninhsim_cppa.py`
+- `tests/python/integration/test_ninhsim_cppa.py`
 - `data/interim/ninhsim/ninhsim_extracted_inputs.json`
 - `scenarios/case_studies/ninhsim/2026-04-01_ninhsim_scenario-a_baseline-evn.json`
 - `scenarios/case_studies/ninhsim/2026-04-01_ninhsim_scenario-b_optimized-cppa.json`
@@ -270,10 +333,10 @@
 
 ### Validation
 
-- `python -m pytest tests/python/test_ninhsim_cppa.py -v --tb=short` - PASS
+- `python -m pytest tests/python/integration/test_ninhsim_cppa.py -v --tb=short` - PASS
 - `julia --project --compile=min scripts/julia/run_vietnam_scenario.jl --scenario scenarios/case_studies/ninhsim/2026-04-01_ninhsim_scenario-b_optimized-cppa.json --no-solve` - PASS
 - `julia --project --compile=min scripts/julia/run_vietnam_scenario.jl --scenario scenarios/case_studies/ninhsim/2026-04-01_ninhsim_scenario-b_optimized-cppa.json` - PASS
-- `python scripts/python/analyze_ninhsim_cppa.py --reopt artifacts/results/ninhsim/2026-04-01_ninhsim_scenario-b_optimized-cppa_reopt-results.json --output artifacts/reports/ninhsim/2026-04-01_ninhsim-cppa-analysis.json` - PASS
+- `python scripts/python/integration/analyze_ninhsim_cppa.py --reopt artifacts/results/ninhsim/2026-04-01_ninhsim_scenario-b_optimized-cppa_reopt-results.json --output artifacts/reports/ninhsim/2026-04-01_ninhsim-cppa-analysis.json` - PASS
 
 ### Next-Step Seeds
 
@@ -297,7 +360,7 @@
 ### Outputs Generated
 
 - `scripts/python/rank_case_study_offtakers.py`
-- `tests/python/test_case_study_ranking.py`
+- `tests/python/integration/test_case_study_ranking.py`
 - `artifacts/reports/case_studies/2026-04-01_offtaker-physical-match-ranking.json`
 - `reports/2026-04-01-case-study-offtaker-physical-match-ranking.html`
 - `lessons.md`
@@ -315,7 +378,7 @@
 
 ### Validation
 
-- `python -m pytest tests/python/test_case_study_ranking.py -v --tb=short` - PASS
+- `python -m pytest tests/python/integration/test_case_study_ranking.py -v --tb=short` - PASS
 - `python scripts/python/rank_case_study_offtakers.py` - PASS
 
 ---
@@ -359,20 +422,20 @@
 - Added `scripts/python/build_north_thuan_load_profile.py` to create a deterministic 8760 industrial load profile, derived FMP proxy, and synthetic wind production-factor fallback from the staff PDF summary inputs.
 - Added `scripts/python/build_north_thuan_reopt_input.py` and `scripts/python/run_north_thuan_reopt.py` so North Thuan now has the same build/run workflow shape as Saigon18.
 - Updated `scripts/julia/run_vietnam_scenario.jl` so `scenarios/case_studies/north_thuan/` solves save into `artifacts/results/north_thuan/` automatically.
-- Added `scripts/python/compare_north_thuan_reopt_vs_staff.py`, `scripts/python/generate_north_thuan_reopt_report.py`, and `tests/python/test_north_thuan_reopt.py` for solved-result comparison, HTML reporting, and regression coverage.
-- Extended `scripts/python/dppa_settlement.py` with `compute_virtual_dppa_developer_revenue()` for the North Thuan virtual-DPPA revenue check without breaking the existing Saigon18 settlement path.
-- Generated six report-skill-style phase reports in `reports/` using `scripts/python/generate_north_thuan_phase_reports.py` and the shared `report-template.html` shell.
+- Added `scripts/python/integration/compare_north_thuan_reopt_vs_staff.py`, `scripts/python/integration/generate_north_thuan_reopt_report.py`, and `tests/python/integration/test_north_thuan_reopt.py` for solved-result comparison, HTML reporting, and regression coverage.
+- Extended `scripts/python/reopt/dppa_settlement.py` with `compute_virtual_dppa_developer_revenue()` for the North Thuan virtual-DPPA revenue check without breaking the existing Saigon18 settlement path.
+- Generated six report-skill-style phase reports in `reports/` using `scripts/python/integration/generate_north_thuan_phase_reports.py` and the shared `report-template.html` shell.
 
 ### Validation
 
-- `python -m pytest tests/python/test_north_thuan_reopt.py -v --tb=short` - PASS
+- `python -m pytest tests/python/integration/test_north_thuan_reopt.py -v --tb=short` - PASS
 - `python scripts/python/run_north_thuan_reopt.py --scenarios a --no-solve` - PASS
 - `python scripts/python/run_north_thuan_reopt.py --scenarios a` - PASS after switching Wind to a synthetic `production_factor_series` fallback
 - `python scripts/python/run_north_thuan_reopt.py --scenarios b c` - PASS
-- `python scripts/python/compare_north_thuan_reopt_vs_staff.py ...` - PASS
-- `python scripts/python/generate_north_thuan_reopt_report.py` - PASS
-- `python scripts/python/generate_north_thuan_phase_reports.py --template ... --outdir reports` - PASS
-- `python -m pytest tests/python/test_saigon18_compare.py tests/python/test_saigon18_phase3.py tests/python/test_north_thuan_reopt.py -v --tb=short` - PASS
+- `python scripts/python/integration/compare_north_thuan_reopt_vs_staff.py ...` - PASS
+- `python scripts/python/integration/generate_north_thuan_reopt_report.py` - PASS
+- `python scripts/python/integration/generate_north_thuan_phase_reports.py --template ... --outdir reports` - PASS
+- `python -m pytest tests/python/integration/test_saigon18_compare.py tests/python/integration/test_saigon18_phase3.py tests/python/integration/test_north_thuan_reopt.py -v --tb=short` - PASS
 
 ### Key Results
 
@@ -389,7 +452,7 @@
 
 ## Phase 7 — Cross-Project Dashboard — 2026-03-29
 
-- [x] Implement `scripts/python/generate_cross_project_dashboard.py` — unified dashboard
+- [x] Implement `scripts/python/integration/generate_cross_project_dashboard.py` — unified dashboard
 - [x] Run dashboard: `artifacts/reports/2026-03-29_cross-project-dashboard.html` (18,415 bytes)
 - [x] Git commit: all Phase 4–7 changes staged and committed
 
@@ -408,7 +471,7 @@
 
 ## Phase 6 — North Thuan Staff Validation — 2026-03-29
 
-- [x] Implement `scripts/python/validate_north_thuan.py` — recomputes all metrics from PDF inputs
+- [x] Implement `scripts/python/integration/validate_north_thuan.py` — recomputes all metrics from PDF inputs
 - [x] Implement `scripts/python/generate_north_thuan_validation_report.py` — standalone HTML report
 - [x] Run validation: `artifacts/reports/north_thuan/2026-03-29_north-thuan-validation.json`
 - [x] Publish validation HTML: `artifacts/reports/north_thuan/2026-03-29_north-thuan-validation.html`
@@ -512,7 +575,7 @@ Note: Combined EBITDA (REopt base + settlement) is additive for framework consis
 
 ---
 
-- [x] Implement Decree 57 hard export-cap support in `src/REoptVietnam.jl`
+- [x] Implement Decree 57 hard export-cap support in `src/julia/REoptVietnam.jl`
 - [x] Add regression/integration coverage for the export cap
 - [x] Run targeted validation for the new constraint path
 - [x] Record review/results notes for this export-cap pass
@@ -523,7 +586,7 @@ Note: Combined EBITDA (REopt base + settlement) is additive for framework consis
 
 Mapping the Saigon18 Excel feasibility model (40.36 MWp solar + 66 MWh BESS, southern Vietnam) onto REopt.jl to validate and challenge the Excel outputs (Equity IRR 19.4%, NPV $22M, 6-yr payback).
 
-Plan: `docs/worklog/plans/saigon18_reopt_integration_plan.md`
+Plan: `plans/archive/saigon18_reopt_integration_plan.md`
 
 ---
 
@@ -533,13 +596,13 @@ Plan: `docs/worklog/plans/saigon18_reopt_integration_plan.md`
 
 | Task | Status | Notes |
 |---|---|---|
-| `scripts/python/extract_excel_inputs.py` | ✅ Done | Extracts 8760 load/PV/FMP from Excel; validates row count, negatives, yield |
-| `scripts/python/build_saigon18_reopt_input.py` | ✅ Done | Builds Scenario A & B JSON; applies Vietnam defaults + project overrides |
-| `scripts/python/dppa_settlement.py` | ✅ Done | DPPA CfD post-processing; compute settlement from FMP + REopt dispatch |
-| `scripts/python/compare_reopt_vs_excel.py` | ✅ Done | Comparison report script (delta table, 5% flag threshold) |
-| `scripts/python/equity_irr.py` | ✅ Done | Levered equity IRR from REopt EBITDA + debt schedule |
+| `scripts/python/reopt/extract_excel_inputs.py` | ✅ Done | Extracts 8760 load/PV/FMP from Excel; validates row count, negatives, yield |
+| `scripts/python/reopt/build_saigon18_reopt_input.py` | ✅ Done | Builds Scenario A & B JSON; applies Vietnam defaults + project overrides |
+| `scripts/python/reopt/dppa_settlement.py` | ✅ Done | DPPA CfD post-processing; compute settlement from FMP + REopt dispatch |
+| `scripts/python/reopt/compare_reopt_vs_excel.py` | ✅ Done | Comparison report script (delta table, 5% flag threshold) |
+| `scripts/python/reopt/equity_irr.py` | ✅ Done | Levered equity IRR from REopt EBITDA + debt schedule |
 | `scripts/julia/run_vietnam_scenario.jl` | ✅ Done | `--scenario <path>` flag; output path branches per mode |
-| `tests/python/test_saigon18_data.py` | ✅ Done | 19/19 Layer 1 tests pass |
+| `tests/python/integration/test_saigon18_data.py` | ✅ Done | 19/19 Layer 1 tests pass |
 | `data/interim/saigon18/2026-03-20_saigon18_extracted_inputs.json` | ✅ Done | 71.81 GWh PV, 184.26 GWh load, 30.2 MW peak — all checks passed |
 | `scenarios/case_studies/saigon18/2026-03-20_scenario-a_fixed-sizing_evntou.json` | ✅ Done | Built; no-solve validation passed |
 | `scenarios/case_studies/saigon18/2026-03-20_scenario-b_fixed-sizing_ppa-discount.json` | ✅ Done | Built |
@@ -638,8 +701,8 @@ Reports: `artifacts/reports/saigon18/2026-03-22_scenario-a_vs_excel_comparison.m
 | Fix `compare_reopt_vs_excel.py` energy-flow key mapping (see bug log) | ✅ Fixed 2026-03-22 |
 | Re-run equity IRR validation vs Excel 19.4% | ✅ Done — 19.8% vs 19.4% (+0.4%) |
 | Re-generate Scenario A/B comparison reports with corrected keys | ✅ Done |
-| Add regression test for Saigon18 comparison key mapping | ✅ Done — `tests/python/test_saigon18_compare.py` |
-| Decree 57 20% export cap as hard JuMP constraint in `src/REoptVietnam.jl` | ✅ Done 2026-03-23 |
+| Add regression test for Saigon18 comparison key mapping | ✅ Done — `tests/python/integration/test_saigon18_compare.py` |
+| Decree 57 20% export cap as hard JuMP constraint in `src/julia/REoptVietnam.jl` | ✅ Done 2026-03-23 |
 | Optional fixed BESS dispatch window constraints (Option B) | ⏳ Not started |
 | Scenario C — optimized sizing (unconstrained PV + BESS) | ✅ Done 2026-03-23 |
 | `tests/python/test_saigon18_integration.py` (Layer 4) | ⏳ Not started |
@@ -683,7 +746,7 @@ grown at `elec_cost_escalation_rate_fraction` (default 5%) each year.
 - Grid purchases from `ElectricUtility.annual_energy_supplied_kwh`
 - Year-1 revenue from `Financial.year_one_total_operating_cost_savings_before_tax`
 
-Added regression coverage in `tests/python/test_saigon18_compare.py` to lock this mapping.
+Added regression coverage in `tests/python/integration/test_saigon18_compare.py` to lock this mapping.
 
 **Actual values (Scenario A, corrected report):**
 - PV to grid: 549 MWh (REopt) vs Excel 1,087 MWh — Decree 57 cap partially effective
@@ -716,10 +779,10 @@ The tariff v2025.2 schema drift in both Julia and Python test suites was fixed i
 
 | Validation scope | Result |
 |---|---|
-| `tests/python/test_data_validation.py` | PASS |
-| `tests/python/test_unit.py` | PASS |
+| `tests/python/reopt/test_data_validation.py` | PASS |
+| `tests/python/reopt/test_unit.py` | PASS |
 | `tests/cross_language/cross_validate.py` | PASS |
-| `tests/python/test_integration.py` | PASS (1 skipped API block) |
+| `tests/python/reopt/test_integration.py` | PASS (1 skipped API block) |
 | `tests/julia/test_data_validation.jl` | PASS |
 | `tests/julia/test_unit.jl` | PASS |
 
@@ -745,7 +808,7 @@ Known environment noise remains on Julia startup from ArchGDAL method-overwrite 
 
 ### What changed
 
-- Added a Vietnam-specific solver wrapper `run_vietnam_reopt` in `src/REoptVietnam.jl` that builds the REopt JuMP model, injects a hard annual PV export cap constraint, then solves and post-processes results.
+- Added a Vietnam-specific solver wrapper `run_vietnam_reopt` in `src/julia/REoptVietnam.jl` that builds the REopt JuMP model, injects a hard annual PV export cap constraint, then solves and post-processes results.
 - `apply_decree57_export!` now stores `decree57_max_export_fraction` in `_meta` so scenario JSONs carry the intended cap into the Julia solve path.
 - `scripts/julia/run_vietnam_scenario.jl` now uses `run_vietnam_reopt(...)` instead of plain `run_reopt(...)`, so scenario runs honor the Decree 57 cap automatically.
 - Added a Julia integration test scenario that verifies annual PV exports are capped at 20% of annual PV production.
@@ -771,7 +834,7 @@ Known environment noise remains on Julia startup from ArchGDAL method-overwrite 
 ### What changed
 
 - Moved Layer 3 cross-validation to the canonical path `tests/cross_language/cross_validate.py` and added `tests/cross_validate.py` as a backward-compatible wrapper for direct script and pytest usage.
-- Moved worklog plan and research notes into `docs/worklog/plans/` and `docs/worklog/research/` to better separate stable docs from active project process material.
+- Moved worklog plan and research notes into `plans/archive/` and `docs/worklog/research/` to better separate stable docs from active project process material.
 - Updated `tests/run_all_tests.ps1`, `README.md`, `docs/testing.md`, and `activeContext.md` to point at the canonical paths.
 
 ### Targeted validation
@@ -800,11 +863,11 @@ Known environment noise remains on Julia startup from ArchGDAL method-overwrite 
 
 ### Targeted validation
 
-- `python scripts/python/build_saigon18_reopt_input.py` — PASS
-- `python -m pytest tests/python/test_saigon18_data.py -v --tb=short` — PASS
-- `python -m pytest tests/python/test_saigon18_compare.py -v --tb=short` — PASS
-- `python scripts/python/compare_reopt_vs_excel.py --reopt artifacts/results/saigon18/2026-03-23_scenario-a_fixed-sizing_evntou_reopt-results.json --scenario "A (fixed sizing EVN TOU)"` — PASS
-- `python scripts/python/equity_irr.py --reopt artifacts/results/saigon18/2026-03-23_scenario-a_fixed-sizing_evntou_reopt-results.json --capex 49510000` — PASS
+- `python scripts/python/reopt/build_saigon18_reopt_input.py` — PASS
+- `python -m pytest tests/python/integration/test_saigon18_data.py -v --tb=short` — PASS
+- `python -m pytest tests/python/integration/test_saigon18_compare.py -v --tb=short` — PASS
+- `python scripts/python/reopt/compare_reopt_vs_excel.py --reopt artifacts/results/saigon18/2026-03-23_scenario-a_fixed-sizing_evntou_reopt-results.json --scenario "A (fixed sizing EVN TOU)"` — PASS
+- `python scripts/python/reopt/equity_irr.py --reopt artifacts/results/saigon18/2026-03-23_scenario-a_fixed-sizing_evntou_reopt-results.json --capex 49510000` — PASS
 - `JULIA_PKG_PRECOMPILE_AUTO=0 julia --project --compile=min scripts/julia/run_vietnam_scenario.jl --scenario scenarios/case_studies/saigon18/2026-03-20_scenario-a_fixed-sizing_evntou.json --no-solve` — PASS
 
 ### Compatibility notes
@@ -833,7 +896,7 @@ Known environment noise remains on Julia startup from ArchGDAL method-overwrite 
 
 ### What changed
 
-- Removed the last redirect-only root folder, `plans/`, after confirming all references already pointed at `docs/worklog/plans/`.
+- Removed the last redirect-only root folder, `plans/`, after confirming all references already pointed at `plans/archive/`.
 - Confirmed `research/` had already been fully removed and no longer needed a compatibility marker.
 - Kept `legacy/README.md` as the single consolidated place for old-to-new path guidance.
 
@@ -939,13 +1002,13 @@ artifacts/reports/saigon18/
 
 ### What changed
 
-- Rewrote `scripts/python/dppa_settlement.py` to use the actual REopt result schema (`PV.electric_to_load_series_kw` + `ElectricStorage.storage_to_load_series_kw`) and to normalize the extracted FMP series safely before computing Scenario D settlement revenue.
-- Extended `scripts/python/equity_irr.py` so Scenario D can add DPPA settlement cash flows on top of the base REopt EBITDA and emit a dedicated Scenario D equity summary.
-- Replaced `scripts/python/compare_reopt_vs_excel.py` with a version that supports tariff-period BESS disaggregation, Scenario D settlement/equity adders, and refreshed A/C/D markdown comparison artifacts.
-- Added `tests/python/test_saigon18_phase3.py` for the Scenario D schema, tariff-period BESS split, and DPPA finance-adder regression path.
+- Rewrote `scripts/python/reopt/dppa_settlement.py` to use the actual REopt result schema (`PV.electric_to_load_series_kw` + `ElectricStorage.storage_to_load_series_kw`) and to normalize the extracted FMP series safely before computing Scenario D settlement revenue.
+- Extended `scripts/python/reopt/equity_irr.py` so Scenario D can add DPPA settlement cash flows on top of the base REopt EBITDA and emit a dedicated Scenario D equity summary.
+- Replaced `scripts/python/reopt/compare_reopt_vs_excel.py` with a version that supports tariff-period BESS disaggregation, Scenario D settlement/equity adders, and refreshed A/C/D markdown comparison artifacts.
+- Added `tests/python/integration/test_saigon18_phase3.py` for the Scenario D schema, tariff-period BESS split, and DPPA finance-adder regression path.
 - Updated `tests/run_all_tests.ps1` so the Saigon18 Phase 3 regression test runs in the Layer 4 path during full validation.
 - Fixed `scripts/julia/run_vietnam_scenario.jl` output path detection so Saigon18 scenario solves write to the canonical `artifacts/results/saigon18/` tree even when invoked from bash on Windows.
-- Added `scripts/python/generate_html_report.py` and generated the final consolidated HTML report at `artifacts/reports/saigon18/2026-03-26_saigon18-full-analysis.html`.
+- Added `scripts/python/integration/generate_html_report.py` and generated the final consolidated HTML report at `artifacts/reports/saigon18/2026-03-26_saigon18-full-analysis.html`.
 
 ### Scenario D final outputs
 
@@ -967,13 +1030,13 @@ artifacts/reports/saigon18/
 
 ### Validation
 
-- `python -m pytest tests/python/test_saigon18_compare.py tests/python/test_saigon18_phase3.py -v --tb=short` — PASS
+- `python -m pytest tests/python/integration/test_saigon18_compare.py tests/python/integration/test_saigon18_phase3.py -v --tb=short` — PASS
 - `julia --project --compile=min scripts/julia/run_vietnam_scenario.jl --scenario scenarios/case_studies/saigon18/2026-03-20_scenario-d_dppa-baseline.json --no-solve` — PASS
 - `julia --project --compile=min scripts/julia/run_vietnam_scenario.jl --scenario scenarios/case_studies/saigon18/2026-03-20_scenario-d_dppa-baseline.json` — PASS
-- `python scripts/python/dppa_settlement.py --reopt artifacts/results/saigon18/2026-03-20_scenario-d_dppa-baseline_reopt-results.json ...` — PASS
-- `python scripts/python/equity_irr.py --reopt artifacts/results/saigon18/2026-03-20_scenario-d_dppa-baseline_reopt-results.json --settlement ...` — PASS
-- `python scripts/python/compare_reopt_vs_excel.py ...` for Scenario A/C/D — PASS
-- `python scripts/python/generate_html_report.py` — PASS
+- `python scripts/python/reopt/dppa_settlement.py --reopt artifacts/results/saigon18/2026-03-20_scenario-d_dppa-baseline_reopt-results.json ...` — PASS
+- `python scripts/python/reopt/equity_irr.py --reopt artifacts/results/saigon18/2026-03-20_scenario-d_dppa-baseline_reopt-results.json --settlement ...` — PASS
+- `python scripts/python/reopt/compare_reopt_vs_excel.py ...` for Scenario A/C/D — PASS
+- `python scripts/python/integration/generate_html_report.py` — PASS
 - `powershell -ExecutionPolicy Bypass -File "tests/run_all_tests.ps1" -Layer 4 -SmokeOnly` — PASS
 
 ### Remaining note

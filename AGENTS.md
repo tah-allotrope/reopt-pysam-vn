@@ -10,7 +10,7 @@
 
 ## 3. Documentation Directory
 Detailed instructions have been organized into the `docs/` folder for progressive disclosure. When working on specific areas, read the relevant file:
-- **[Architecture & Tech Stack](docs/architecture.md):** JuMP/HiGHS pipeline, Preprocessing modules (`src/REoptVietnam.jl` / `src/reopt_vietnam.py`), and Coding standards.
+- **[Architecture & Tech Stack](docs/architecture.md):** JuMP/HiGHS pipeline, preprocessing modules (`src/julia/REoptVietnam.jl` / `src/python/reopt_pysam_vn/reopt/preprocess.py`), and coding standards.
 - **[Data Layer & API Reference](docs/data_and_api.md):** API keys, Vietnam JSON data schema, and DeepWiki URLs.
 - **[Known Pitfalls & Workarounds](docs/pitfalls.md):** Common REopt errors, default overrides, and Decree 57 constraint limitations.
 - **[Scenario Templates](docs/scenarios.md):** Pre-configured JSON templates and usage patterns.
@@ -25,9 +25,9 @@ Detailed instructions have been organized into the `docs/` folder for progressiv
 
 ### Implementation Steps (all complete)
 1. Data layer — 5 JSON files + manifest (`data/vietnam/`)
-2. Julia module — `src/REoptVietnam.jl`
+2. Julia module — `src/julia/REoptVietnam.jl`
 3. Julia Layer 1 + Layer 2 tests
-4. Python module — `src/reopt_vietnam.py`
+4. Python module — `src/python/reopt_pysam_vn/reopt/preprocess.py`
 5. Python Layer 1 + Layer 2 tests + Layer 3 cross-validation
 6. 4 scenario templates in `scenarios/templates/`
 7. Layer 4 integration/regression tests + baselines

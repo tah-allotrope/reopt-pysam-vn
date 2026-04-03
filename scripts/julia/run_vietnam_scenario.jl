@@ -30,7 +30,7 @@ using HiGHS
 using REopt
 
 const REPO_ROOT = abspath(joinpath(@__DIR__, "..", ".."))
-include(joinpath(REPO_ROOT, "src", "REoptVietnam.jl"))
+include(joinpath(REPO_ROOT, "src", "julia", "REoptVietnam.jl"))
 using .REoptVietnam
 
 const NO_SOLVE = "--no-solve" in ARGS

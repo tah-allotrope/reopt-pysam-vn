@@ -23,9 +23,9 @@ from pathlib import Path
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-sys.path.insert(0, str(REPO_ROOT))
+sys.path.insert(0, str(REPO_ROOT / "src" / "python"))
 
-from src.reopt_vietnam import (
+from reopt_pysam_vn.reopt.preprocess import (
     apply_vietnam_defaults,
     build_vietnam_tariff,
     load_vietnam_data,

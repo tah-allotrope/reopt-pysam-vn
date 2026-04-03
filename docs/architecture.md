@@ -11,8 +11,8 @@ Dual Julia/Python modules that apply Vietnam defaults to a REopt input dict **be
 
 | Module | Language | Key Function |
 |---|---|---|
-| `src/REoptVietnam.jl` | Julia | `apply_vietnam_defaults!(dict, vn; customer_type, voltage_level, region)` |
-| `src/reopt_vietnam.py` | Python | `apply_vietnam_defaults(dict, vn, customer_type, voltage_level, region)` |
+| `src/julia/REoptVietnam.jl` | Julia | `apply_vietnam_defaults!(dict, vn; customer_type, voltage_level, region)` |
+| `src/python/reopt_pysam_vn/reopt/preprocess.py` | Python | `apply_vietnam_defaults(dict, vn, customer_type, voltage_level, region)` |
 
 Both modules share the same `data/vietnam/` data files and produce identical output (verified by Layer 3 cross-validation, max diff = 0.00e+00).
 

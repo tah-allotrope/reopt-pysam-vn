@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "reopt-pysam-vn"
+version = "0.1.0"
+description = "Vietnam REopt and PySAM toolkit for buyer-side optimization and developer-side finance modeling"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "matplotlib>=3.8",
+  "nrel-pysam>=7.1",
+  "numpy-financial>=1.0",
+  "openpyxl>=3.1",
+  "pandas>=2.0",
+  "requests>=2.31",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src/python"}
+
+[tool.setuptools.packages.find]
+where = ["src/python"]
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "src/python",
+]
+testpaths = [
+  "tests",
+]

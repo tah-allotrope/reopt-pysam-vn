@@ -1,43 +1,45 @@
-# REopt Vietnam Analysis
+# REopt PySAM VN
 
-Techno-economic optimization for cost-optimal Solar, Wind, and Battery systems for buildings and microgrids in Vietnam using [NREL REopt.jl](https://github.com/NREL/REopt.jl).
+Techno-economic optimization and finance modeling for solar, wind, storage, and corporate PPA workflows in Vietnam using [NREL REopt.jl](https://github.com/NREL/REopt.jl) plus PySAM.
 
 ## Tech Stack
 
 - **Julia 1.10+** with REopt.jl v0.56.4, JuMP, HiGHS
-- **Python 3.10+** for REopt API, preprocessing mirror, and tests
+- **Python 3.10+** for REopt preprocessing, PySAM integration, analytics, and tests
 - **Pipeline:** `Scenario(dict)` → `REoptInputs(s)` → `run_reopt(m, inputs)` → results dict
 
 ## Project Structure
 
 ```
 data/
-  vietnam/             Versioned Vietnam-specific policy data
-  raw/saigon18/        Source workbook for the Saigon18 case study
-  interim/saigon18/    Extracted and transformed Saigon18 inputs
+  vietnam/                 Versioned Vietnam-specific policy data
+  raw/saigon18/            Source workbook for the Saigon18 case study
+  interim/saigon18/        Extracted and transformed Saigon18 inputs
 src/
-  REoptVietnam.jl       Julia preprocessing module
-  reopt_vietnam.py      Python preprocessing module (mirror)
-scenarios/
-  templates/            Pre-filled Vietnam scenario templates (4 templates)
-  wind/                 Wind+Battery hospital scenario
-  case_studies/saigon18/ Time-labeled Saigon18 scenario files
+  julia/
+    REoptVietnam.jl        Julia preprocessing module
+  python/
+    reopt_pysam_vn/
+      reopt/               REopt-specific Python package code
+      pysam/               PySAM package scaffolding and finance modules
+      integration/         Cross-engine bridge code
 scripts/
-  julia/                Julia run scripts (Vietnam analysis)
-artifacts/
-  results/              Canonical optimization outputs
-  reports/              Canonical comparison reports and summaries
-archive/
-  colab/                US-benchmark reference scripts and results (archived)
+  julia/                   Julia execution scripts
+  python/
+    reopt/                 REopt-oriented Python workflows
+    pysam/                 PySAM-oriented Python workflows
+    integration/           Combined case-study and reporting workflows
+plans/
+  active/                  Current planning docs
+  archive/                 Historical planning docs
 tests/
-  cross_language/       Julia/Python cross-validation tests
-  julia/                Julia tests (data validation, unit, integration)
-  python/               Python tests (data validation, unit, integration)
-  baselines/            Regression baselines (auto-generated)
-  run_all_tests.ps1     Master test runner (all 4 layers)
-docs/                   Reference documentation (architecture, data, pitfalls, testing, internals)
-  worklog/              Active plans and research notes
-legacy/                 Old-to-new path map for retired folders
+  julia/                   Julia tests
+  python/
+    reopt/                 Python REopt tests
+    pysam/                 Python PySAM tests
+    integration/           Python integration and case-study tests
+  cross_language/          Julia/Python cross-validation tests
+  baselines/               Regression baselines
 ```
 
 ## Quick Start
@@ -61,11 +63,11 @@ julia --project --compile=min scripts/julia/run_vietnam_scenario.jl
 
 ```powershell
 # 1. Extract the case-study workbook into canonical interim JSON
-python scripts/python/extract_excel_inputs.py `
+python scripts/python/reopt/extract_excel_inputs.py `
   --excel data/raw/saigon18/2026-01-29_saigon18_excel_model_v2.xlsm
 
 # 2. Build canonical Saigon18 scenarios
-python scripts/python/build_saigon18_reopt_input.py
+python scripts/python/reopt/build_saigon18_reopt_input.py
 
 # 3. Validate a canonical scenario without solving
 $env:JULIA_PKG_PRECOMPILE_AUTO = "0"
@@ -87,7 +89,7 @@ The preprocessing tool applies Vietnam-specific defaults to any REopt input dict
 ### Usage (Julia)
 
 ```julia
-include("src/REoptVietnam.jl")
+include("src/julia/REoptVietnam.jl")
 using .REoptVietnam
 
 vn = load_vietnam_data()
@@ -100,7 +102,7 @@ s = Scenario(d)
 ### Usage (Python)
 
 ```python
-from src.reopt_vietnam import load_vietnam_data, apply_vietnam_defaults
+from reopt_pysam_vn.reopt.preprocess import load_vietnam_data, apply_vietnam_defaults
 
 vn = load_vietnam_data()
 d = json.load(open("scenarios/templates/vn_commercial_rooftop_pv.json"))
@@ -158,6 +160,16 @@ Pre-filled Vietnam templates in `scenarios/templates/` — override only Site/Lo
 | **2: Unit Tests** | All exported functions, edge cases | <3s |
 | **3: Cross-Validation** | Julia vs Python identical output | <5s |
 | **4: Integration** | Scenario construction, solver runs, regression baselines | ~30-60s/scenario |
+
+## Python Setup
+
+```powershell
+python -m pip install -r requirements.txt
+python -m pip install -e .
+```
+
+- PySAM support is now scaffolded through the `nrel-pysam` dependency.
+- PySAM-specific tests are skipped automatically when the package is unavailable.
 
 ## Generated Outputs
 
