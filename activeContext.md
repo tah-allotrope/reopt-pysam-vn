@@ -102,6 +102,63 @@
 
 ---
 
+## Phase 18 — PySAM Phase 5 Strike-Price Discovery — 2026-04-04
+
+- [x] Phase 1 - Update the Phase 18 checklist, scope guardrails, and expected outputs before implementation starts
+- [x] Phase 2 - Add failing regression coverage for strike-price sweep and minimum viable price discovery on top of the Phase 4 Ninhsim artifact
+- [x] Phase 3 - Implement the Phase 5 strike sweep from `5.0` to `15.0` UScents/kWh in `0.5`-cent steps using the local `.venv` PySAM runtime
+- [x] Phase 4 - Publish the normalized strike-discovery JSON artifact for Ninhsim
+- [x] Phase 5 - Publish a synchronized HTML phase report in the same report-skill pattern as Phase 4
+- [x] Phase 6 - Run the full PySAM pytest lane in `.venv` and confirm pass after Phase 5 lands
+- [ ] Review / Results - Record delivered files, sweep outcome, validation commands, and next-phase seeds
+
+### Notes
+
+- This phase must build directly on `artifacts/reports/ninhsim/2026-04-04_ninhsim-single-owner-finance.json` rather than bypassing the Phase 4 artifact.
+- The target business question is the minimum year-one strike in the requested sweep range that clears the target developer IRR, defaulting to `10%`.
+- Reporting should follow the same shared report-template flow used in Phase 4 so the HTML artifact remains consistent.
+
+### Outputs Expected
+
+- `src/python/reopt_pysam_vn/integration/strike_search.py`
+- `scripts/python/pysam/strike_price_discovery.py`
+- `scripts/python/integration/generate_ninhsim_phase5_strike_price_report.py`
+- `scripts/python/strike_price_discovery.py`
+- `scripts/python/generate_ninhsim_phase5_strike_price_report.py`
+- `tests/python/pysam/test_strike_price_discovery.py`
+- `artifacts/reports/ninhsim/2026-04-04_ninhsim-strike-price.json`
+- `reports/2026-04-04-ninhsim-pysam-phase-5-strike-price.html`
+
+### Interim Notes
+
+- Implementation should reuse the existing `build_ninhsim_single_owner_inputs()` bridge and `run_single_owner_model()` runtime so Phase 5 stays a thin orchestration layer on top of Phase 4 rather than a duplicate finance path.
+- Regression coverage should lock both the deterministic sweep mechanics and the discovered minimum viable strike so future refactors do not silently change the decision boundary.
+- The final JSON should preserve the Phase 4 case metadata and add explicit sweep settings, all evaluated strike points, and a machine-readable viability decision block.
+
+### Review / Results
+
+- Implemented Phase 5 strike discovery in `src/python/reopt_pysam_vn/integration/strike_search.py` as a thin orchestration layer over the existing Phase 4 bridge and `Single Owner` runtime, keeping all finance assumptions fixed while sweeping only the year-one PPA strike.
+- Added failing-then-passing regression coverage in `tests/python/pysam/test_strike_price_discovery.py` for both deterministic sweep behavior and the real Ninhsim boundary result against the canonical Phase 4 artifact.
+- Added runnable entrypoints at `scripts/python/pysam/strike_price_discovery.py` and `scripts/python/strike_price_discovery.py`, then published the normalized sweep artifact at `artifacts/reports/ninhsim/2026-04-04_ninhsim-strike-price.json`.
+- Added the synchronized HTML report generator at `scripts/python/integration/generate_ninhsim_phase5_strike_price_report.py` plus wrapper `scripts/python/generate_ninhsim_phase5_strike_price_report.py`, then published `reports/2026-04-04-ninhsim-pysam-phase-5-strike-price.html`.
+- The requested `5.0` to `15.0` UScents/kWh sweep produced `21` evaluated strike points and found the first strike that clears the default `10%` after-tax IRR target at `15.0` UScents/kWh, which is the top end of the requested range.
+- The Phase 4 baseline strike remains about `7.328` UScents/kWh and is not finance-viable under this developer-side screen; only the `15.0` UScents/kWh point met the IRR hurdle, with after-tax IRR about `10.89%`, minimum DSCR about `0.616`, and after-tax NPV still about `-$3.50M`.
+
+### Validation
+
+- `.venv\Scripts\python.exe -m pytest tests/python/pysam/test_strike_price_discovery.py -q` - PASS (`2 passed`)
+- `.venv\Scripts\python.exe scripts/python/pysam/strike_price_discovery.py` - PASS
+- `.venv\Scripts\python.exe scripts/python/integration/generate_ninhsim_phase5_strike_price_report.py` - PASS
+- `.venv\Scripts\python.exe -m pytest tests/python/pysam -q` - PASS (`9 passed`)
+
+### Next-Step Seeds
+
+- Extend the strike sweep above `15.0` UScents/kWh or tighten the step near the boundary if the next phase needs a more precise minimum viable strike than the current endpoint answer.
+- Put the buyer-side REopt parity ceiling and the developer-side PySAM viable strike in the same artifact so the commercial gap is explicit rather than split across Phase 4 and Phase 5 outputs.
+- Decide whether future developer-side screening should require a second threshold such as non-negative NPV or minimum DSCR now that the IRR-only boundary has been exposed.
+
+---
+
 ## Phase 11 — Ninhsim Developer Revenue and Offtaker Cost Path — 2026-04-02
 
 ## Phase 14 — Ninhsim Commercial Candidate Memo — 2026-04-02

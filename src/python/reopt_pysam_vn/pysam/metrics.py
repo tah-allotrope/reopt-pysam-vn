@@ -20,19 +20,26 @@ def _last_number(value) -> float | None:
     return _clean_number(value)
 
 
+def _percent_to_fraction(value) -> float | None:
+    cleaned = _last_number(value)
+    if cleaned is None:
+        return None
+    return cleaned / 100.0
+
+
 def extract_single_owner_outputs(financial_model) -> dict:
     """Normalize the finance metrics used by the Phase 4 artifact."""
 
     outputs = financial_model.Outputs
     return {
         "project_return_aftertax_npv_usd": float(outputs.project_return_aftertax_npv),
-        "project_return_aftertax_irr_fraction": _clean_number(
+        "project_return_aftertax_irr_fraction": _percent_to_fraction(
             outputs.project_return_aftertax_irr
         ),
         "project_return_pretax_npv_usd": _last_number(
             outputs.cf_project_return_pretax_npv
         ),
-        "project_return_pretax_irr_fraction": _last_number(
+        "project_return_pretax_irr_fraction": _percent_to_fraction(
             outputs.cf_project_return_pretax_irr
         ),
         "size_of_debt_usd": float(outputs.size_of_debt),
