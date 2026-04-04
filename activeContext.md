@@ -63,6 +63,45 @@
 
 ---
 
+## Phase 17 — Folder Blocker Cleanup and PySAM Phase 4 MVP — 2026-04-04
+
+- [x] Phase 1 - Recheck and, if possible, clear the remaining local folder-rename blocker without disturbing the synced git state
+- [x] Phase 2 - Add failing regression coverage for a real PySAM `Single Owner` developer-finance MVP
+- [x] Phase 3 - Implement the first normalized Vietnam-focused PySAM finance workflow and runnable script
+- [x] Phase 4 - Validate the Phase 4 workflow with targeted tests and smoke execution
+- [x] Phase 5 - Publish a synchronized HTML phase report if the MVP lands cleanly
+- [x] Review / Results - Record blocker status, delivered files, validation commands, and follow-up seeds
+
+### Notes
+
+- This phase should resolve the remaining rename blocker if it is now actionable, but should not use destructive filesystem operations.
+- The modeling scope stays intentionally narrow: `Single Owner` only, wrapper-driven Vietnam defaults, canonical JSON outputs, and one runnable case-study-oriented smoke path.
+- Reporting should happen promptly after validation so the phase artifact matches the delivered code and outputs.
+
+### Review / Results
+
+- Rechecked the old rename blocker and closed it as stale: `C:\Users\tukum\Downloads\reopt-julia-VNanalysis` no longer exists, the local folder is already `C:\Users\tukum\Downloads\reopt-pysam-vn`, and `origin` already points to `https://github.com/tah-allotrope/reopt-pysam-vn.git`.
+- Added real Phase 4 PySAM execution code under `src/python/reopt_pysam_vn/pysam/` plus a Ninhsim bridge in `src/python/reopt_pysam_vn/integration/bridge.py`, replacing the earlier scaffolding with a runnable `CustomGenerationProfileSingleOwner` workflow that uses wrapper-driven Vietnam defaults and zeroed US-style incentives.
+- Added Phase 4 regression coverage in `tests/python/pysam/test_single_owner_phase4.py` and expanded `tests/python/pysam/test_single_owner_scaffold.py` so the PySAM lane now checks both canonical Ninhsim mapping and a real local `Single Owner` execution path.
+- Added runnable entrypoints at `scripts/python/integration/run_ninhsim_single_owner.py`, `scripts/python/run_ninhsim_single_owner.py`, `scripts/python/pysam/run_single_owner_smoke.py`, and published the normalized artifact at `artifacts/reports/ninhsim/2026-04-04_ninhsim-single-owner-finance.json`.
+- Updated `docs/pysam.md` to document the supported local `.venv` Python 3.12 path because the workstation's global Python 3.14 cannot install `nrel-pysam`; also ignored `.venv/` in `.gitignore` to keep the local runtime out of git.
+- Published the synchronized HTML phase report at `reports/2026-04-04-ninhsim-pysam-phase-4-mvp.html` immediately after validation so the report stays aligned with the delivered JSON and code.
+
+### Validation
+
+- `.venv\Scripts\python.exe -m pytest tests/python/pysam -q` - PASS (`7 passed`)
+- `.venv\Scripts\python.exe scripts/python/integration/run_ninhsim_single_owner.py` - PASS
+- `.venv\Scripts\python.exe scripts/python/pysam/run_single_owner_smoke.py` - PASS
+- `.venv\Scripts\python.exe scripts/python/integration/generate_ninhsim_phase4_pysam_report.py` - PASS
+
+### Follow-up Seeds
+
+- Feed the new Phase 4 artifact into Phase 5 strike-price discovery so buyer-side REopt parity and developer-side PySAM return thresholds can be solved together instead of reviewed separately.
+- Decide whether the repo should standardize on `.venv\Scripts\python.exe` for PySAM work or add a helper bootstrap script so contributors do not have to remember the supported local runtime steps.
+- Add a second case-study bridge after the Phase 5 strike loop is stable so developer-side PySAM modeling does not remain Ninhsim-only.
+
+---
+
 ## Phase 11 — Ninhsim Developer Revenue and Offtaker Cost Path — 2026-04-02
 
 ## Phase 14 — Ninhsim Commercial Candidate Memo — 2026-04-02

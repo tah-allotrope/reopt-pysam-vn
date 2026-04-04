@@ -2,26 +2,212 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
+
+from reopt_pysam_vn.pysam.cashflow import build_annual_cashflow_table, trim_year_zero
+from reopt_pysam_vn.pysam.config import PySAMRuntimeConfig
+from reopt_pysam_vn.pysam.metrics import extract_single_owner_outputs
 
 
 @dataclass
 class SingleOwnerInputs:
-    """Normalized developer-finance inputs for the initial PySAM MVP."""
+    """Normalized developer-finance inputs for the Phase 4 Single Owner MVP."""
 
     system_capacity_kw: float
+    generation_profile_kw: list[float] = field(default_factory=lambda: [100.0] * 8760)
+    annual_generation_kwh: float = 876_000.0
+    installed_cost_usd: float = 1_000_000.0
+    fixed_om_usd_per_year: float = 10_000.0
+    ppa_price_input_usd_per_kwh: float = 0.08
     analysis_years: int = 20
-    debt_fraction: float = 0.7
+    debt_fraction: float = 0.70
     target_irr_fraction: float = 0.15
+    owner_tax_rate_fraction: float = 0.20
+    owner_discount_rate_fraction: float = 0.08
+    offtaker_discount_rate_fraction: float = 0.10
+    inflation_rate_fraction: float = 0.035
+    debt_interest_rate_fraction: float = 0.085
+    debt_tenor_years: int = 10
+    ppa_escalation_rate_fraction: float = 0.04
+    om_escalation_rate_fraction: float = 0.03
+    depreciation_schedule: tuple[float, ...] = (100.0,)
     metadata: dict = field(default_factory=dict)
 
 
 def build_single_owner_inputs(
     system_capacity_kw: float, **overrides
 ) -> SingleOwnerInputs:
-    """Create a normalized Single Owner input bundle.
+    """Create a normalized Single Owner input bundle."""
 
-    This intentionally stops short of invoking PySAM until the finance mapping layer lands.
-    """
+    inputs = SingleOwnerInputs(
+        system_capacity_kw=float(system_capacity_kw), **overrides
+    )
+    if not inputs.generation_profile_kw:
+        raise ValueError("generation_profile_kw must not be empty")
+    if len(inputs.generation_profile_kw) != 8760:
+        raise ValueError("generation_profile_kw must contain 8760 hourly values")
+    if inputs.annual_generation_kwh <= 0.0:
+        inputs.annual_generation_kwh = float(sum(inputs.generation_profile_kw))
+    return inputs
 
-    return SingleOwnerInputs(system_capacity_kw=system_capacity_kw, **overrides)
+
+def _safe_float(value: float) -> float | None:
+    value = float(value)
+    if math.isnan(value) or math.isinf(value):
+        return None
+    return value
+
+
+def _configure_financial_model(financial_model, inputs: SingleOwnerInputs) -> None:
+    financial_model.Revenue.ppa_soln_mode = 1
+    financial_model.Revenue.ppa_price_input = [
+        float(inputs.ppa_price_input_usd_per_kwh)
+    ]
+    financial_model.Revenue.ppa_escalation = (
+        float(inputs.ppa_escalation_rate_fraction) * 100.0
+    )
+
+    financial_model.SystemCosts.total_installed_cost = float(inputs.installed_cost_usd)
+    financial_model.SystemCosts.om_fixed = [float(inputs.fixed_om_usd_per_year)]
+    financial_model.SystemCosts.om_capacity = [0.0]
+    financial_model.SystemCosts.om_production = [0.0]
+    financial_model.SystemCosts.om_fixed_escal = (
+        float(inputs.om_escalation_rate_fraction) * 100.0
+    )
+    financial_model.SystemCosts.om_capacity_escal = 0.0
+    financial_model.SystemCosts.om_production_escal = 0.0
+
+    financial_model.FinancialParameters.analysis_period = int(inputs.analysis_years)
+    financial_model.FinancialParameters.debt_option = 0
+    financial_model.FinancialParameters.debt_percent = (
+        float(inputs.debt_fraction) * 100.0
+    )
+    financial_model.FinancialParameters.federal_tax_rate = [
+        float(inputs.owner_tax_rate_fraction) * 100.0
+    ]
+    financial_model.FinancialParameters.state_tax_rate = [0.0]
+    financial_model.FinancialParameters.real_discount_rate = (
+        float(inputs.owner_discount_rate_fraction) * 100.0
+    )
+    financial_model.FinancialParameters.inflation_rate = (
+        float(inputs.inflation_rate_fraction) * 100.0
+    )
+    financial_model.FinancialParameters.term_int_rate = (
+        float(inputs.debt_interest_rate_fraction) * 100.0
+    )
+    financial_model.FinancialParameters.term_tenor = int(inputs.debt_tenor_years)
+
+    financial_model.Depreciation.depr_fedbas_method = 1
+    financial_model.Depreciation.depr_stabas_method = 1
+    financial_model.Depreciation.depr_alloc_macrs_5_percent = float(
+        inputs.depreciation_schedule[0]
+    )
+    financial_model.Depreciation.depr_alloc_macrs_15_percent = 0.0
+    financial_model.Depreciation.depr_alloc_sl_5_percent = 0.0
+    financial_model.Depreciation.depr_alloc_sl_15_percent = 0.0
+    financial_model.Depreciation.depr_alloc_sl_20_percent = 0.0
+    financial_model.Depreciation.depr_alloc_sl_39_percent = 0.0
+    financial_model.Depreciation.depr_alloc_custom_percent = 0.0
+    financial_model.Depreciation.depr_bonus_fed = 0.0
+    financial_model.Depreciation.depr_bonus_sta = 0.0
+    financial_model.Depreciation.depr_custom_schedule = [0.0] * int(
+        inputs.analysis_years
+    )
+
+    financial_model.TaxCreditIncentives.itc_fed_percent = (0.0,)
+    financial_model.TaxCreditIncentives.itc_sta_percent = (0.0,)
+    financial_model.TaxCreditIncentives.itc_fed_amount = (0.0,)
+    financial_model.TaxCreditIncentives.itc_sta_amount = (0.0,)
+    financial_model.TaxCreditIncentives.ptc_fed_amount = (0.0,)
+    financial_model.TaxCreditIncentives.ptc_sta_amount = (0.0,)
+    financial_model.TaxCreditIncentives.ptc_fed_term = 10
+    financial_model.TaxCreditIncentives.ptc_sta_term = 10
+    financial_model.TaxCreditIncentives.ptc_fed_escal = 0.0
+    financial_model.TaxCreditIncentives.ptc_sta_escal = 0.0
+
+
+def run_single_owner_model(inputs: SingleOwnerInputs) -> dict:
+    """Execute the Phase 4 Single Owner workflow and normalize the outputs."""
+
+    import PySAM.CustomGeneration as cg
+    import PySAM.Grid as gr
+    import PySAM.Singleowner as so
+    import PySAM.Utilityrate5 as ur
+
+    runtime = PySAMRuntimeConfig()
+    system_model = cg.default("CustomGenerationProfileNone")
+    grid_model = gr.from_existing(system_model, runtime.system_config)
+    utility_model = ur.from_existing(system_model, runtime.system_config)
+    financial_model = so.from_existing(system_model, runtime.system_config)
+
+    system_model.Plant.system_capacity = float(inputs.system_capacity_kw)
+    system_model.Plant.derate = 1.0
+    system_model.Plant.energy_output_array = [
+        float(value) for value in inputs.generation_profile_kw
+    ]
+    system_model.Plant.spec_mode = 1
+    system_model.Lifetime.analysis_period = int(inputs.analysis_years)
+    system_model.Lifetime.system_use_lifetime_output = 0
+    system_model.Lifetime.generic_degradation = [0.5]
+
+    _configure_financial_model(financial_model, inputs)
+
+    system_model.execute()
+    grid_model.execute()
+    utility_model.execute()
+    financial_model.execute()
+
+    analysis_years = int(inputs.analysis_years)
+    revenue = trim_year_zero(financial_model.Outputs.cf_total_revenue, analysis_years)
+    aftertax_cash = trim_year_zero(
+        financial_model.Outputs.cf_project_return_aftertax_cash,
+        analysis_years,
+    )
+    debt_service = trim_year_zero(
+        financial_model.Outputs.cf_debt_payment_total,
+        analysis_years,
+    )
+    debt_balance = trim_year_zero(
+        financial_model.Outputs.cf_debt_balance, analysis_years
+    )
+    dscr = trim_year_zero(financial_model.Outputs.cf_pretax_dscr, analysis_years)
+
+    return {
+        "model": runtime.model_name,
+        "status": "ok",
+        "runtime": {
+            "country": runtime.country,
+            "currency": runtime.currency,
+            "python": runtime.local_python,
+            "system_config": runtime.system_config,
+        },
+        "inputs": {
+            "system_capacity_kw": float(inputs.system_capacity_kw),
+            "annual_generation_kwh": float(inputs.annual_generation_kwh),
+            "installed_cost_usd": float(inputs.installed_cost_usd),
+            "fixed_om_usd_per_year": float(inputs.fixed_om_usd_per_year),
+            "ppa_price_input_usd_per_kwh": float(inputs.ppa_price_input_usd_per_kwh),
+            "analysis_years": analysis_years,
+            "debt_fraction": float(inputs.debt_fraction),
+            "target_irr_fraction": float(inputs.target_irr_fraction),
+            "owner_tax_rate_fraction": float(inputs.owner_tax_rate_fraction),
+            "owner_discount_rate_fraction": float(inputs.owner_discount_rate_fraction),
+            "debt_interest_rate_fraction": float(inputs.debt_interest_rate_fraction),
+            "debt_tenor_years": int(inputs.debt_tenor_years),
+        },
+        "case": dict(inputs.metadata),
+        "outputs": extract_single_owner_outputs(financial_model),
+        "annual_cashflows": build_annual_cashflow_table(
+            analysis_years,
+            revenue,
+            aftertax_cash,
+            debt_service,
+            debt_balance,
+            dscr,
+        ),
+        "notes": {
+            "phase_scope": "Phase 4 MVP uses CustomGenerationProfileSingleOwner with wrapper-driven Vietnam defaults and zeroed US-style incentives.",
+            "irr_warning": "PySAM can return null-equivalent IRR when the configured cashflow never crosses into positive territory under the selected strike and cost assumptions.",
+        },
+    }
