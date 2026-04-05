@@ -1,5 +1,13 @@
 # Active Context — Saigon18 REopt Integration
 
+## Phase 19 — Planning Surface Cleanup and Session Handoff — 2026-04-05
+
+- [ ] Phase 1 - Resolve stale planning surfaces so `plans/active/` is the only mutable home for the PySAM reorganization roadmap
+- [ ] Phase 2 - Close out the current PySAM strike-discovery phase with synchronized notes, outcomes, and next-step guidance
+- [ ] Phase 3 - Generate a current-state HTML handoff report that summarizes repo status and the recommended first Vietnam analysis flow for the next session
+- [ ] Validation - Regenerate the handoff artifact and verify it renders cleanly
+- [ ] Review / Results - Record the canonical plan path, report path, and next-session starting commands
+
 ## Phase 15 — PySAM Integration Reorganization Plan — 2026-04-03
 
 - [x] Phase 1 - Audit the current repository structure and identify rename, folder-move, and PySAM landing-zone requirements
@@ -14,11 +22,11 @@
 
 ### Outputs Generated
 
-- `plans/pysam_integration_reorg_plan.md`
+- `plans/active/pysam_integration_reorg_plan.md`
 
 ### Review / Results
 
-- Created a new root-level planning home and placed the PySAM roadmap at `plans/pysam_integration_reorg_plan.md` so future review can happen outside `docs/worklog/`.
+- Created a new root-level planning home and placed the PySAM roadmap at `plans/active/pysam_integration_reorg_plan.md` so future review can happen outside `docs/worklog/`.
 - The plan recommends renaming the repository to `reopt-pysam-vn` first, then restructuring the repo into explicit REopt, PySAM, and integration domains rather than mixing new finance code into the current script-first Python layout.
 - The roadmap is split into seven implementation phases: rename and planning cleanup, structural reorganization, Python packaging, PySAM MVP, REopt-plus-PySAM strike search, contract and risk extensions, and final documentation plus hardening.
 - Open questions were embedded directly in the markdown plan with recommended defaults so the user can review asynchronously without interrupting the workflow.
@@ -35,7 +43,7 @@
 
 ### Notes
 
-- This execution pass implements the first three phases from `plans/pysam_integration_reorg_plan.md`.
+- This execution pass implements the first three phases from `plans/active/pysam_integration_reorg_plan.md`.
 - The safest migration path is to preserve old entry points where practical while moving code into the new canonical structure.
 
 ### Outputs Expected
@@ -110,7 +118,7 @@
 - [x] Phase 4 - Publish the normalized strike-discovery JSON artifact for Ninhsim
 - [x] Phase 5 - Publish a synchronized HTML phase report in the same report-skill pattern as Phase 4
 - [x] Phase 6 - Run the full PySAM pytest lane in `.venv` and confirm pass after Phase 5 lands
-- [ ] Review / Results - Record delivered files, sweep outcome, validation commands, and next-phase seeds
+- [x] Review / Results - Record delivered files, sweep outcome, validation commands, and next-phase seeds
 
 ### Notes
 
@@ -151,11 +159,51 @@
 - `.venv\Scripts\python.exe scripts/python/integration/generate_ninhsim_phase5_strike_price_report.py` - PASS
 - `.venv\Scripts\python.exe -m pytest tests/python/pysam -q` - PASS (`9 passed`)
 
+### Handoff Notes
+
+- `plans/active/pysam_integration_reorg_plan.md` is now the canonical roadmap; `plans/pysam_integration_reorg_plan.md` remains only as a pointer so the repo no longer has duplicate editable plan copies.
+- The repo is ready for the next session to either build the combined buyer-plus-developer commercial-gap artifact or run a fresh first-analysis pass from a template and the Julia scenario runner.
+
 ### Next-Step Seeds
 
 - Extend the strike sweep above `15.0` UScents/kWh or tighten the step near the boundary if the next phase needs a more precise minimum viable strike than the current endpoint answer.
 - Put the buyer-side REopt parity ceiling and the developer-side PySAM viable strike in the same artifact so the commercial gap is explicit rather than split across Phase 4 and Phase 5 outputs.
 - Decide whether future developer-side screening should require a second threshold such as non-negative NPV or minimum DSCR now that the IRR-only boundary has been exposed.
+
+---
+
+## Phase 19 — Planning Surface Cleanup and Session Handoff — 2026-04-05
+
+- [x] Phase 1 - Resolve stale planning surfaces so `plans/active/` is the only mutable home for the PySAM reorganization roadmap
+- [x] Phase 2 - Close out the current PySAM strike-discovery phase with synchronized notes, outcomes, and next-step guidance
+- [x] Phase 3 - Generate a current-state HTML handoff report that summarizes repo status and the recommended first Vietnam analysis flow for the next session
+- [x] Validation - Regenerate the handoff artifact and verify it renders cleanly
+- [x] Review / Results - Record the canonical plan path, report path, and next-session starting commands
+
+### Notes
+
+- This cleanup phase is intentionally documentation-first: it removes stale planning duplication, closes the Phase 18 execution log, and creates a practical handoff artifact for the next session.
+- The handoff should guide both continuation of the Ninhsim PySAM roadmap and a clean first-run Vietnam scenario flow from the repo root.
+
+### Outputs Generated
+
+- `plans/active/pysam_integration_reorg_plan.md`
+- `plans/pysam_integration_reorg_plan.md`
+- `scripts/python/integration/generate_project_status_handoff_report.py`
+- `scripts/python/generate_project_status_handoff_report.py`
+- `reports/2026-04-05-project-status-and-first-analysis-handoff.html`
+
+### Review / Results
+
+- Refreshed `plans/active/pysam_integration_reorg_plan.md` as the canonical roadmap and replaced the stale root-level duplicate with a pointer-only file so the repo now follows a one-live-plan-per-topic rule under `plans/active/`.
+- Closed the stale rename and packaging notes implicitly by aligning the roadmap with actual repo state: the repo is already `reopt-pysam-vn`, PySAM scaffolding and Phase 4 execution are complete, and the open integration gap is the combined buyer-plus-developer artifact.
+- Published a current-state HTML handoff report at `reports/2026-04-05-project-status-and-first-analysis-handoff.html` that summarizes implemented phases, current blockers, canonical paths, and the recommended first Vietnam project analysis commands for the next session.
+- The recommended next-session first analysis flow is to run a fast template validation with `julia --project --compile=min scripts/julia/run_vietnam_scenario.jl --no-solve`, then solve the default template or a specific case-study scenario once API credentials and Julia are confirmed healthy.
+
+### Validation
+
+- `.venv\Scripts\python.exe scripts/python/integration/generate_project_status_handoff_report.py` - PASS
+- Verified the generated HTML includes explicit-height Chart.js containers and current canonical paths for plans, reports, and runner commands.
 
 ---
 

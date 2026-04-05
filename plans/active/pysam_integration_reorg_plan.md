@@ -1,9 +1,16 @@
 # PySAM Integration and Repository Reorganization Plan
 
-> Status: Draft for review - 2026-04-03
-> Scope: Planning only for the next implementation phase
-> Current repo: `reopt-pysam-vn` (GitHub renamed; local folder rename pending release of file lock)
-> Proposed repo: `reopt-pysam-vn`
+> Status: Active roadmap refreshed after Phase 5 strike discovery - 2026-04-05
+> Scope: Canonical roadmap for remaining PySAM and integration work
+> Current repo: `reopt-pysam-vn` locally and on GitHub
+> Canonical plan path: `plans/active/pysam_integration_reorg_plan.md`
+
+## Status refresh - 2026-04-05
+
+- Phases 1-3 are complete: repository rename, planning-home migration, package reorganization, and Python packaging all landed.
+- Phase 4 is complete: the first runnable Vietnam-focused PySAM `Single Owner` workflow now produces canonical finance JSON for Ninhsim.
+- Phase 5 is partially complete: developer-side strike discovery landed, but the combined buyer-plus-developer decision artifact is still the main unfinished bridge item.
+- Use `activeContext.md` as the execution log and this file as the roadmap for remaining work.
 
 ---
 
@@ -25,26 +32,27 @@ The current repository is functional, but it is still organized around the origi
 ### Current strengths
 
 - Clear split between Julia execution and Python preprocessing.
-- Existing `scripts/python/`, `tests/python/`, and `src/python/reopt_pysam_vn/reopt/preprocess.py` already give PySAM a natural Python-side entry point.
+- The Python side is now organized as `src/python/reopt_pysam_vn/` with explicit `reopt`, `pysam`, `integration`, and `common` domains.
 - Documentation and testing are already phase-based and disciplined.
+- The repo already has a working Ninhsim Phase 4 PySAM artifact and a deterministic Phase 5 strike-sweep artifact to build on.
 
 ### Current constraints for PySAM integration
 
-- The Python code is not yet organized as a package with explicit REopt and future PySAM subdomains.
-- `requirements.txt` does not yet include PySAM.
-- Repository naming, README copy, and some metadata still describe a REopt-only project.
-- Planning documents currently live under `plans/archive/`, which makes them less visible than they should be for active iteration.
+- Buyer-side parity outputs and developer-side finance outputs are still split across separate artifacts instead of one combined commercial decision payload.
+- PySAM execution still depends on the repo-local Python 3.12 `.venv` because the workstation's global Python 3.14 cannot install `nrel-pysam`.
+- Phase 6+ contract structures, wheeling-risk layers, and Vietnam-specific sensitivities are still roadmap items rather than implemented workflows.
+- Root-level `plans/*.md` files should be treated as compatibility pointers only; editable plans belong in `plans/active/`.
 
 ---
 
 ## 3. Phase goals
 
-This next phase should accomplish four things in order:
+The remaining roadmap should now accomplish four things in order:
 
-1. Rename the project from `reopt-julia-VNanalysis` to `reopt-pysam-vn` locally and on GitHub.
-2. Reorganize the repository so REopt and PySAM can coexist cleanly in the Python layer.
-3. Move planning artifacts to a root-level `plans/` home and define an archive convention for older plans.
-4. Create the foundation for PySAM-based developer PPA modeling without changing upstream REopt or PySAM internals.
+1. Complete the buyer-plus-developer bridge so one artifact can show commercial overlap or gap directly.
+2. Expand beyond the current `Single Owner` and pay-as-produced screens only after the combined bridge is stable.
+3. Add Vietnam-specific contract and risk layers without modifying upstream REopt or PySAM internals.
+4. Harden docs, baselines, and onboarding so a new session can run either REopt-only or REopt-plus-PySAM workflows cleanly.
 
 ### Non-goals for this phase
 
@@ -133,6 +141,8 @@ reopt-pysam-vn/
 
 ## 5. Folder and path migration plan
 
+Status note: the major folder migration work in this section is complete. Keep this section as migration history and use it only when checking compatibility shims or historical references.
+
 ### Required moves
 
 | Current path | Proposed path | Action | Notes |
@@ -154,7 +164,7 @@ reopt-pysam-vn/
 
 ## 6. Multi-phase execution roadmap
 
-## Phase 1 - Repository rename and planning-home cleanup
+## Phase 1 - Repository rename and planning-home cleanup (complete)
 
 ### Objective
 
@@ -189,7 +199,7 @@ Rename the repo and make the planning surface easy to find before deeper code mo
 
 ---
 
-## Phase 2 - Structural reorganization for a dual-engine repo
+## Phase 2 - Structural reorganization for a dual-engine repo (complete)
 
 ### Objective
 
@@ -223,7 +233,7 @@ Make the codebase shape reflect the fact that the project now has two engines: R
 
 ---
 
-## Phase 3 - Python packaging and dependency foundation
+## Phase 3 - Python packaging and dependency foundation (complete)
 
 ### Objective
 
@@ -256,7 +266,7 @@ Prepare the Python layer to support PySAM as a first-class dependency rather tha
 
 ---
 
-## Phase 4 - PySAM MVP for developer-side PPA finance
+## Phase 4 - PySAM MVP for developer-side PPA finance (complete)
 
 ### Objective
 
@@ -295,7 +305,7 @@ Land the first usable PySAM workflow that turns an existing renewable project as
 
 ---
 
-## Phase 5 - REopt plus PySAM bridge for strike-price discovery
+## Phase 5 - REopt plus PySAM bridge for strike-price discovery (in progress)
 
 ### Objective
 
@@ -326,6 +336,7 @@ Find a strike price where:
 
 - At least one case study can produce a bounded strike recommendation.
 - Search logic is deterministic under fixed assumptions.
+- One combined artifact shows both buyer-side ceiling economics and developer-side viability results for the same case without manual cross-reading.
 
 ### Risks
 
