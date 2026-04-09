@@ -33,6 +33,7 @@ OM_COST_ESCALATION = 0.04
 
 REGION = "south"
 VOLTAGE_LEVEL = "medium_voltage_22kv_to_110kv"
+SOLAR_STORAGE_TARGET_FRACTION = 0.60
 
 
 def build_base_scenario(extracted: dict) -> dict:
@@ -155,6 +156,46 @@ def build_scenario_b(extracted: dict) -> dict:
     return d
 
 
+def build_scenario_c(
+    extracted: dict,
+    enforced_target_fraction: float = SOLAR_STORAGE_TARGET_FRACTION,
+    requested_target_fraction: float = SOLAR_STORAGE_TARGET_FRACTION,
+) -> dict:
+    d = build_base_scenario(extracted)
+    d["PV"]["max_kw"] = 100_000.0
+    d["ElectricStorage"]["max_kw"] = 60_000.0
+    d["ElectricStorage"]["max_kwh"] = 240_000.0
+    d["Wind"]["min_kw"] = 0.0
+    d["Wind"]["max_kw"] = 0.0
+    d["Wind"]["production_factor_series"] = []
+    d["Site"]["renewable_electricity_min_fraction"] = float(enforced_target_fraction)
+    d["Site"]["include_grid_renewable_fraction_in_RE_constraints"] = False
+    d["Site"]["include_exported_renewable_electricity_in_total"] = False
+    d["_meta"] = {
+        "scenario": "C",
+        "name": "Ninhsim optimized solar+storage for 60% delivered-energy target",
+        "site": dict(extracted["site"]),
+        "description": (
+            "Optimizes solar PV and battery storage only, with wind removed, while targeting at least 60% annual renewable delivery to site load. "
+            "Exports remain merchant-valued in post-processing and are excluded from the delivered-energy target basis."
+        ),
+        "requested_renewable_delivered_fraction_of_load": float(
+            requested_target_fraction
+        ),
+        "enforced_renewable_delivered_fraction_of_load": float(
+            enforced_target_fraction
+        ),
+        "target_definition": "annual_renewable_delivered_to_load_fraction",
+        "target_treatment": "minimum_threshold",
+        "wind_enabled": False,
+        "battery_grid_charging_allowed": False,
+        "excess_energy_treatment": "merchant_sale_proxy_from_weighted_evn_ratio",
+        "strike_anchor": "95_percent_of_weighted_evn_tariff",
+        "strike_escalation": "matches_evn_escalation",
+    }
+    return d
+
+
 def save_scenario(d: dict, output_dir: Path, filename: str) -> Path:
     path = output_dir / filename
     path.write_text(json.dumps(d, indent=2), encoding="utf-8")
@@ -179,7 +220,7 @@ def main() -> None:
     parser.add_argument(
         "--scenarios",
         nargs="+",
-        choices=["a", "b", "all"],
+        choices=["a", "b", "c", "all"],
         default=["all"],
         help="Which scenarios to build",
     )
@@ -194,6 +235,10 @@ def main() -> None:
     builders = {
         "a": (build_scenario_a, "2026-04-01_ninhsim_scenario-a_baseline-evn.json"),
         "b": (build_scenario_b, "2026-04-01_ninhsim_scenario-b_optimized-cppa.json"),
+        "c": (
+            build_scenario_c,
+            "2026-04-08_ninhsim_solar-storage_60pct.json",
+        ),
     }
 
     print("Building Ninhsim REopt scenarios...")

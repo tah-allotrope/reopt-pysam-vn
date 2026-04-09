@@ -172,6 +172,30 @@
 
 ---
 
+## Phase 19 — Ninhsim 60% Solar + Storage DPPA Planning Note — 2026-04-06
+
+- [x] Phase 1 - Review the current Ninhsim REopt and PySAM artifacts relevant to a `60%` demand-serving solar-plus-storage study
+- [x] Phase 2 - Draft a standalone markdown plan that explains the REopt-plus-PySAM workflow and embeds clarifying questions for user review
+- [x] Review / Results - Save the planning artifact under `plans/active/` and record the recommended defaults for unresolved points
+
+### Notes
+
+- This is a planning-only phase requested by the user; no modeling implementation should happen in this pass.
+- The plan should align with the repo's existing Ninhsim workflow and explicitly distinguish buyer-side REopt sizing from developer-side PySAM finance evaluation.
+
+### Outputs Generated
+
+- `plans/active/ninhsim_60pct_solar_storage_dppa_plan.md`
+
+### Review / Results
+
+- Drafted a dedicated planning artifact for a Ninhsim `solar + storage` study that targets `60%` demand coverage and evaluates developer returns at a DPPA strike pegged to `5%` below the weighted EVN industrial tariff for `22-110 kV`.
+- The plan explicitly notes that this new strike peg is lower than the prior Phase 4 commercial input, so developer finance results may weaken unless the new sizing materially changes the cost and delivery profile.
+- Embedded clarifying questions directly in the plan around the `60%` target definition, wind removal, battery charging source, excess-energy treatment, strike escalation, optimization objective, and finance assumptions so the user can answer inline before implementation begins.
+- Recommended default path in the plan is a customer-anchored REopt sizing pass for `solar + storage only`, followed by a PySAM `Single Owner` finance evaluation and one combined decision artifact.
+
+---
+
 ## Phase 19 — Planning Surface Cleanup and Session Handoff — 2026-04-05
 
 - [x] Phase 1 - Resolve stale planning surfaces so `plans/active/` is the only mutable home for the PySAM reorganization roadmap
@@ -1186,3 +1210,45 @@ artifacts/reports/saigon18/
 ### Remaining note
 
 - Full Layer 4 rerun through `tests/run_all_tests.ps1 -Layer 4` started successfully and entered the long Julia integration section, but the CLI command timed out before completion in this session; the pre-existing Python API payload failures documented in `docs/testing.md` still apply to the repo-wide Layer 4 scope.
+
+---
+
+## Phase 20 - Ninhsim 60% Solar + Storage DPPA Implementation - 2026-04-08
+
+- [ ] Phase 1 - Extend the Ninhsim scenario builder for a solar-plus-storage-only case with a 60% annual renewable-delivered target and the agreed export treatment
+- [ ] Phase 2 - Add failing regression coverage for the tariff peg, 60% coverage logic, and the solar-plus-storage PySAM bridge
+- [ ] Phase 3 - Implement the Ninhsim 60% analysis workflow, including the pegged strike, merchant-sale proxy, and combined decision artifact
+- [ ] Phase 4 - Run the new REopt and PySAM case-study workflow and persist canonical JSON artifacts
+- [ ] Phase 5 - Generate the synchronized HTML phase report in the repo report-skill style
+- [ ] Review / Results - Record delivered files, validation commands, achieved coverage, and finance-screen outcome
+
+### Notes
+
+- This phase implements `plans/active/ninhsim_60pct_solar_storage_dppa_plan.md` using the defaults already agreed in the plan: annual delivered-energy target, minimum 60% threshold, solar plus storage only, solar-only battery charging, weighted-EVN tariff peg at 95%, EVN-style escalation after year one, merchant treatment for excess energy, and repo-default Vietnam finance assumptions.
+- The safest first implementation path is to use REopt's renewable-electricity minimum-fraction input if the local solver accepts it, then report the achieved delivered-energy coverage directly from the solved hourly series and carry the solved case into PySAM with explicit matched-versus-merchant revenue metadata.
+
+### Outputs Expected
+
+- `scenarios/case_studies/ninhsim/2026-04-08_ninhsim_solar-storage_60pct.json`
+- `artifacts/results/ninhsim/2026-04-08_ninhsim_solar-storage_60pct_reopt-results.json`
+- `artifacts/reports/ninhsim/2026-04-08_ninhsim_solar-storage_60pct_analysis.json`
+- `artifacts/reports/ninhsim/2026-04-08_ninhsim_solar-storage_60pct_single-owner.json`
+- `artifacts/reports/ninhsim/2026-04-08_ninhsim_solar-storage_60pct_combined-decision.json`
+- `reports/2026-04-08-ninhsim-solar-storage-60pct-dppa.html`
+
+### Review / Results
+
+- Implemented the Ninhsim 60% solar-plus-storage workflow across `scripts/python/integration/build_ninhsim_reopt_input.py`, `src/python/reopt_pysam_vn/integration/ninhsim_solar_storage_60pct.py`, `src/python/reopt_pysam_vn/integration/bridge.py`, and the new runner/report scripts so the case now has a reproducible REopt -> analysis -> PySAM -> combined-decision path.
+- Added a dedicated Scenario C at `scenarios/case_studies/ninhsim/2026-04-08_ninhsim_solar-storage_60pct.json` with wind removed, solar-only battery charging preserved, larger PV/BESS search bounds, and the site-level renewable-electricity minimum fraction set to the delivered-energy target requested in the plan.
+- The end-to-end solve landed `optimal` and achieved the requested delivered-energy target: `PV 100.0 MW`, `BESS 27.5637 MW / 166.7641 MWh`, annual renewable delivered to load `110.627 GWh`, exported renewable `18.291 GWh`, and delivered-energy coverage `60.03%` against annual load `184.286 GWh`.
+- The fixed year-one DPPA strike was locked at `1917.93 VND/kWh` (`0.072649 USD/kWh`), which is exactly `95%` of the recomputed weighted EVN benchmark `2018.88 VND/kWh`; the merchant proxy stayed tied to the repo wholesale benchmark at `671 VND/kWh` in year one.
+- The paired PySAM Single Owner finance screen published to `artifacts/reports/ninhsim/2026-04-08_ninhsim_solar-storage_60pct_single-owner.json` remains non-viable at the default hurdle: after-tax NPV about `-$158.59M`, after-tax IRR `null`, minimum DSCR about `-0.489`, and year-one total revenue about `$8.45M` under the blended realized price feed.
+- The combined decision artifact at `artifacts/reports/ninhsim/2026-04-08_ninhsim_solar-storage_60pct_combined-decision.json` therefore marks the case as operationally feasible but not financeable at the default `15%` project-IRR target, with recommended position `needs_reprice_or_scope_change`.
+
+### Validation
+
+- `".venv/Scripts/python.exe" -m pytest tests/python/integration/test_ninhsim_cppa.py -q` - PASS (`20 passed`)
+- `".venv/Scripts/python.exe" -m pytest tests/python/pysam/test_single_owner_phase4.py -q` - PASS (`7 passed`)
+- `julia --project --compile=min scripts/julia/run_vietnam_scenario.jl --scenario scenarios/case_studies/ninhsim/2026-04-08_ninhsim_solar-storage_60pct.json --no-solve` - PASS
+- `".venv/Scripts/python.exe" scripts/python/integration/run_ninhsim_solar_storage_60pct.py` - PASS
+- `".venv/Scripts/python.exe" scripts/python/integration/generate_ninhsim_solar_storage_60pct_report.py` - PASS

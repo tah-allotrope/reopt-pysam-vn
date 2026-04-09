@@ -3,31 +3,66 @@ Regression tests for the Ninhsim bundled-CPPA optimization workflow.
 """
 
 import math
+import importlib.util
 import sys
 from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
-sys.path.insert(0, str(REPO_ROOT / "scripts" / "python"))
+sys.path.insert(0, str(REPO_ROOT / "src" / "python"))
 
-from analyze_ninhsim_cppa import (  # noqa: E402
-    build_commercial_candidate_memo,
-    build_summary,
-    calculate_customer_first_annual_path,
-    calculate_cppa_sensitivity_bands,
-    calculate_customer_bill_breakdown,
-    calculate_customer_equivalent_strike,
-    calculate_financial_screening_view,
-    calculate_multi_year_cppa_path,
+
+def _load_module(name: str, relative_path: str):
+    spec = importlib.util.spec_from_file_location(name, REPO_ROOT / relative_path)
+    module = importlib.util.module_from_spec(spec)
+    assert spec is not None and spec.loader is not None
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+ANALYZE_NINHSIM_CPPA = _load_module(
+    "analyze_ninhsim_cppa_module",
+    "scripts/python/integration/analyze_ninhsim_cppa.py",
 )
-from build_ninhsim_extracted_inputs import (  # noqa: E402
-    PROJECT_SITE,
-    build_extracted_inputs,
+BUILD_NINHSIM_EXTRACTED = _load_module(
+    "build_ninhsim_extracted_inputs_module",
+    "scripts/python/integration/build_ninhsim_extracted_inputs.py",
 )
-from build_ninhsim_reopt_input import (  # noqa: E402
-    build_scenario_a,
-    build_scenario_b,
+BUILD_NINHSIM_REOPT_INPUT = _load_module(
+    "build_ninhsim_reopt_input_module",
+    "scripts/python/integration/build_ninhsim_reopt_input.py",
 )
+
+build_commercial_candidate_memo = ANALYZE_NINHSIM_CPPA.build_commercial_candidate_memo
+build_summary = ANALYZE_NINHSIM_CPPA.build_summary
+calculate_customer_first_annual_path = (
+    ANALYZE_NINHSIM_CPPA.calculate_customer_first_annual_path
+)
+calculate_cppa_sensitivity_bands = ANALYZE_NINHSIM_CPPA.calculate_cppa_sensitivity_bands
+calculate_customer_bill_breakdown = (
+    ANALYZE_NINHSIM_CPPA.calculate_customer_bill_breakdown
+)
+calculate_customer_equivalent_strike = (
+    ANALYZE_NINHSIM_CPPA.calculate_customer_equivalent_strike
+)
+calculate_financial_screening_view = (
+    ANALYZE_NINHSIM_CPPA.calculate_financial_screening_view
+)
+calculate_multi_year_cppa_path = ANALYZE_NINHSIM_CPPA.calculate_multi_year_cppa_path
+from reopt_pysam_vn.integration.ninhsim_solar_storage_60pct import (  # noqa: E402
+    build_combined_decision_artifact,
+    build_ninhsim_60pct_analysis,
+    build_target_fraction_candidates,
+    calculate_ninhsim_coverage_summary,
+    calculate_ninhsim_fixed_strike,
+)
+
+PROJECT_SITE = BUILD_NINHSIM_EXTRACTED.PROJECT_SITE
+build_extracted_inputs = BUILD_NINHSIM_EXTRACTED.build_extracted_inputs
+build_scenario_a = BUILD_NINHSIM_REOPT_INPUT.build_scenario_a
+build_scenario_b = BUILD_NINHSIM_REOPT_INPUT.build_scenario_b
+build_scenario_c = BUILD_NINHSIM_REOPT_INPUT.build_scenario_c
 
 
 def _synthetic_results() -> dict:
@@ -59,6 +94,46 @@ def _synthetic_results() -> dict:
             "year_one_total_operating_cost_savings_before_tax": 1_700_000.0,
         },
         "_test_total_load_series_kw": [renewable_to_load_kw + residual_grid_kw] * 8760,
+    }
+
+
+def _synthetic_solar_storage_results() -> dict:
+    renewable_to_load_kw = 12_000.0
+    renewable_to_grid_kw = 2_000.0
+    residual_grid_kw = 8_000.0
+    return {
+        "status": "optimal",
+        "PV": {
+            "size_kw": 24_000.0,
+            "year_one_energy_produced_kwh": 70_000_000.0,
+            "electric_to_load_series_kw": [10_000.0] * 8760,
+            "electric_to_grid_series_kw": [renewable_to_grid_kw] * 8760,
+        },
+        "Wind": {
+            "size_kw": 0.0,
+            "year_one_energy_produced_kwh": 0.0,
+            "electric_to_load_series_kw": [0.0] * 8760,
+            "electric_to_grid_series_kw": [0.0] * 8760,
+        },
+        "ElectricStorage": {
+            "size_kw": 6_000.0,
+            "size_kwh": 24_000.0,
+            "initial_capital_cost": 4_800_000.0,
+            "storage_to_load_series_kw": [2_000.0] * 8760,
+        },
+        "ElectricUtility": {
+            "electric_to_load_series_kw": [residual_grid_kw] * 8760,
+        },
+        "Financial": {
+            "npv": 9_000_000.0,
+            "analysis_years": 20,
+            "owner_discount_rate_fraction": 0.08,
+            "offtaker_discount_rate_fraction": 0.10,
+            "elec_cost_escalation_rate_fraction": 0.05,
+            "om_cost_escalation_rate_fraction": 0.04,
+            "initial_capital_costs": 22_800_000.0,
+            "initial_capital_costs_after_incentives": 22_800_000.0,
+        },
     }
 
 
@@ -103,6 +178,122 @@ def test_scenario_builders_preserve_capex_and_enable_wind_optimization():
     assert scenario_b["Wind"]["max_kw"] > 0.0
     assert scenario_b["ElectricStorage"]["min_kwh"] == 0.0
     assert scenario_b["PV"].get("production_factor_series") is None
+
+
+def test_scenario_c_builds_solar_storage_only_case_with_delivered_energy_target():
+    extracted = build_extracted_inputs()
+
+    scenario_c = build_scenario_c(extracted)
+
+    assert scenario_c["Wind"]["max_kw"] == 0.0
+    assert scenario_c["Wind"]["min_kw"] == 0.0
+    assert scenario_c["PV"]["max_kw"] == 100_000.0
+    assert scenario_c["ElectricStorage"]["max_kw"] == 60_000.0
+    assert scenario_c["ElectricStorage"]["max_kwh"] == 240_000.0
+    assert scenario_c["ElectricStorage"]["can_grid_charge"] is False
+    assert scenario_c["Site"]["renewable_electricity_min_fraction"] == 0.60
+    assert (
+        scenario_c["Site"]["include_grid_renewable_fraction_in_RE_constraints"] is False
+    )
+    assert (
+        scenario_c["Site"]["include_exported_renewable_electricity_in_total"] is False
+    )
+    assert scenario_c["_meta"]["requested_renewable_delivered_fraction_of_load"] == 0.60
+
+
+def test_build_target_fraction_candidates_starts_at_requested_target_and_steps_down():
+    assert build_target_fraction_candidates(0.60) == [0.6, 0.575, 0.55, 0.525, 0.5]
+
+
+def test_fixed_strike_peg_uses_weighted_evn_discount_directly():
+    extracted = build_extracted_inputs()
+    results = _synthetic_solar_storage_results()
+
+    fixed_strike = calculate_ninhsim_fixed_strike(results, extracted)
+
+    assert math.isclose(
+        fixed_strike["year_one_strike_vnd_per_kwh"],
+        extracted["benchmark"]["weighted_evn_price_vnd_per_kwh"] * 0.95,
+        rel_tol=0,
+        abs_tol=1e-9,
+    )
+    assert math.isclose(
+        fixed_strike["merchant_price_fraction_of_evn"],
+        extracted["benchmark"]["wholesale_rate_usd_per_kwh"]
+        / extracted["benchmark"]["weighted_evn_price_usd_per_kwh"],
+        rel_tol=0,
+        abs_tol=1e-12,
+    )
+
+
+def test_coverage_summary_tracks_delivered_fraction_and_excludes_exports_from_target():
+    extracted = build_extracted_inputs()
+    results = _synthetic_solar_storage_results()
+
+    coverage = calculate_ninhsim_coverage_summary(
+        results, extracted, target_fraction=0.60
+    )
+
+    assert coverage["renewable_delivered_kwh"] == 105_120_000.0
+    assert coverage["exported_renewable_kwh"] == 17_520_000.0
+    assert coverage["sold_renewable_kwh"] == 122_640_000.0
+    assert coverage["achieved_delivered_fraction_of_load"] < 0.60
+    assert coverage["meets_requested_target"] is False
+
+
+def test_build_ninhsim_60pct_analysis_includes_tariff_peg_coverage_and_finance_screen():
+    extracted = build_extracted_inputs()
+    results = _synthetic_solar_storage_results()
+    scenario = build_scenario_c(extracted)
+
+    analysis = build_ninhsim_60pct_analysis(results, extracted, scenario)
+
+    assert analysis["coverage_summary"]["requested_target_fraction"] == 0.60
+    assert analysis["coverage_summary"]["meets_requested_target"] is False
+    assert analysis["optimal_mix"]["wind_size_mw"] == 0.0
+    assert analysis["year_one_financial_screen"]["developer_revenue_usd"] > 0.0
+    assert analysis["developer_revenue_path"]
+    assert analysis["warnings"]
+
+
+def test_combined_decision_artifact_flags_customer_feasible_but_not_financeable_when_irr_fails():
+    extracted = build_extracted_inputs()
+    results = _synthetic_solar_storage_results()
+    scenario = build_scenario_c(extracted)
+    analysis = build_ninhsim_60pct_analysis(results, extracted, scenario)
+    analysis["coverage_summary"]["meets_requested_target"] = True
+    analysis["coverage_summary"]["meets_enforced_target"] = True
+    pysam_results = {
+        "status": "ok",
+        "case": {
+            "source_case": "ninhsim_60pct_solar_storage",
+            "requested_target_fraction": 0.60,
+            "achieved_delivered_fraction_of_load": analysis["coverage_summary"][
+                "achieved_delivered_fraction_of_load"
+            ],
+            "year_one_strike_vnd_per_kwh": analysis["fixed_strike"][
+                "year_one_strike_vnd_per_kwh"
+            ],
+        },
+        "outputs": {
+            "project_return_aftertax_npv_usd": -5_000_000.0,
+            "project_return_aftertax_irr_fraction": 0.09,
+            "project_return_pretax_irr_fraction": 0.11,
+            "size_of_debt_usd": 12_000_000.0,
+            "min_dscr": 0.82,
+            "npv_ppa_revenue_usd": 55_000_000.0,
+        },
+        "annual_cashflows": [{"year": 1, "total_revenue_usd": 6_200_000.0}],
+    }
+
+    combined = build_combined_decision_artifact(analysis, pysam_results)
+
+    assert combined["decision"]["operationally_feasible"] is True
+    assert combined["decision"]["financeable_at_default_target_irr"] is False
+    assert (
+        combined["developer_finance_summary"]["project_return_aftertax_irr_fraction"]
+        == 0.09
+    )
 
 
 def test_customer_equivalent_strike_matches_weighted_price_target():
