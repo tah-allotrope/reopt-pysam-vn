@@ -34,6 +34,7 @@ OM_COST_ESCALATION = 0.04
 REGION = "south"
 VOLTAGE_LEVEL = "medium_voltage_22kv_to_110kv"
 SOLAR_STORAGE_TARGET_FRACTION = 0.60
+DPPA_CASE_1_BESS_DURATION_HOURS = 2.0
 
 
 def build_base_scenario(extracted: dict) -> dict:
@@ -196,6 +197,41 @@ def build_scenario_c(
     return d
 
 
+def build_scenario_dppa_case_1(extracted: dict) -> dict:
+    d = build_base_scenario(extracted)
+    d["PV"]["max_kw"] = 80_000.0
+    d["PV"]["can_wholesale"] = False
+    d["PV"]["can_net_meter"] = False
+    d["PV"]["can_export_beyond_nem_limit"] = False
+    d["PV"]["can_curtail"] = True
+    d["Wind"]["min_kw"] = 0.0
+    d["Wind"]["max_kw"] = 0.0
+    d["Wind"]["production_factor_series"] = []
+    d["ElectricStorage"]["max_kw"] = 30_000.0
+    d["ElectricStorage"]["max_kwh"] = 60_000.0
+    d["ElectricStorage"]["min_duration_hours"] = DPPA_CASE_1_BESS_DURATION_HOURS
+    d["ElectricStorage"]["max_duration_hours"] = DPPA_CASE_1_BESS_DURATION_HOURS
+    d["ElectricStorage"]["can_grid_charge"] = False
+    d["_meta"] = {
+        "scenario": "DPPA_CASE_1",
+        "name": "Ninhsim DPPA Case 1 - private-wire no-excess solar plus 2h BESS",
+        "site": dict(extracted["site"]),
+        "description": (
+            "Initial REopt sizing pass for a private-wire Ninhsim DPPA case using solar PV plus a fixed 2-hour battery. "
+            "The design intent is full site use with negligible export, solar-only battery charging, and minimum project capex under a private-wire tariff ceiling."
+        ),
+        "contract_type": "private_wire",
+        "target_design_intent": "near_zero_export_full_site_use",
+        "reopt_objective": "minimum_lifecycle_cost_with_no_export_intent",
+        "battery_duration_hours": DPPA_CASE_1_BESS_DURATION_HOURS,
+        "battery_grid_charging_allowed": False,
+        "solar_export_treatment": "disallowed_in_design_intent_with_negligible_spill_tolerance",
+        "private_wire_pricing_basis": "south_ground_mounted_with_bess_ceiling_when_bess_thresholds_met",
+        "final_decision_metrics": ["project_irr", "equity_irr"],
+    }
+    return d
+
+
 def save_scenario(d: dict, output_dir: Path, filename: str) -> Path:
     path = output_dir / filename
     path.write_text(json.dumps(d, indent=2), encoding="utf-8")
@@ -220,7 +256,7 @@ def main() -> None:
     parser.add_argument(
         "--scenarios",
         nargs="+",
-        choices=["a", "b", "c", "all"],
+        choices=["a", "b", "c", "dppa_case_1", "all"],
         default=["all"],
         help="Which scenarios to build",
     )
@@ -238,6 +274,10 @@ def main() -> None:
         "c": (
             build_scenario_c,
             "2026-04-08_ninhsim_solar-storage_60pct.json",
+        ),
+        "dppa_case_1": (
+            build_scenario_dppa_case_1,
+            "2026-04-09_ninhsim_dppa-case-1.json",
         ),
     }
 

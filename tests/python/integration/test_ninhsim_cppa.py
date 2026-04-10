@@ -2,6 +2,7 @@
 Regression tests for the Ninhsim bundled-CPPA optimization workflow.
 """
 
+from importlib.machinery import ModuleSpec
 import math
 import importlib.util
 import sys
@@ -14,8 +15,10 @@ sys.path.insert(0, str(REPO_ROOT / "src" / "python"))
 
 def _load_module(name: str, relative_path: str):
     spec = importlib.util.spec_from_file_location(name, REPO_ROOT / relative_path)
-    module = importlib.util.module_from_spec(spec)
-    assert spec is not None and spec.loader is not None
+    if spec is None or spec.loader is None:
+        raise AssertionError(f"Could not load module spec for {relative_path}")
+    spec_checked: ModuleSpec = spec
+    module = importlib.util.module_from_spec(spec_checked)
     sys.modules[name] = module
     spec.loader.exec_module(module)
     return module
@@ -63,6 +66,7 @@ build_extracted_inputs = BUILD_NINHSIM_EXTRACTED.build_extracted_inputs
 build_scenario_a = BUILD_NINHSIM_REOPT_INPUT.build_scenario_a
 build_scenario_b = BUILD_NINHSIM_REOPT_INPUT.build_scenario_b
 build_scenario_c = BUILD_NINHSIM_REOPT_INPUT.build_scenario_c
+build_scenario_dppa_case_1 = BUILD_NINHSIM_REOPT_INPUT.build_scenario_dppa_case_1
 
 
 def _synthetic_results() -> dict:
@@ -199,6 +203,20 @@ def test_scenario_c_builds_solar_storage_only_case_with_delivered_energy_target(
         scenario_c["Site"]["include_exported_renewable_electricity_in_total"] is False
     )
     assert scenario_c["_meta"]["requested_renewable_delivered_fraction_of_load"] == 0.60
+
+
+def test_scenario_dppa_case_1_builds_private_wire_two_hour_no_export_case():
+    extracted = build_extracted_inputs()
+
+    scenario = build_scenario_dppa_case_1(extracted)
+
+    assert scenario["Wind"]["max_kw"] == 0.0
+    assert scenario["PV"]["can_wholesale"] is False
+    assert scenario["PV"]["can_net_meter"] is False
+    assert scenario["ElectricStorage"]["can_grid_charge"] is False
+    assert scenario["ElectricStorage"]["min_duration_hours"] == 2.0
+    assert scenario["ElectricStorage"]["max_duration_hours"] == 2.0
+    assert scenario["_meta"]["contract_type"] == "private_wire"
 
 
 def test_build_target_fraction_candidates_starts_at_requested_target_and_steps_down():

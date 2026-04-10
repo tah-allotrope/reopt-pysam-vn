@@ -1252,3 +1252,99 @@ artifacts/reports/saigon18/
 - `julia --project --compile=min scripts/julia/run_vietnam_scenario.jl --scenario scenarios/case_studies/ninhsim/2026-04-08_ninhsim_solar-storage_60pct.json --no-solve` - PASS
 - `".venv/Scripts/python.exe" scripts/python/integration/run_ninhsim_solar_storage_60pct.py` - PASS
 - `".venv/Scripts/python.exe" scripts/python/integration/generate_ninhsim_solar_storage_60pct_report.py` - PASS
+
+---
+
+## Phase 21 - DPPA Case 1 Planning Note - 2026-04-09
+
+- [x] Phase 1 - Review the current Ninhsim REopt, export-treatment, and PySAM workflow surfaces relevant to a new no-excess solar-plus-storage case
+- [x] Phase 2 - Draft a standalone markdown plan for `DPPA Case 1` that reuses the Ninhsim load profile and embeds open questions for user review
+- [x] Review / Results - Save the planning artifact under `plans/active/` and record the recommended two-engine modeling split
+
+### Notes
+
+- This phase is planning-only and should not implement the new scenario yet.
+- The requested workflow intentionally changes the engine split from the latest Ninhsim 60% run: REopt should anchor the initial optimal sizing search, while PySAM should run a fuller solar-plus-battery configuration rather than only a finance-only custom-generation bridge.
+- The plan should preserve the Ninhsim `8760` load basis, enforce a `2-hour` BESS duration assumption at the REopt stage, and treat zero-excess or effectively no-export operation as a first-class design requirement rather than a post-processing preference.
+
+### Outputs Generated
+
+- `plans/active/dppa_case_1_plan.md`
+
+### Review / Results
+
+- Drafted a dedicated planning artifact for `DPPA Case 1` that uses the Ninhsim load profile, asks REopt for an initial customer-anchored PV+BESS size with fixed `2-hour` storage duration and no-excess intent, then hands the candidate design into a fuller PySAM solar-plus-battery workflow for plant, battery, and finance refinement.
+- Embedded all material open questions directly in the plan, including the exact no-excess interpretation, whether REopt may undersize slightly to avoid export, whether grid charging is allowed, what commercial settlement applies if trace exports remain, and which metric should define the final recommended design after the REopt-to-PySAM handoff.
+
+---
+
+## Phase 22 - DPPA Case 1 Implementation - 2026-04-09
+
+- [x] Phase 1 - Research and freeze the private-wire DPPA and fuller PySAM module path for PV plus 2-hour BESS
+- [x] Phase 2 - Add failing regression coverage for the new REopt sizing logic, no-excess handling, and fuller PySAM bridge expectations
+- [x] Phase 3 - Build the `DPPA Case 1` REopt scenario, analysis helpers, and machine-readable REopt summary artifacts
+- [x] Phase 4 - Implement the fuller PySAM PV+BESS workflow with solar-only charging and private-wire revenue treatment
+- [x] Phase 5 - Run the end-to-end REopt -> PySAM workflow, compare both engines, and persist canonical artifacts
+- [x] Phase 6 - Generate a report artifact after each implementation phase and publish a more extensive final report at the end
+- [x] Review / Results - Record delivered files, validations, report paths, and the final recommended position
+
+### Notes
+
+- This phase implements `plans/active/dppa_case_1_plan.md` using the defaults now agreed in the plan: near-zero export target with negligible spill tolerated, exact `2-hour` BESS duration, REopt objective anchored on minimum project capex, solar-only battery charging, private-wire DPPA logic, and project plus equity IRR as the main decision metrics.
+- The phase should keep the strongest role split between the tools: REopt for first-pass sizing under tariff and load constraints, and PySAM for fuller PV-plus-battery behavior plus finance.
+- A report should be generated at each major phase checkpoint, and the end-of-phase report should be more extensive than the interim checkpoints.
+
+### Interim Notes
+
+- Researched the fuller PySAM path and froze `PVWatts + Battwatts + Utilityrate5 + Singleowner` as the stable workstation-supported implementation for this case after the more detailed `Pvsamv1` route proved unreliable locally.
+- Added failing regression coverage in `tests/python/integration/test_dppa_case_1.py` and `tests/python/pysam/test_dppa_case_1_pvwatts.py`, then implemented the first REopt-side scenario builder, comparison helpers, and the new fuller PySAM bridge/runtime modules.
+
+### Outputs Generated
+
+- `scenarios/case_studies/ninhsim/2026-04-09_ninhsim_dppa-case-1.json`
+- `artifacts/results/ninhsim/2026-04-09_ninhsim_dppa-case-1_reopt-results.json`
+- `artifacts/reports/ninhsim/2026-04-09_ninhsim_dppa-case-1_reopt-summary.json`
+- `artifacts/reports/ninhsim/2026-04-09_ninhsim_dppa-case-1_pysam-results.json`
+- `artifacts/reports/ninhsim/2026-04-09_ninhsim_dppa-case-1_comparison.json`
+- `artifacts/reports/ninhsim/2026-04-09_ninhsim_dppa-case-1_combined-decision.json`
+- `reports/2026-04-09-dppa-case-1-phase-a.html`
+- `reports/2026-04-09-dppa-case-1-phase-b.html`
+- `reports/2026-04-09-dppa-case-1-phase-c.html`
+- `reports/2026-04-09-dppa-case-1-final.html`
+- `scripts/python/integration/analyze_ninhsim_dppa_case_1.py`
+- `scripts/python/integration/run_ninhsim_dppa_case_1.py`
+- `scripts/python/integration/run_ninhsim_dppa_case_1_pvwatts.py`
+- `scripts/python/integration/generate_ninhsim_dppa_case_1_phase_reports.py`
+- `scripts/python/integration/generate_ninhsim_dppa_case_1_report.py`
+- Thin wrappers under `scripts/python/` for the new DPPA Case 1 entrypoints
+
+### Review / Results
+
+- Implemented the new DPPA Case 1 workflow surface end to end: REopt scenario build, REopt summary analysis, fuller PySAM PVWatts+battery runner, comparison artifact, combined decision artifact, and final HTML report.
+- Added the requested interim HTML review surfaces at `reports/2026-04-09-dppa-case-1-phase-a.html`, `reports/2026-04-09-dppa-case-1-phase-b.html`, and `reports/2026-04-09-dppa-case-1-phase-c.html`, using the same report-template structure as the other phased repo deliverables.
+- Fixed the new PySAM input-builder lane so unit-test input construction no longer requires a real weather file until execution time, and added a canonical zero-battery placeholder artifact so the full workflow remains machine-readable even when the REopt solve does not select storage.
+- Ran the full DPPA Case 1 workflow successfully and generated the canonical artifacts listed above; the current solved case uses `38.108 MW` PV, `0 MW / 0 MWh` BESS, `0.000%` export fraction, about `2.055 GWh` curtailment, and REopt NPV about `$11.17M`.
+- Under the user-selected minimum-capex objective plus near-zero-export intent, REopt chose zero battery, so the private-wire strike falls back to the `solar_ground_no_storage` south ceiling at `1012.00 VND/kWh` and the fuller PySAM battery run is intentionally marked `skipped` rather than failing.
+- The current final recommendation is `needs_reprice_or_resize` because the design passes the export screen but fails the exact `2-hour` battery requirement in practice and therefore cannot clear the project/equity IRR screen through the fuller battery workflow without tightening the storage requirement or changing the objective.
+
+### Validation
+
+- `".venv\Scripts\python.exe" -m pytest tests/python/integration/test_ninhsim_cppa.py -q` - PASS (`21 passed`)
+- `".venv\Scripts\python.exe" -m pytest tests/python/integration/test_dppa_case_1.py tests/python/pysam/test_dppa_case_1_pvwatts.py -q` - PASS (`9 passed`)
+- `".venv\Scripts\python.exe" scripts/python/integration/run_ninhsim_dppa_case_1.py --no-solve` - PASS
+- `".venv\Scripts\python.exe" scripts/python/integration/run_ninhsim_dppa_case_1.py` - PASS
+- `".venv\Scripts\python.exe" scripts/python/integration/generate_ninhsim_dppa_case_1_phase_reports.py` - PASS
+- `".venv\Scripts\python.exe" scripts/python/integration/generate_ninhsim_dppa_case_1_report.py` - PASS
+
+### Outputs Expected
+
+- `scenarios/case_studies/ninhsim/<date>_ninhsim_dppa-case-1.json`
+- `artifacts/results/ninhsim/<date>_ninhsim_dppa-case-1_reopt-results.json`
+- `artifacts/reports/ninhsim/<date>_ninhsim_dppa-case-1_reopt-summary.json`
+- `artifacts/reports/ninhsim/<date>_ninhsim_dppa-case-1_pysam-results.json`
+- `artifacts/reports/ninhsim/<date>_ninhsim_dppa-case-1_comparison.json`
+- `artifacts/reports/ninhsim/<date>_ninhsim_dppa-case-1_combined-decision.json`
+- `reports/<date>-dppa-case-1-phase-a.html`
+- `reports/<date>-dppa-case-1-phase-b.html`
+- `reports/<date>-dppa-case-1-phase-c.html`
+- `reports/<date>-dppa-case-1-final.html`

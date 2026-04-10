@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from reopt_pysam_vn.integration.assumptions import DEFAULT_TARGET_DEVELOPER_IRR_FRACTION
+from reopt_pysam_vn.integration.dppa_case_1 import calculate_private_wire_strike_basis
 from reopt_pysam_vn.integration.ninhsim_solar_storage_60pct import (
     calculate_ninhsim_developer_revenue_path,
     calculate_ninhsim_fixed_strike,
@@ -12,6 +13,10 @@ from reopt_pysam_vn.integration.ninhsim_solar_storage_60pct import (
 )
 from reopt_pysam_vn.pysam.config import build_vietnam_finance_defaults
 from reopt_pysam_vn.pysam.ppa import convert_vnd_to_usd
+from reopt_pysam_vn.pysam.pvwatts_battery import (
+    PVWattsBatterySingleOwnerInputs,
+    build_pvwatts_battery_single_owner_inputs,
+)
 from reopt_pysam_vn.pysam.single_owner import (
     SingleOwnerInputs,
     build_single_owner_inputs,
@@ -305,6 +310,110 @@ def build_ninhsim_solar_storage_single_owner_inputs(
             ),
             "reopt_npv_usd": float(
                 reopt_results.get("Financial", {}).get("npv") or 0.0
+            ),
+        },
+    )
+
+
+def build_dppa_case_1_pvwatts_inputs(
+    reopt_results: dict,
+    scenario: dict,
+    extracted: dict,
+    solar_resource_file: str,
+    vn_data: VNData | None = None,
+) -> PVWattsBatterySingleOwnerInputs:
+    """Map DPPA Case 1 REopt outputs into fuller PVWatts battery inputs."""
+
+    vn = vn_data or load_vietnam_data()
+    defaults = build_vietnam_finance_defaults(vn)
+    financial = scenario.get("Financial", {})
+    pv = reopt_results.get("PV", {})
+    storage = reopt_results.get("ElectricStorage", {})
+    strike = calculate_private_wire_strike_basis(reopt_results, extracted, scenario)
+
+    pv_size_kw = float(pv.get("size_kw") or 0.0)
+    battery_power_kw = float(storage.get("size_kw") or 0.0)
+    battery_capacity_kwh = float(storage.get("size_kwh") or 0.0)
+    storage_initial_capital_cost = float(storage.get("initial_capital_cost") or 0.0)
+    fixed_om_usd_per_year = pv_size_kw * float(scenario["PV"]["om_cost_per_kw"]) + (
+        storage_initial_capital_cost
+        * float(scenario["ElectricStorage"]["om_cost_fraction_of_installed_cost"])
+    )
+
+    buy_rate = _float_list(extracted["evn_tariff"]["tou_energy_rates_usd_per_kwh"])
+    sell_rate = [0.0] * len(buy_rate)
+
+    return build_pvwatts_battery_single_owner_inputs(
+        system_capacity_kw=pv_size_kw,
+        battery_power_kw=battery_power_kw,
+        battery_capacity_kwh=battery_capacity_kwh,
+        load_profile_kw=_float_list(extracted["loads_kw"]),
+        buy_rate_usd_per_kwh=buy_rate,
+        sell_rate_usd_per_kwh=sell_rate,
+        ppa_price_input_usd_per_kwh=float(
+            strike["year_one_private_wire_strike_usd_per_kwh"]
+        ),
+        solar_resource_file=solar_resource_file,
+        analysis_years=int(financial.get("analysis_years") or defaults.analysis_years),
+        debt_fraction=defaults.debt_fraction,
+        target_project_irr_fraction=DEFAULT_TARGET_DEVELOPER_IRR_FRACTION,
+        owner_tax_rate_fraction=_value_or_default(
+            financial,
+            "owner_tax_rate_fraction",
+            defaults.owner_tax_rate_fraction,
+        ),
+        owner_discount_rate_fraction=_value_or_default(
+            financial,
+            "owner_discount_rate_fraction",
+            defaults.owner_discount_rate_fraction,
+        ),
+        offtaker_discount_rate_fraction=_value_or_default(
+            financial,
+            "offtaker_discount_rate_fraction",
+            defaults.offtaker_discount_rate_fraction,
+        ),
+        inflation_rate_fraction=defaults.inflation_rate_fraction,
+        debt_interest_rate_fraction=defaults.debt_interest_rate_fraction,
+        debt_tenor_years=defaults.debt_tenor_years,
+        ppa_escalation_rate_fraction=_value_or_default(
+            financial,
+            "elec_cost_escalation_rate_fraction",
+            defaults.elec_cost_escalation_rate_fraction,
+        ),
+        om_escalation_rate_fraction=_value_or_default(
+            financial,
+            "om_cost_escalation_rate_fraction",
+            defaults.om_cost_escalation_rate_fraction,
+        ),
+        installed_cost_usd=float(
+            reopt_results.get("Financial", {}).get(
+                "initial_capital_costs_after_incentives"
+            )
+            or reopt_results.get("Financial", {}).get("initial_capital_costs")
+            or 0.0
+        ),
+        fixed_om_usd_per_year=fixed_om_usd_per_year,
+        battery_can_grid_charge=bool(
+            scenario.get("ElectricStorage", {}).get("can_grid_charge", False)
+        ),
+        battery_dispatch_mode="peak_shaving_look_ahead",
+        case_metadata={
+            "source_case": "ninhsim_dppa_case_1",
+            "contract_type": scenario.get("_meta", {}).get(
+                "contract_type", "private_wire"
+            ),
+            "year_one_private_wire_strike_vnd_per_kwh": float(
+                strike["year_one_private_wire_strike_vnd_per_kwh"]
+            ),
+            "qualifies_for_bess_private_wire_ceiling": bool(
+                strike["qualifies_for_bess_private_wire_ceiling"]
+            ),
+            "battery_duration_hours": float(strike["battery_duration_hours"]),
+            "battery_power_fraction_of_pv": float(
+                strike["battery_power_fraction_of_pv"]
+            ),
+            "stored_output_fraction_of_delivered_energy": float(
+                strike["stored_output_fraction_of_delivered_energy"]
             ),
         },
     )
