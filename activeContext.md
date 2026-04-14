@@ -1,5 +1,95 @@
 # Active Context — Saigon18 REopt Integration
 
+## Phase 26 - DPPA Case 2 Implementation (Phases C-D) - 2026-04-14
+
+- [x] Phase C - Add the canonical DPPA Case 2 REopt scenario builder and physical-summary surfaces
+- [x] Phase C Validation - Prove the scenario contract with failing-then-passing regression coverage and targeted execution
+- [x] Phase D - Implement the buyer-side settlement engine and benchmark comparison artifacts
+- [x] Phase D Validation - Prove matched, shortfall, excess, CfD, and benchmark math with failing-then-passing regression coverage and targeted execution
+- [x] Reporting - Publish synchronized HTML reports for Phase C and Phase D via the report-skill template flow
+- [x] Review / Results - Record canonical files, validations, artifacts, and next-step seeds
+
+### Review / Results
+
+- Implemented the canonical Phase C/D helper surfaces in `src/python/reopt_pysam_vn/integration/dppa_case_2.py`, including the Case 2 scenario builder, market proxy, settlement input builder, physical summary, buyer settlement ledger, and buyer benchmark artifact.
+- Corrected the Case 2 scenario contract so `ElectricTariff` remains present with the valid REopt `tou_energy_rates_per_kwh` field while stripping the invalid `tou_energy_rates_vnd_per_kwh` field that had broken Julia `Scenario()` construction.
+- Published the solved Case 2 scenario and result surfaces at `scenarios/case_studies/ninhsim/2026-04-14_ninhsim_dppa-case-2.json` and `artifacts/results/ninhsim/2026-04-14_ninhsim_dppa-case-2_reopt-results.json`.
+- Published the canonical Phase C/D machine-readable artifacts at `artifacts/reports/ninhsim/2026-04-14_ninhsim_dppa-case-2_physical-summary.json`, `artifacts/reports/ninhsim/2026-04-14_ninhsim_dppa-case-2_buyer-settlement.json`, and `artifacts/reports/ninhsim/2026-04-14_ninhsim_dppa-case-2_buyer-benchmark.json`.
+- Generated synchronized HTML reports at `reports/2026-04-14-dppa-case-2-phase-c.html` and `reports/2026-04-14-dppa-case-2-phase-d.html`.
+- Real solved outcome for the current proxy-priced base case: REopt selected about `41.725 MW` PV with no storage, matched about `28.16%` of annual load, and the buyer benchmark shows a premium of about `12.03B VND` versus EVN with blended buyer cost about `2084.13 VND/kWh` versus benchmark about `2018.88 VND/kWh`.
+
+### Validation
+
+- `./.venv/Scripts/python.exe -m pytest tests/python/integration/test_dppa_case_2_phase_cd.py -q` - PASS (`5 passed`)
+- `python scripts/python/integration/build_ninhsim_reopt_input.py --scenarios dppa_case_2` - PASS
+- `julia --project --compile=min scripts/julia/run_vietnam_scenario.jl --scenario scenarios/case_studies/ninhsim/2026-04-14_ninhsim_dppa-case-2.json --no-solve` - PASS
+- `./.venv/Scripts/python.exe scripts/python/integration/run_ninhsim_dppa_case_2.py` - PASS
+- `./.venv/Scripts/python.exe scripts/python/integration/generate_ninhsim_dppa_case_2_cd_reports.py` - PASS
+
+### Next-Step Seeds
+
+- Replace the proxy market-reference series with a trusted hourly CFMP/FMP source so the buyer benchmark can move from directional to bankable.
+- Run Phase E sensitivities on strike, DPPA adder, KPP, and excess-generation treatment now that the base Phase D ledger is frozen and executable.
+- Feed the buyer settlement outputs into a future PySAM developer-side pass without collapsing the ledger back into one blended strike-only revenue assumption.
+
+## Phase 25 - DPPA Case 2 Implementation (Phases A-B) - 2026-04-14
+
+- [x] Phase A - Freeze Case 2 definition, naming, and assumptions register
+- [x] Phase A Report - Publish a synchronized phase report via the report skill
+- [x] Phase B - Design the Case 2 commercial settlement ledger and canonical schema surfaces
+- [x] Phase B Report - Publish a synchronized phase report via the report skill
+- [x] Validation - Verify the new planning/design artifacts and any added tests
+- [x] Review / Results - Record canonical paths, validations, and next-step seeds
+
+### Review / Results
+
+- Implemented new Phase A/B helper surfaces in `src/python/reopt_pysam_vn/integration/dppa_case_2.py` so Case 2 now has canonical JSON builders for the definition artifact, assumptions register, settlement design, settlement schema, and edge-case matrix.
+- Added the runnable artifact-preparation entrypoint at `scripts/python/integration/prepare_ninhsim_dppa_case_2_phase_ab.py` plus a package export update in `src/python/reopt_pysam_vn/integration/__init__.py`.
+- Added failing-then-passing regression coverage in `tests/python/integration/test_dppa_case_2_phase_ab.py`, then validated the new Phase A/B contract end to end.
+- Published the canonical design artifacts at `artifacts/reports/ninhsim/2026-04-14_ninhsim_dppa-case-2_phase-a-definition.json`, `artifacts/reports/ninhsim/2026-04-14_ninhsim_dppa-case-2_phase-a-assumptions-register.json`, `artifacts/reports/ninhsim/2026-04-14_ninhsim_dppa-case-2_phase-b-settlement-design.json`, `artifacts/reports/ninhsim/2026-04-14_ninhsim_dppa-case-2_phase-b-settlement-schema.json`, and `artifacts/reports/ninhsim/2026-04-14_ninhsim_dppa-case-2_phase-b-edge-case-matrix.json`.
+- Generated synchronized phase reports at `reports/2026-04-14-dppa-case-2-phase-a.html` and `reports/2026-04-14-dppa-case-2-phase-b.html` using the report-skill template flow.
+
+### Validation
+
+- `.venv\Scripts\python.exe -m pytest tests/python/integration/test_dppa_case_2_phase_ab.py -q` - PASS (`5 passed`)
+- `.venv\Scripts\python.exe scripts/python/integration/prepare_ninhsim_dppa_case_2_phase_ab.py` - PASS
+- `.venv\Scripts\python.exe scripts/python/integration/generate_ninhsim_dppa_case_2_phase_reports.py` - PASS
+
+### Next-Step Seeds
+
+- Implement Phase C and Phase D together so the first runnable Case 2 scenario can consume the frozen settlement schema rather than inventing new field names on the fly.
+- Resolve the actual-versus-proxy hourly `FMP` / `CFMP` source early in the next phase because the settlement engine is now schema-ready but still waiting on a trusted market-price series.
+- Decide how the future PySAM developer-side run should ingest buyer-settlement results without collapsing them back into a single blended strike-only revenue stream.
+
+## Phase 24 - DPPA Case 2 Planning Note - 2026-04-14
+
+- [x] Phase 1 - Review the DPPA Case 2 readiness findings and existing plan format requirements
+- [x] Phase 2 - Draft a standalone multi-phase markdown plan for `DPPA Case 2` under `plans/active/`
+- [x] Phase 3 - Embed explicit review questions and recommended defaults for the user to answer inline before implementation
+- [x] Review / Results - Record the canonical plan path and the recommended default direction for Case 2
+
+### Review / Results
+
+- Created the canonical Case 2 planning artifact at `plans/active/dppa_case_2_plan.md`, following the repo's existing DPPA planning style while shifting the commercial basis from private-wire screening to synthetic / financial DPPA settlement.
+- Embedded a detailed multi-phase implementation path covering case-definition freeze, settlement-ledger design, REopt physical sizing, buyer-settlement validation, strike and contract sensitivities, optional PySAM developer validation, and final reporting.
+- Added explicit review questions with recommended defaults directly into the plan so the user can answer inline before implementation starts.
+- Recommended default direction: make `DPPA Case 2` the repo's first canonical synthetic-DPPA buyer-cost workflow, keep `DPPA Case 1` as the private-wire reference case, and stage PySAM after the buyer-settlement ledger is trusted.
+
+## Phase 23 - DPPA Case 2 Readiness Review - 2026-04-14
+
+- [x] Phase 1 - Review DPPA research markdown sources and extract the mechanism assumptions relevant to buyer-side settlement and case shaping
+- [x] Phase 2 - Cross-check the implemented DPPA Case 1 plan, code, scenario, and artifacts against those research assumptions
+- [x] Phase 3 - Identify updates or revisions that should be applied before a DPPA Case 2 run
+- [x] Phase 4 - Publish a markdown review report with findings, risks, and recommended revisions
+- [x] Review / Results - Record the report path and the main Case 2 guidance points
+
+### Review / Results
+
+- Reviewed the repo's sole DPPA research note at `research/2026-04-07-vietnam-dppa-buyer-guide.md` against the implemented Case 1 plan, scenario builder, REopt/PySAM bridge, runtime, and generated artifacts.
+- Confirmed that `DPPA Case 1` is implemented as a `private_wire` tariff-ceiling screen, not as the synthetic / financial DPPA buyer-payment mechanism described in the buyer guide.
+- Recorded the full findings and recommended revisions for `DPPA Case 2` at `reports/2026-04-14-dppa-case-2-readiness-review.md`.
+- Main recommendation: split the workflow cleanly so `Case 1` remains the private-wire screen and `Case 2` becomes a new synthetic-DPPA buyer-cost model with an explicit settlement ledger, settlement-quantity rule, excess-generation treatment, and nonzero-storage enforcement if BESS is required.
+
 ## Phase 19 — Planning Surface Cleanup and Session Handoff — 2026-04-05
 
 - [ ] Phase 1 - Resolve stale planning surfaces so `plans/active/` is the only mutable home for the PySAM reorganization roadmap

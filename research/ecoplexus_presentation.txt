@@ -1,0 +1,213 @@
+Presentation on: Direct Power Purchase Agreement
+Mechanism - Decree 57
+
+September, 2025
+
+                 CONFIDENTIAL
+CONTENTS  1 Overview of The DPPA Mechanism
+          2 DPPA Models
+          3 DPPA Eligibility Requirements
+          4 Ecoplexus Sharing
+  1. Overview of The DPPA Mechanism                                                   It involves a contract for electricity purchase and delivery through
+                                                                                      private wires between RE Generators and Large Customers
+* Summary of DPPA Models:
+
+                                            Model 1: Physical DPPA
+                                                  (by private wire)
+
+DPPA Models
+
+             Model 2: Financial DPPA                                                  - The RE Generator sells all electricity produced into the VWEM.
+                  (by national grid)
+                                                                                      - Consumer (or authorized IP/EPZ power retailer/utility) buys
+                                                                        CONFIDENTIAL  electricity from grid via a power purchase agreement with EVN
+                                                                                      Power Corporation to meet its power demands.
+
+                                                                                      - The RE Generator and the Large Customer (or the Authorized
+                                                                                      Retailer) purchase and sell electricity through a forward contract
+                                                                                      (CfD).
+2. DPPA Models                                                                        Key Points:
+* Models_ Physical DPPA
+                                               RE generator and project:
+                       Electricity output as
+                       agreed in the DPPA          No Limitation on capacity; RTS expressly rules included; all
+                                                        types of RE technologies permitted to participate.
+                                 DPPA
+                                                   Projects need to comply with master planning (April.25 revised
+                        Tariff as agreed in             PDP8, PDP Implementation Plan (IP) and provincial master
+                              the DPPA                  plans).
+
+                                               Eligible customers:
+
+                                                   Monthly consumption no less than that of a `large customer' as
+                                                        per VWEM rules.
+
+                                                   Currently: 200,000 kWh average per month over the previous 12
+                                                        months.
+
+                                               Scope of application: Currently, the majority applies to RST (Roof-top
+                                               Solar).
+
+                                              CONFIDENTIAL
+2. DPPA Models
+
+* Models_ Financial DPPA                                          Scope of applications:
+
+Financial DPPA ­ Key Challenges                                       RE Generator which has a wind, solar, or biomass
+Consumer:                                                                  power plant with a capacity of 10 MW or more that are
+                                                                           connected to the national electricity grid and directly
+    Customers with 16/24h load, requested purchase                         participates in VWEM;
+         DPPA power following clusters or multiple nearby
+         factories.                                                   Large Customer using electricity for production
+                                                                           purposes, or for commercial service purposes such as
+    Customers with 24/24h load, have no viable solution to                 charging electric vehicles, which purchases electricity
+         secure renewable energy supply at all hours.                      from EVN PC (or a non-EVN PC retailer) with a
+                                                                           connection voltage of 22 kV or higher; and
+RE Generator:
+                                                                      Authorized Retailer.
+    Many projects are included in PDP8 but lack land
+         allocation  subject to investor selection through
+         auctions (Decree 115, Circular 27).
+
+    Projects with meet conditions still face unresolved
+         pricing issues due to DPPA uncertainties:
+         unforeseeable fees, output quantity controlled by third
+         parties, and 15­20 year commitments amid an
+         unstable power market.
+
+                CONFIDENTIAL
+* Models_ Financial DPPA (Cont.)
+
+                                      Forward Contract (CfD)      Large Customers
+                                                              (or Authorized Retailer)
+             RE Generator
+
+Electricity           PPA1Spot price
+                             (Rspot)
+             EVN / EVN PC             PPA2
+
+                                      CONFIDENTIAL
+* Models_ Financial DPPA (Cont.)
+
+      Payable to          Rspot     Payment from EVN/EVN PC to RE Generator, formula as:
+           RE             Rcfd
+                                                               Rspot = Qm x FMP
+       generator                       Qm means metered energy output (kWh)
+
+In relation to PPA 1 and                FMP means full market price which is calculated as follows:
+    Forward Contract                                                 FMP = SMP + CAN
+
+                                    SMP means spot market electricity price (VND/kWh)
+                                    CAN means market capacity price (VND/kWh)
+
+                                    Payment from Large Customer to RE Generator, formula as:
+
+                                                            RCfD = (Pc ­ FMP) x Qc
+
+                                    Pc means committed price in CfD (VND/kWh)
+                                    Qc means committed energy output in CfD (kWh)
+
+                                    FMP means full market price (VND/kWh)
+
+                                  CONFIDENTIAL
+* Models_ Financial DPPA (Cont.)
+
+                                  To be settled between RE Generator and Large Customer under the
+
+                                  Forward Contract as per the formula for RCFD
+
+                      RCfD        Cconsumption means the total electricity             Qconsumption means the electricity volume
+                                                                                       consumed by Large Customer as adjusted (kWh)
+                                  purchase price to be paid by the Large Customer
+                                  to EVN PC which is calculated as follows:            CFMP means electricity purchase price to be paid to
+                                                                                       EVN PC in the spot market (VND/kWh)
+                                  Cconsumption = Qconsumption x CFMP x K
+
+   Payable by         Cmarket     CDPPA means DPPA charges (for use of                 K means power distribution loss coefficient
+      Large           Cretail
+                                  electricity system services) which is calculated as  - In 2025, The CDPPAdv = 360,1 VND/kWh
+    Customer                      follows:                                             (~1,38 Cent).
+                                                                                       - In 2025, The CCL = 163,2 VND/kWh
+   Payable by Large               CDPPA = Qconsumption x CDPPA Unit                    (~0.63 Cent)
+Customer to EVN PC
+                                  Cdifference means the difference clearing charge      Total DPPA Charge in 2025:
+In relation to PPA 2              which is calculated as follows: Cdifference =
+and Forward Contract              Qconsumption x Pdifference                           523,34 VND/Kwh ~ 2.01 cents/kWh
+
+                                  Payable only for the electricity volume consumed by the Large Customer in excess of the
+                                  electricity output generated by the RE Generator, and calculated based on the electricity
+                                  retail tariff (VND) published by the MOIT
+
+                                  CONFIDENTIAL
+3. DPPA Eligibility Requirements for the DPPA through National grid
+
+Documents for Registration:
+
+No.                                                     Documents
+
+1    Letter requesting participation in DPPA mechanism
+
+     The document of agreement in principle signed between the Buyer and the Seller on the purchase and sale of electricity through the
+
+     CfD contract.
+
+2    Including the following information:
+
+      Expected signing of the CFD contract
+
+      Expected termination of the Seller's existing PPA contract to participate in the DPPA mechanism
+
+     Report on the current status of the Seller (wind, solar, biomass power plants) such as: Type of power plant, capacity, current status
+
+3    of the plant, infrastructure to participate in the electricity market and electricity price at the existing PPA "if any"
+
+     Buyer information such as: location of electricity consumption facility, purpose of electricity use, current status of electricity use "if
+
+4    any", infrastructure to participate in the electricity market and existing electricity price "if any"
+
+5    Document agreeing on the principle of allocating the percentage (%) of the Seller's electricity output but (not exceeding 100%) to the
+
+     Buyer
+
+                                                        CONFIDENTIAL
+Procedures Registration to NSMO:               5 days  The Electricity Corporation, the
+                                                       electricity retailer in the Industrial Park
+             Customers submit application to           and EVN send back to NSMO a
+             participate in DPPA mechanism to          document confirming the Customer's
+             NSMO                                      profile.
+
+                           5 days                                      5 days
+
+                                               NSMO sends confirmation                NSMO sends a letter response to
+                                               documents to the Electricity           the Customers regarding the
+                                               Corporation, electricity retailers in  expected time for signing the
+                                               the Industrial Park, EVN and reviews   contract between EVN and RE
+                                               the compliance of the Customer's       generators, and the expected
+                                               documents.                             time of applying the DPPA
+                                                                                      mechanism
+
+                                                       CONFIDENTIAL
+4. Ecoplexus Sharing  Cancelling the Ccl (Charges for Difference Compensation regarding EVN's payments to
+                      other backup sources) and fixing a cap on DPPA fee variation per year;
+      Proposes and
+  Recommendations     Aggregation mechanism for clean electricity instead of the current 30-minute matching
+                      mechanism; Such as:
+                      1/ Aggregation of supply: surplus electricity needs to be stored as renewable energy
+                      credits and sold to Large Customers during night hours.
+                      2/ Aggregation of demand: electricity buyers need to collect many electricity meters in
+                      the same location to buy electricity from a large project
+
+                      Bidding for investor selection criteria on lowest price is conflicting with the priorities that
+                      DPPA projects are striving for (more contribution to the tax);
+
+                      Risks & CfD Contract: Negotiations on CfD Contract need to consider through on such
+                      as the absence of payment guarantees, unilateral termination of the contract, and
+                      uncertainties regarding the contract term;
+
+                                                                        CONFIDENTIAL
+                   Thank you
+
+Ecoplexus
+
+                                                                                                                                                                                                        12
+

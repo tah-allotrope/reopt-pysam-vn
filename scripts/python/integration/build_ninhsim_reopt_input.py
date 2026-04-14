@@ -13,6 +13,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 sys.path.insert(0, str(REPO_ROOT / "src" / "python"))
 
+from reopt_pysam_vn.integration.dppa_case_2 import build_scenario_dppa_case_2  # noqa: E402
 from reopt_pysam_vn.reopt.preprocess import apply_vietnam_defaults, load_vietnam_data  # noqa: E402
 
 
@@ -232,6 +233,10 @@ def build_scenario_dppa_case_1(extracted: dict) -> dict:
     return d
 
 
+def build_scenario_dppa_case_2_wrapper(extracted: dict) -> dict:
+    return build_scenario_dppa_case_2(extracted)
+
+
 def save_scenario(d: dict, output_dir: Path, filename: str) -> Path:
     path = output_dir / filename
     path.write_text(json.dumps(d, indent=2), encoding="utf-8")
@@ -256,7 +261,7 @@ def main() -> None:
     parser.add_argument(
         "--scenarios",
         nargs="+",
-        choices=["a", "b", "c", "dppa_case_1", "all"],
+        choices=["a", "b", "c", "dppa_case_1", "dppa_case_2", "all"],
         default=["all"],
         help="Which scenarios to build",
     )
@@ -278,6 +283,10 @@ def main() -> None:
         "dppa_case_1": (
             build_scenario_dppa_case_1,
             "2026-04-09_ninhsim_dppa-case-1.json",
+        ),
+        "dppa_case_2": (
+            build_scenario_dppa_case_2_wrapper,
+            "2026-04-14_ninhsim_dppa-case-2.json",
         ),
     }
 

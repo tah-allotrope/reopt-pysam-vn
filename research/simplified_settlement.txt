@@ -1,0 +1,123 @@
+--- Slide 1 ---
+ 
+Simplified DPPA Daily Scenario
+Assumption
+Hourly Flat Demand: 
+5MWh or 5,000kWh
+Solar Capacity 
+~ 
+45MWp
+ 
+Blended Retail Tariff ~
+ 
+2,100 VND/kWh
+ for 22kV to below 110kV connection?
+DPPA Strike Price: 
+2,100 VND/kWh
+CFMP: 
+1,700 VND/kWh
+ on average?
+CDPPA = Cssc + Ccl = 360.14 + 163.2 = 
+523.34VND/kWh
+Zone 1
+Zone 2
+
+--- Slide 2 ---
+ 
+Zone 1 Buyer Calculation - EVN 
+Payment to EVN from 8am to 9am assuming 2,000kWh met by DPPA
+Phí trả cho EVN (Payment to EVN, Retail price): EVN Demand x Retail Tariff Normal = 
+3,000kWh
+ x 1,833 VND/kWh
+ 
+Phí mua theo giá trên thị trường: DPPA Demand x 
+Kpp
+ x CFMP
+ = 
+2,000kWh x 
+1.027263
+ x 1,700VND/kWh
+Phí DPPA (mỗi 1kWh mất 523đ): DPPA Demand x CDPPA = 
+2,000kWh x 523.34VND/kWh
+=> Không tính thêm 
+Kpp
+Tổng: trả cho EVN khi tải của nhà máy > sản lượng Solar:
+Zone 1
+
+--- Slide 3 ---
+ 
+Zone 1 Buyer Calculation - CfD 
+Settlement for Contract for Difference (CfD) assuming spot price is 1,700VND/kWh from 8am to 9am  
+DPPA Demand x (Strike Price - Spot Price) = 
+2,000kWh x (2,100VND/kWh - 1,700VND/kWh)
+Spot Price = FMP confirmed
+Vietnam Wholesale/Spot Market vs other markets
+Zone 1
+
+--- Slide 4 ---
+ 
+Zone 1 Buyer Calculation - Cost Saving/Premium
+Total with DPPA = EVN Payment + CfD = ???
+Total 
+without
+ DPPA = 5,000kWh x 1,833 VND/kWh = 
+Cost saving/premium = ???
+Zone 1
+
+--- Slide 5 ---
+
+
+--- Slide 6 ---
+ 
+Zone 2 Buyer Calculation - EVN 
+Zone 2
+Payment to EVN from 11am to 12pm assuming 2,500kWh excess solar generation
+DPPA Demand x CFMP? = DPPA Demand x Kpp x CFMP = 
+5
+,000kWh x 1.027263 x 1,700VND/kWh x ???
+DPPA Demand x CDPPA = 
+5
+,000kWh x 523.34VND/kWh
+
+--- Slide 7 ---
+ 
+Zone 2 Buyer Calculation - CfD
+Zone 2
+Settlement for Contract for Difference (CfD) assuming spot price is 1,700VND/kWh from 11am to 12pm and 2,500kWh excess solar generation
+(DPPA Demand + Excess Generation) x (Strike Price - Spot Price) = 
+(5,000kWh + 2,500kWh) x (2,100VND/kWh - 1,700VND/kWh)
+
+--- Slide 8 ---
+ 
+Zone 2 Buyer Calculation - Cost Saving/Premium
+Zone 2
+Total with DPPA = EVN Payment + CfD = ???
+Total without DPPA = 5,000kWh x 
+3,398
+ VND/kWh = 
+Cost saving/premium = ???
+
+--- Slide 9 ---
+ 
+Zone 2 Buyer Calculation - Cost Saving/Premium
+Zone 2
+Buyer Expense under DPPA 
+Total = EVN + CfD (PPA > FMP)
+[Q*CFMP + cDPPA] + Q*[PPA - FMP]
+Q*FMP*k(i) + cDPPA + Q*PPA - Q*FMP
+Q*PPA + cDPPA
+Total = EVN - CfD (PPA<FMP)
+[Q*CFMP + cDPPA] - Q*[FMP - PPA]
+Q*FMP*k(i) + cDPPA - Q*FMP + Q*PPA
+Q*PPA + cDPPA
+
+--- Slide 10 ---
+ 
+Zone 2 Buyer Calculation - Cost Saving/Premium - Canada - Option C
+Zone 2
+Buyer Expense under vPPA 
+Total = Canada + CfD (PPA > FMP)
+Q*Retail + Q*[PPA - FMP]
+Q*
+Retail
+ + Q*PPA - Q*FMP

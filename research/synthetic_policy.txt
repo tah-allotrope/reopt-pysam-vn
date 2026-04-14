@@ -1,0 +1,897 @@
+Vietnam Renewable Energy
+Corporate DPPA
+
+Thanh-Hai Nguyen, Special Counsel | 14 February 2025
+Agenda
+
+01 DPPA Decree
+02 Model 1: Physical corporate DPPA
+03 Model 2: Synthetic/Virtual corporate DPPA
+A Structure and Partiess to Synthetic DPPA
+B Energy Payments and DPPA Charges
+C Synthetic DPPA Transaction Agreements
+D Next Steps for Implementation
+04 Q&A
+01 DPPA Decree
+DPPA Decree                                                       Model 2: Virtual/Synthetic DPPA (via
+                                                                  national grid)
+Models of Corporate DPPAs
+                                                                  Sale and purchase of power via a Forward Contract
+   Model 1: Physical DPPA                                         between RE GENCO and Consumer (or authorized
+   (via private wire)                                             IP/EZ/EPZ power retailer/utility), particularly:
+
+    Physical DPPA: Sale, purchase and delivery of power            RE GENCO sells entire power output via the spot
+          via direct private wire between RE GENCO and                  market of Vietnam Competitive Wholesale Electricity
+          Consumer.                                                     Market (VWEM) under a VWEM PPA with EVN.
+
+    Existing retail PPA of Consumer with EVN PCs: Any              Consumer (or authorized IP/EZ/EPZ power
+          demand not met by the onsite project is serviced via          retailer/utility) buys electricity from grid via a power
+          separate retail PPA of Consumer with EVN Power                purchase agreement with EVN Power Corporation to
+          Corporations under existing regulations.                      meet its power demands.
+
+    Excess PPA with EVN: Excess power may be                       RE GENCO and Consumer (or authorized IP/EZ/EPZ
+          exported to the grid (subject to new regulations to be        power retailer/utility) enters a Forward Contract as a
+          issued).                                                      virtual/synthetic PPA (or also known as Contract for
+                                                                        Differences (CfD))
+
+                                                                                                                                © 2025 Baker & McKenzie (Vietnam) Ltd.
+New Electricity Law - DPPA mechanisms
+
+                                a. Similar to the current DPPA Decree No. 80/2024/ND-CP, the New Electricity Law regulates two models of direct
+                                      power sale and purchase between large electricity users and power generators as follows:
+                                      i. Sale and purchase of electricity through a separate connected power wire (also knowns as "physical DPPA");
+                                      ii. Sale and purchase of electricity through the national grid (also knowns as "synthetic DPPA").
+
+                                b. The direct sale and purchase of electricity between large electricity users and power generators must ensure the
+                                      following principles:
+                                      i. Complying with the provisions of the laws on planning, investment, issuance of power operation licenses,
+                                           electricity purchase and sale activities and other relevant provisions of law;
+                                      ii. Conformity with the level of the competitive electricity market.
+
+                                c. "Large electricity consumers" are defined as customers who use electricity with high power and consumption
+                                      levels as regulated by the Minister of MOIT, in accordance with each period of development of the power
+                                      system.
+
+                                d. The Government to provide for the mechanism of direct electricity sale and purchase between large electricity
+                                      users and power generating units; stipulate the dossiers, order, procedures and responsibilities of relevant
+                                      parties when participating in the mechanism of direct electricity sale and purchase between large electricity
+                                      users and power generating units.
+
+                                                                                                                                                                                               © 2025 Baker & McKenzie (Vietnam) Ltd.
+Draft New DPPA Decree
+
+Physical DPPA related regulations
+
+   Physical / Private-Wire DPPA
+
+                                a) Clarify relevant regulations for rooftop solar (definition, private connection wire)
+                                b) Excess power sale by RE GENCO to EVN up to 20% of actually generated output at the average energy market
+
+                                      price of previous year, not exceeding the ceiling price for ground-mounted solar farm price bracket;
+                                c) Procedure and form for registration with DOIT for RTS physical DPPA.
+
+                                                                                                                                                                                               © 2025 Baker & McKenzie (Vietnam) Ltd.
+Draft New DPPA Decree
+
+Synthetic DPPA related regulations
+
+   Synthetic / Virtual / Financial DPPA via National Grid
+
+                                a) RE sources: add biomass, other than existing solar and wind farms (10MW+)
+
+                                b) Unlike the Current DPPA Decree No. 80, the Draft New DPPA Decree does not require power retailers in
+                                      industrial parks, economic zones, export processing zones, industrial clusters, hi-tech parks, concentrated
+                                      information technology parks, high- agricultural parks and other similar models as regulated by the competent
+                                      State authorities ("Authorized Power Retailers") to meet (A) a minimum power output of  200,000 kWh per
+                                      month of its purchase from EVN PCs or (B) a grid connection at  22 kV of voltage level from EVN PCs, when
+                                      such Authorized Power Retailers participate, on the power off-taker side, in synthetic DPPAs, when they have
+                                      been authorized (by Large Power Consumer(s)) to purchase power from EVN PCs and enter into Forward
+                                      Contract(s) with RE GENCOs. If so approved, it may allow more power retailers to join the synthetic DPPA
+                                      mechanism.
+
+                                c) the Draft New DPPA Decree supplements an annual review of qualifications of participating power consumers.
+
+                                d) The Draft New DPPA Decree requires the NSMO to monitor the allocation ratio of actual electricity output (at the
+                                      delivery point) from RE GENCOs to large power consumers (Authorized Power Retailers) in each transaction
+                                      cycle to ensure that the total actual electricity output values (at the delivery point) allocated in each transaction
+                                      cycle do not exceed the measured output of the RE GENCO in the corresponding transaction cycle.
+
+                                                                                                                                                                                               © 2025 Baker & McKenzie (Vietnam) Ltd.
+02 Model 1: Physical corporate
+    DPPA
+Model 1: Physical corporate DPPA
+
+Private wire                  RE GENCO                      Physical corporate DPPA
+
+                        PPA electricity                     The power price is determined by mutual
+                                           tariff x output  agreement by parties
+
+Financial transactions  Large Consumer
+Electricity flows
+
+                                                            © 2025 Baker & McKenzie (Vietnam) Ltd.
+Model 1: Physical corporate DPPA
+
+Scope of GENCO: "Renewable Energy Generation Companies"
+
+ Criteria required to qualify as a "Renewable Energy Generation Companies" for DPPA mechanisms
+
+                                        Electricity entities owning solar, wind, small hydropower, biomass,
+                                             geothermal energy, wave power, tidal, ocean current, other forms of
+                                             renewable energy sources and rooftop solar systems; and
+
+                                        Being granted or exempted from the electricity operation license
+                                             according to the laws.
+
+Renewable energy generation companies  Takeaways:
+                   ("RE GENCO")
+
+                                        In previous drafts, electricity entities owning rooftop solar systems are
+                                             not explicitly set forth as to whether they are a qualified RE GENCO
+                                             under DPPA Decree or not. The definition under DPPA Decree makes
+                                             it clear by adding "rooftop solar systems" thereto; and
+
+                                        Model 1 (Physical DPPA) does not set a cap on the capacity of power
+
+                                       plants.     © 2025 Baker & McKenzie (Vietnam) Ltd.
+Model 1: Physical corporate DPPA
+
+Scope of Consumers: "Large Power Consumers"
+
+ Key criteria required to qualify as a "Large Power Consumer" for DPPA mechanisms
+
+(i) In case of an existing power consumer:  (ii) In case of a new power consumer or a
+                                            power consumer consuming electricity for
+Having an average consumption output of     less than 12 months:
+ 200,000 kWh (averaged over the most
+recent 12 months)                           Registered output of  200,000 kWh
+
+a Large Power Consumer under DPPA
+                      Decree
+
+                                                                                   © 2025 Baker & McKenzie (Vietnam) Ltd.
+Physical DPPA ­ Key Regulations
+
+ 01 The PPA between RE GENCO and Consumer must be in accordance with the Electricity Law and relevant
+            laws, and must contain the following key provisions:
+
+Contracting parties    Rights and obligations of  Term and termination
+                       the parties                Defaults and remedies
+Purpose of use         Electricity price          Terms on private wire
+Standards and quality
+of services            Payment methods and terms
+
+02 Generally, the electricity price shall be determined by mutual agreement between contracting parties
+
+03 RE GENCO must negotiate, agree and sign PPA with EVN (or its authorized units) on capacity, output, and
+          price for excess electricity output in accordance with regulations.
+                                                                                                                                                                                             © 2025 Baker & McKenzie (Vietnam) Ltd.
+Physical DPPA ­ Key Regulations
+
+            The retail power price shall be determined according to the MOIT's regulations on electricity tariffs [i.e.,
+            subject to appraisal by DOIT and approved by PPC on an annual basis] if a power entity:
+
+ 04  performs both the power generation and retail functions in an industrial park (IP), EZ, EPZ, and similar
+               park; and
+             purchases power from both the national grid/power system and other on-site power sources to sell power
+               to customers inside IP, EZ, EPZ, and similar park.
+
+                                                                                                                                                                                               © 2025 Baker & McKenzie (Vietnam) Ltd.
+Physical DPPA ­ Steps required
+
+Step 1   Licensing   RE GENCOs / project investors shall conduct procedures on master planning,
+Step 2               investment, construction, power operation license for projects, works and grids
+Step 3  Contracting  for entering into physical DPPAs with Consumers
+
+         Reporting   RE GENCOs and Consumers shall negotiate, agree and sign physical DPPAs
+        Contents of
+         the report  Consumers must prepare a written report on the signing of the DPPA with RE
+                     GENCO and send it to the local PPC and notify the EVN's in-charge power
+                     corporation and SMO in writing; the report and notification must include a copy
+                     of the DPPA.
+
+                     (i) notification on the signing of the DPPA, (ii) Consumer's information and (iii)
+                     the current status of RE GENCO and the RE project.
+
+                                                                                                               © 2025 Baker & McKenzie (Vietnam) Ltd.
+Physical DPPA
+
+Reporting requirements
+
+ Larger Power Consumers must make and submit the following reports:
+
+Report on commencement of Physical DPPA       Report on the results of Physical DPPA for
+                                                                      Year N-1
+ Recipients: MOIT and in-charge provincial
+      People's Committee                     Recipients: MOIT and in-charge provincial
+                                                  People's Committee
+ Deadline: Within 10 days from the date of
+      signing the physical DPPA              Deadline: Before 30 January of Year N
+                                             Frequency: On an annual basis
+
+                                                                                               © 2025 Baker & McKenzie (Vietnam) Ltd.
+03 Synthetic/Virtual Corporate
+    DPPA
+A. Structure and Parties to
+    Synthetic DPPA
+Synthetic corporate DPPA
+
+                                                               Forward Contract as a virtual PPA (CfD) for
+                                                               a scheduled portion of GENCO production
+
+Connecting to the national grid
+
+                                              RE GENCO           DPPA fixed price payments  Consumer or IP Authorized                 Contract allowing
+                                  (solar or wind power plant)      CfD VWEM price swaps       Power Retailer ("APR")                  consumer access to VWEM
+                                                                                                                                      spot pricing for all
+VWEM PPA                         PPA electricity                                                                   Spot market power  consumption; payment of
+                                                                                                                         purchases    DPPA charges
+
+                                                VWEM spot price           Spot market        Spot Market Rate x                       Pricing mechanism subject
+                                                                       payments + fees      Load; DPPA charges                        to the consumption quantity
+                                      EVN                         VWEM wholesale price                                                of Consumer in a trading
+                               (EPTC/NLDC)                                                         Power corporation (PC)             interval compared to the
+                                                                 Bulk power at VWEM rate                                              generation quantity of RE
+Financial transactions                                                                                                                GENCO in that interval
+Electricity flows
+                                                                                                                                      (DPPA Decree, Article 14)
+
+                                                                                                                           © 2025 Baker & McKenzie (Vietnam) Ltd.
+Synthetic corporate DPPA
+
+Scope of "Renewable Energy Generation Companies"
+
+ Criteria required to qualify as a "RE GENCO" for Synthetic DPPA
+
+                                            Being the power generation company owning a grid-connected wind
+                                                 or solar power plant with an installed capacity of  10 MW;
+
+                                            Being granted or exempted from the electricity operation license
+                                                 according to the laws; and
+
+                                            Directly participating in VWEM.
+
+Renewable energy generation companies      Takeaways:
+                   ("RE GENCO")
+                                            Synthetic DPPA only applies to grid-connected wind or solar power
+   (DPPA Decree, Articles 2.2(a) and 3.6)        plants;
+
+                                            Capacity cap:  10 MW (such plant must have sufficient infrastructure
+
+                                           and facilities to operate in the mechanism, i.e., information system
+
+                                           and SCADA system).     © 2025 Baker & McKenzie (Vietnam) Ltd.
+Synthetic corporate DPPA
+
+Scope of Consumers: "Large Power Consumers"
+
+ Criteria required to qualify as a "Large Power Consumers" for Synthetic DPPA
+
+         Large Power Consumers            Being manufacturing consumers;
+                                          Purchasing power at  22 kV of voltage level from EVN's Power
+(DPPA Decree, Articles 2.2(b) and 3.12)
+                                               Corporations or power retailers;
+                                          For cases of existing power consumers, having an average
+
+                                               consumption output of  200,000 kWh (averaged over the most recent
+                                               12 months);
+                                          For cases of new power consumers or a power consumer consuming
+                                               electricity for less than 12 months, registered output of  200,000 kWh
+
+                                                                                                                                     © 2025 Baker & McKenzie (Vietnam) Ltd.
+Synthetic corporate DPPA
+
+Scope of Power Retailers: "Power Retailers in IP, EZ, EPZ"
+
+ Criteria required to qualify as a "Power Retailers in IP, EZ, EPZ" for authorized off-taker for Synthetic DPPA
+
+IP Power Retailer/Utility                      Being a power retailer inside IP, EZ, EPZ, and similar park;
+
+                                               Being granted a power operation license for power retail in such park;
+
+                                               Electricity output purchased  200,000 kWh per month at  22 kV of
+                                                    voltage level; and
+
+                                               Being authorized (by large power consumers) to purchase electricity
+                                                    from PC.
+
+Additional documents required for IP Power Retailers/Utility when applying for participation in the Synthetic DPPA
+
+ Written agreement with EVN PC on authorized IP Power Retailer's responsibility for the installation of meters
+     satisfying technical conditions under regulations, and expected electricity purchase charges/prices; and
+
+ Agreement of consumers with IP's power retailer on expected termination of the existing retail PPA(s) when consumer(s) (i.e., IP
+      tenants) select to participate in Synthetic DPPA, and retail costs within the IP, EZ, and EPZ; OR authorization agreement by
+      consumers to IP power retailer to participate in Synthetic DPPA and amendments to existing retail PPA(s).
+
+(DPPA Decree, Articles 2.2(c), 3.7 and 26.2)  © 2025 Baker & McKenzie (Vietnam) Ltd.
+B. Energy Payments and
+    DPPA Charges under
+    Synthetic DPPA
+1. RE GENCO & Consumer's Forward Contract (or CfD)
+
+ Payment Mechanism
+
+   Rc:                      
+ Pc(i):
+FMP(i) :      = [  -   ]  ()
+ Qc(i) :
+                          =
+
+          The revenue of RE GENCO under Forward Contract in the
+          payment cycle (VND)
+
+          Committed contract (strike) price under Forward Contract
+          (VND per kWh)
+
+          Spot market electricity price in trading interval (i) (VND per
+          kWh)
+
+          Committed power quantity/output under Forward Contract
+          in trading interval (i) (kWh)
+
+(DPPA Decree, Article 18.3)
+
+                                                                          © 2025 Baker & McKenzie (Vietnam) Ltd.
+2. RE GENCO & EVN's VWEM Power Purchase Agreement
+
+ Payment Mechanism
+
+                                                                                01
+
+           =  () × ()                                                           RE GENCO must make a day-ahead
+                                                                                projection of power output of the power plant
+                      =                                                         for each trading cycle and make offerings in
+                                                                                accordance with MOIT's VWEM operation
+Rg:       Total amount of market energy payments in the payment                 regulations.
+          cycle (VND)
+                                                                                02
+Qmq(i):   Metered quantity/output of RE GENCO in trading cycle (i)
+          (kWh)                                                                 RE GENCO, Electricity System and Market
+                                                                                Operator (SMO) and EVN shall prepare,
+FMP(i) :  Full spot market electricity price in trading cycle (i) (VND          publish, compare, and confirm spot market
+          per kWh)                                                              payment statements in accordance with
+                                                                                MOIT's VWEM operation regulations.
+          () = () + ()
+                                                                                03
+SMP(i) :  Spot market electricity price in trading cycle (i) (VND per
+CAN(i) :  kWh)                                                                  RE GENCO and EVN shall perform
+                                                                                procedures and works for payments in
+          Market capacity price in trading cycle (i) (VND per kWh)              accordance with the executed PPA.
+
+(DPPA Decree, Articles 10 - 13); (Amended Circular 45/2018/TT-BCT, Article 80)                                   © 2025 Baker & McKenzie (Vietnam) Ltd.
+3. Consumer & EVN PC's Power Supply Agreement
+
+ Payment mechanism (1/5)
+
+          =  +                                                                               
+
+         = ( + + ) +                                                           =  () × () × 
+
+                                                                                           =
+
+ CKH :   Total electricity purchase charges of Consumer from      QKHhc(i) :  Adjusted electricity consumption/output of Consumer
+ CDN :   EVN PC (VND)                                                         in trading cycle (i) (kWh)
+CDPPA :
+         Energy charge paid based on the electricity market       CFMP(i) :   Electricity purchase price from EVN PC in the spot
+         price (VND)                                                          market in trading cycle (i) under VWEM (VND/kWh)
+
+         DPPA charge (for use of services and grids of the        KPP :       Power distribution loss coefficient in trading cycle (i)
+         power system)                                                        applicable to EVN PC in year N (varying between
+                                                                              Consumers with a voltage level less than 110 kV and
+CCL :    Difference clearing charge (VND)                                     those with a level equal to or more than 110 kV)
+
+CBL :    Electricity charge paid based on the electricity retail
+         tariff in each trading cycle (VND)
+
+(DPPA Decree, Articles 16.1 and 16.2)                                         © 2025 Baker & McKenzie (Vietnam) Ltd.
+3. Consumer & EVN PC's Power Supply Agreement
+
+ Payment mechanism (2/5)
+
+          ()= () + ()                                                                        () = () + ()
+
+          = () × ()
+
+CFMP i :  Spot market price for wholesale electricity buyers        FMP(i) :                 Full market electricity price in trading cycle (i) (VND
+          (PC) in trading cycle (i) (VND per kWh)                                            per kWh)
+
+CSMP(i):  Market electricity price for wholesale electricity        SMP(i) :                 Market electricity price in trading cycle (i) (VND per
+          buyers (PC) in trading cycle (i) (VND per kWh)                                     kWh)
+
+CCAN i :  Market capacity price for wholesale electricity buyers    CAN(i) :                 Market capacity price in trading cycle (i) (VND per
+          (PC) in trading cycle (i) (VND per kWh)                                            kWh)
+
+k(i):     Power transmission loss coefficient in trading cycle (i)
+
+(DPPA Decree, Article 16.2(d)); (Amended Circular 45/2018/TT-BCT, Articles 82.2, 83 and 84)
+
+                                                                                             © 2025 Baker & McKenzie (Vietnam) Ltd.
+3. Consumer & EVN PC's Power Supply Agreement
+
+Payment mechanism (3/5): DPPA charges
+
+                                                                     01
+
+             =  () ×                                                 DPPA charges consist of the following charges: (i)
+                                                                     transmission charge, (ii) distribution charge and retail
+                              =                                      charge, and (iii) SMO charge)
+
+i:          Trading cycle (i) in the payment period                  02
+
+I:          Total number of trading cycles in the payment period     DPPA charges are determined by adding the total cost and
+                                                                     estimated profit of the above services, which is then divided
+QKHhc(i) :  Adjusted power consumption of Consumers (or              by total domestic commercial generation quantities of EVN
+            authorized IP Power Retailers) in the trading cycle (i)  PCs
+            (kWh)
+                                                                     03
+CDPPAdv :   DPPA charges per unit of power of year N
+            (VND/kWh)                                                Charges used to calculate DPPA charges are based on
+                                                                     approved data of year N. Otherwise, data from year N-2
+(DPPA Decree, Articles 16.1(b) and 16.4(d))                          is used. In cases of using data from year N-2, the
+                                                                     estimated profit of the above services determined by
+                                                                     multiplying owner's equity with the return on equity
+                                                                     presented in the current average retail electricity price
+                                                                     plan in year N-2
+
+                                                                                                                   © 2025 Baker & McKenzie (Vietnam) Ltd.
+3. Consumer & EVN PC's Power Supply Agreement
+
+Payment mechanism (4/5): Difference clearing charge
+
+                                                                   =  +  +  +  + 
+
+             =  () × 
+
+                          =
+
+CCL :       Difference clearing charge                            PCLTTBOT :  The difference in BOT components payment related to
+ i:         Trading cycle (i) in the payment period                           BOT power plants (VND/kWh) for month M-2
+
+I:          Total number of trading cycles in the payment period  PCCLTTGT :  The difference in component payments to power plants
+                                                                              indirectly participating in VWEM, including RE GENCO,
+                                                                              power plants selling surplus power and power importing
+                                                                              [from other countries] (VND/kWh)
+
+QKHhc(i) :  Adjusted power consumption of Large Power                               The difference in component payment for strategic multi-
+            Consumers in the trading cycle (i) (kWh)
+                                                                  PCLTTSMHP : purpose hydropower plants (SMHPs) in the month
+                                                                                    (VND/kWh)
+
+PCL :       Cost of clearing differences for month M per unit of  PDVPT :     Ancillary service charge per unit of power (VND/kWh)
+            power for Large Power Consumers (VND/kWh)             PCLTTK :
+                                                                              The additional payment difference per unit of power
+(DPPA Decree, Articles 16.1(b) and Appendix IV)                               (VND/kWh) arising from costs that are allowed to be
+                                                                              included in the electricity price but have yet to be
+                                                                              incorporated
+
+                                                                                                                          © 2025 Baker & McKenzie (Vietnam) Ltd.
+3. Consumer & EVN PC's Power Supply Agreement
+
+ Payment mechanism (5/5): Retail tariff (CBL):
+
+Actual consumption  Generation output                CBL = 0
+
+     Actual consumption > Generation output                                    
+
+Retail tariff for remaining power supply (CBL):                   = (  - ()) × ()
+
+In cases where Consumer's actual consumption (or                              =
+IP Authorized Power Retailer's purchasing output if
+applicable) is higher than RE GENCO's generation     PBL(i) :    Current retail electricity tariff in trading cycle (i) issued
+output in a trading cycle,                                       by the MOIT (VND/kWh)
+
+the Consumer (or IP Authorized Power Retailer if     QKH(i) :    Actual consumption quantity of Consumer in trading
+applicable) shall pay for the difference (between                cycle (i) (kWh)
+Consumer's actual consumption and RE GENCO's
+generation output) [as additionally supplied by EVN  QKHhc(i) :  Adjusted power consumption of Consumer in trading
+PC] at the electricity retail tariff.                            cycle (i) (kWh)
+
+(DPPA Decree, Articles 14.2, 14.3 and 16.1(c))                   © 2025 Baker & McKenzie (Vietnam) Ltd.
+C. Synthetic DPPA Transaction
+    Agreements
+1. RE GENCO & Consumer's Forward Contract (or CfD)
+
+Key Terms (Appendix III to DPPA Decree) (1/2)
+
+RE GENCO and Consumer (or authorized IP/EZ/EPZ) have the rights to negotiate and agree provisions in accordance with
+Vietnamese laws
+
+Key terms          Provision under DPPA Decree
+
+COD                The date on which the entire or a part of the grid-connected solar power plant (i) is ready to sell power to
+                   the EVN and (ii) satisfy conditions as prescribed by the laws.
+Contract price
+                   Consumer undertakes to pay the GENCO for contract output at an agreed contract price (strike price) for
+Contract quantity  interval i, day D, month T, year N in the future.
+Payment method
+Contract term      To be agreed/negotiated for interval i, day D, month T, year N in the future.
+
+                   Payments for the difference in prices between the contract price and the spot market price.
+
+                    Effective date: execution date.
+                    Term: [x] years from COD (to be negotiated).
+                    Survival clauses: After the termination of this contracts, the provisions remain effective within [x]
+
+                         years so that the party can make final invoices, adjusted invoices, make payments and implement
+                         contract rights and obligations (to be negotiated).
+
+                                                                                                                                                                      © 2025 Baker & McKenzie (Vietnam) Ltd.
+1. RE GENCO & Consumer's Forward Contract (or CfD)
+
+Key Terms (Appendix III to DPPA Decree) (2/2)
+
+Key terms         Provision under DPPA Decree
+                  RE GENCO and consumer are entitled to agree on the contents of this term in accordance with relevant
+Rights and        legal regulations.
+obligations of
+parties           RE GENCO and consumer are entitled to agree on the contents of this term in accordance with relevant
+                  legal regulations.
+Liability due to
+the breach of     RE GENCO and consumer are entitled to agree on the contents of this term in accordance with relevant
+contract          legal regulations.
+
+Dispute           Renewable energy certificates (RECs) and/or carbon credits shall be transferred from RE GENCO to
+resolution        Large Power Consumer(s).
+
+RECs, carbon
+credits
+
+                  © 2025 Baker & McKenzie (Vietnam) Ltd.
+2. Consumer & EVN PC's Power Supply Agreement
+
+Model Key Terms (Appendix II to DPPA Decree) (1/2)
+
+Consumer and EVN PC have the rights to negotiate and agree provisions in accordance with Vietnamese laws
+
+Key terms            Provision under DPPA Decree
+Electricity
+purchase             The PC and consumer are entitled to agree on the contents of this term in accordance with relevant legal regulations.
+Performance
+guarantee            Applicable in cases where the two parties have an agreement on contract guarantees in accordance with applicable
+Contract term        regulations.
+
+Standards and         Effective date: To be negotiated between the parties. If the parties agree to choose the application of the performance
+quality of services         guarantee, the effective date of the contract is determined to be: (i) the guaranteed confirmation date; or (ii) the
+Electricity                 energized acceptance date, depending on which date occurs earlier.
+metering
+                      Contract term: To be agreed upon by the parties, but not exceeding the period during which the consumer has the
+                            right to legally own and/or use the electricity usage location.
+
+                     To comply with requirements on electricity quality and customer service quality according to the laws.
+
+                      Electricity metering activities are agreed upon by the parties in accordance with the law.
+                      The consumed electricity is determined by the meter reading and the multiplier factor of the electricity metering device.
+                      The multiplier factor of electricity metering device is agreed and recorded in the minutes of installation or removal of
+
+                            the electricity metering device.
+
+                                                                                                                                                                         © 2025 Baker & McKenzie (Vietnam) Ltd.
+2. Consumer & EVN PC's Power Supply Agreement
+
+Model Key Terms (Appendix II to DPPA Decree) (2/2)
+
+Key terms             Provision under DPPA Decree
+
+PPA electricity       Subject to the consumption quantity of consumers in a trading cycle compared to the generation quantity
+payment formula       of RE GENCO in that cycle.
+
+Payment                Electricity bills and reactive power purchase invoices are made according to the cycle of meter
+                            reading cycle.
+Suspension,
+discontinuation or     Payment currency: Vietnamese Dong.
+reduction of power
+supply                PC reserves the right to temporarily suspend, discontinue or reduce electricity supply to the consumer in
+                      cases where: (i) the consumer breaches its payment obligations as specified under payment clauses; or
+Breach, penalty,      (ii) events arise according to laws.
+compensation for
+damages, termination   If a party breaches its obligations, commitments or warranties under this agreement, it must cease all
+                            violating acts and remedy the consequences of the violation within a reasonable period of time upon
+                            notification by the non-defaulting party.
+
+                       Violation penalty: [x] % of the value of breached obligations (to be negotiated).
+                       The parties may mutually or unilaterally terminate the agreement.
+
+Governing law         Vietnamese law
+
+                                                   © 2025 Baker & McKenzie (Vietnam) Ltd.
+3. RE GENCO & EVN's VWEM Power Purchase Agreement
+
+Model Key Terms (Appendix I to DPPA Decree) (1/2)
+
+RE GENCO and EVN have the rights to negotiate and agree provisions in accordance with Vietnamese laws
+
+Key terms        Provision under DPPA Decree
+
+COD              The date on which the entire or a part of the grid-connected solar power plant (i) is ready to sell power to
+Contract term    the EVN and (ii) satisfy conditions as prescribed by the laws.
+
+Output            Effective date: from the execution date, unless otherwise agreed upon by the parties
+Price             Term: [x] years from the COD (to be negotiated)
+Monthly payment   Survival clauses: After the termination of this contracts, the provisions remain effective within [x]
+
+                       years so that the party can make final invoices, adjusted invoices, make payments and implement
+                       contract rights and obligations (to be negotiated).
+
+                 Metered power output
+
+                 The spot market price announced by EVN/NLDC(A0) to be determined according to VWEM regulations
+
+                  VWEM's payments based on monthly payment statement provided by EVN/NLDC(A0) (including
+                       market energy payments and market capacity payments)
+
+                  Other payments arising from late payment interest and adjusted payments (if any)
+                  Regulatory taxes and fees, including related taxes and fees arising from changes of laws
+
+                       (if any)
+
+                                                   © 2025 Baker & McKenzie (Vietnam) Ltd.
+3. RE GENCO & EVN's VWEM Power Purchase Agreement
+
+Model Key Terms (Appendix I to DPPA Decree) (2/2)
+
+Key terms              Provision under DPPA Decree
+
+Responsibility for     Responsibility for interconnection and metering system are in accordance with regulations on
+connection and         transmission power system, standards and regulations on power metering in the power system, and
+metering system        relevant technical standards.
+Power plant dispatch
+and operation          Operations of power plant and power grid are in accordance with regulations on operation of power
+                       systems, transmission power systems, dispatch of power systems, operation of competitive electricity
+Invoicing and payment  market standards and relevant technical standards.
+Breach of contract,
+compensation for       Invoicing and payment of power prices are in accordance with laws on invoicing.
+damages and
+termination             In the event of a contractual default, the non-defaulting party will send a written notice to the
+                             defaulting party for cooperation to resolve.
+RECs, carbon credits
+                        The defaulting party is liable for payments of compensation for damages for the default. The value
+                             includes: (i) actual and direct loss and (ii) benefits the non-defaulting party would have been entitled
+                             if there was no default by the defaulting party.
+
+                        The parties may mutually or unilaterally terminate the agreement.
+
+                       Renewable energy certificates (RECs) and/or carbon credits shall belong to RE GENCO.
+
+                                                    © 2025 Baker & McKenzie (Vietnam) Ltd.
+Events of suspension or termination of DPPA operations
+
+Scenario 1: Suspension of the DPPA                                        Scenario 2: Termination of the DPPA
+operation                                                                 operation
+
+ Events of suspension:                                                     Events of suspension:
+
+1) The electricity market is suspended pursuant to the MOIT's             1) Voluntary termination at the request of participating parties;
+       regulations on VWEM operations;
+                                                                          2) Exploitation of the mechanism or policies for profiteering
+2) One of the agreements under the DPPA mechanism is                            and consequences cannot be remedied.
+       suspended or expires, affecting relevant parties' interests;
+                                                                           Consequential payment mechanism: RE GENCO,
+3) Exploitation of mechanism or policies for profiteering;
+                                                                                Consumer/IP Authorized Power Retailer, and EVN PC shall
+4) Participating Consumer has an average power consumption less                 negotiate and sign PPAs in accordance with current
+       than 200,000 kWh (average in 12 consecutive months)                      regulations.
+
+ Consequential payment mechanism:                                          Competent authority: MOIT Minister shall decide on
+
+a) The retail tariff, as prescribed by MOIT, will be applied to                 termination of the DPPA operation after having obtained
+       Consumer/IP Authorized Power Retailer.                                   written opinions of relevant agencies.
+
+b) RE GENCO and EVN shall negotiate and agree on the generation
+       price within the applicable renewable energy price bracket or any
+       other applicable pricing mechanisms.
+
+ Competent authority: MOIT Minister shall decide on
+
+       suspension of the DPPA operation based on reports and
+       proposals of EVN, SMO and relevant agencies and organizations.
+
+(DPPA Decree, Article 27)                                                 © 2025 Baker & McKenzie (Vietnam) Ltd.
+Resumption of the DPPA operations
+
+Events of resumption of the DPPA operations [after suspension]
+
+                                                          Events of Resumption
+
+  (i) The violation [causing suspension] have     (ii) Authorized State agencies decide on
+  been remedied and [such remedy has              resumption of the operations of the
+  been] confirmed by competent authorities.       electricity market.
+
+ Consequence: In the event of resumption, the     Competent authority: MOIT Minister shall decide on
+ relevant entities shall be responsible for       resumption of the DPPA operations of Consumer/IP
+ resuming/continuing to implement the agreements  Authorized Power Retailer/RE GENCO based on
+ in the signed PPAs.                              reports and proposals of EVN, SMO and relevant
+                                                  agencies and organizations.
+(DPPA Decree, Articles 27.3 and 27.4)
+                                                                                                             © 2025 Baker & McKenzie (Vietnam) Ltd.
+D. Next Steps for
+    Implementation
+Key Items
+
+Key Items                                                  Implementation Works
+
+Power distribution loss          Calculation made by Power Corporation (EVNPC) before 15 November of Year N-1.
+coefficient in a trading cycle   Calculation results to be approved by EVN.
+in year N (KPP)                  Calculation results to be published by EVN before 30 November of Year N-1.
+
+DPPA charges per unit of         Calculation made by EVN.
+
+power of year N (VND/kWh)  Calculation results to be notified to and approved by the MOIT.
+
+(CDPPAdv)                        Calculation results to be published by EVN before 15 December of Year N-1.
+
+Cost of clearing differences     Calculation made by EVN regarding the PCL of Month M-2.
+for month M per unit of          Calculation results to be published by EVN before the 30th of Month M-1.
+power (PCL)
+
+PDP8 and PDP8                    MOIT is responsible for assessing the market operations and reporting to the Prime Minister for
+Implementation Plan                   considering to adjust and update to the master plan (PDP8 and PDP8 implementation plan)
+                                      (Article 29.1(a).
+
+Distribution charge, SMO         Separate updates to relevant regulations of MOIT for implementing DPPAs.
+charge, VWEM regulations
+
+                                                                                            © 2025 Baker & McKenzie (Vietnam) Ltd.
+Synthetic DPPA ­ Steps required (1/2)
+
+Step 1    Dossier                        Consumers must submit a registration dossier for participating in the DPPA mechanism
+        submission                       to SMO. For (i) off-takers inside IP, EZ and EPZ, and (ii) IP Authorized Power Retailer,
+                                         some additional documents are required.
+Step 2        Further
+Step 3  submission and                   Within five working days from receipt of the dossier, SMO must send the dossier to EVN
+                                         Power Corporations (and any relevant IP power retailer). At the same time, SMO must
+               review                    review the satisfaction of the dossier.
+
+        Confirmation by                  Within five working days from receipt of the dossier from SMO, EVN's relevant power corporation
+        PC and IP Power                  (and any relevant IP relevant Power Retailer) must issue a written response confirming the
+                                         readiness and expected time to convert Consumer (or IP Authorized Power Retailer)'s existing
+              Retailer                   retail PPA.
+
+                        Confirmation by  Within five working days from receipt of the dossier from SMO, EVN must issue a
+                                EVN      document confirming the readiness and expected time to sign the VWEM PPA with RE
+                                         GENCO.
+(DPPA Decree, Article 26)
+                                                                                                                                   © 2025 Baker & McKenzie (Vietnam) Ltd.
+Synthetic DPPA ­ Steps required (2/2)
+
+Step 4  SMO's response      Within five working days from receipt of the written confirmation from PC, IP's power retailer
+          to Consumer       and EVN, SMO must issue a written response to the Consumer regarding the expected date
+                            for: (i) signing the VWEM PPA between EVN and RE GENCO; (ii) converting the existing
+Step 5     Negotiation of   retail PPA between EVN PC/IP Power Retailer and Consumer; and (iii) applying the DPPA
+Step 6  DPPA Agreements     mechanism.
+
+          Submission of     EVN, PC, RE GENCO and Consumer (or IP Power Retailer) shall proactively
+            requirement     negotiate and sign respective PPAs in accordance with regulations of the DPPA
+            satisfaction    decree.
+
+Step 7  Final notification  RE GENCO, Consumer (or IP Power Retailer) and related entities shall submit
+                            documents to SMO confirming that they meet the requirements for participating in
+(DPPA Decree, Article 26)   the DPPA mechanism.
+
+                            SMO shall review the documents submitted in Step 6 and notify related entities in
+                            writing of the official date of the DPPA between RE GENCO and Consumer (or IP
+                            Authorized Power Retailer).
+
+                                                                                                                      © 2025 Baker & McKenzie (Vietnam) Ltd.
+Synthetic DPPA - Application Documents required
+
+          01                           04                        For (i) consumers inside IP, EZ and EPZ and (ii)
+                                                                 IP's authorized power retailer, the following
+                Written request for    Consumer's information    additional documents are required:
+                participating in the   and its consumption
+                DPPA mechanism                                             06
+                                       05
+          02                                                                        Written agreement with EVN PC on responsibility for
+                                       In-principle agreement                       the installation of meters for consumers that
+                In-principle CfD       on the allocation of                         participate in DPPA mechanism, satisfying technical
+                agreement (forward     actual power output of                       conditions under regulations, and expected
+                contract) between RE   RE GENCO for large                           electricity purchase charges/prices.
+                GENCO and Consumer     consumers in each
+                                       trading interval (Qm(i))            07
+          03
+                                                                                    (i) Agreement of consumers with IP's power retailer
+                Report on the current                                               on expected termination of the existing retail PPA(s)
+                status of RE GENCO                                                  when consumer(s) select to participate in DPPA
+                and power plant                                                     mechanism, and retail costs within the IP, EZ, and
+                                                                                    EPZ; OR
+(DPPA Decree, Articles 26.1 and 26.2)                                               (ii) authorization agreement by consumers to IP
+                                                                                    power retailer to participate in DPPA mechanism
+                                                                                    and amendments to retail PPA(s).
+
+                                                                                                                      © 2025 Baker & McKenzie (Vietnam) Ltd.
+Synthetic DPPA - Application Documents required
+
+          01                           04                        For (i) consumers inside IP, EZ and EPZ and (ii)
+                                                                 IP's authorized power retailer, the following
+                Written request for    Consumer's information    additional documents are required:
+                participating in the   and its consumption
+                DPPA mechanism                                             06
+                                       05
+          02                                                                        Written agreement with EVN PC on responsibility for
+                                       In-principle agreement                       the installation of meters for consumers that
+                In-principle CfD       on the allocation of                         participate in DPPA mechanism, satisfying technical
+                agreement (forward     actual power output of                       conditions under regulations, and expected
+                contract) between RE   RE GENCO for large                           electricity purchase charges/prices.
+                GENCO and Consumer     consumers in each
+                                       trading interval (Qm(i))            07
+          03
+                                                                                    (i) Agreement of consumers with IP's power retailer
+                Report on the current                                               on expected termination of the existing retail PPA(s)
+                status of RE GENCO                                                  when consumer(s) select to participate in DPPA
+                and power plant                                                     mechanism, and retail costs within the IP, EZ, and
+                                                                                    EPZ; OR
+(DPPA Decree, Articles 26.1 and 26.2)                                               (ii) authorization agreement by consumers to IP
+                                                                                    power retailer to participate in DPPA mechanism
+                                                                                    and amendments to retail PPA(s).
+
+                                                                                                                      © 2025 Baker & McKenzie (Vietnam) Ltd.
+Responsibilities of State authorities and EVN
+
+                               MOIT     The main regulator for the operation of DPPA mechanisms, responsible for
+                                        coordinating with other relevant agencies and entities to implement the DPPA
+                            Provincial  mechanisms and resolving issues arising during the implementation period.
+                             People's
+                           Committees   Inspecting, monitoring and resolving complaints, as well as handling violations
+                                        during the implementation of the DPPA mechanisms within the scope of its own
+                                EVN     management/jurisdiction.
+
+                                SMO     Guiding its PCs and dependent units on drafting PPAs between PCs and
+                                        Consumers, and calculating payments, DPPA charges and loss coefficients.
+(DPPA Decree, Article 29)
+                                        Responsible for guiding participants in Synthetic DPPA mechanism (via the
+                                        national grid); ensuring that total renewable energy capacity will not exceed such
+                                        capacity for each type of power source specified in the approved PDP
+
+                                                                                                                                  © 2025 Baker & McKenzie (Vietnam) Ltd.
+Synthetic DPPA
+
+Reporting requirements
+
+  1. Monthly report on results of       2. Quarterly report on deployment   3. Annual report on implementation
+  Synthetic DPPAs of Month M-1          and results of Synthetic DPPAs      results of Synthetic DPPAs
+   Reporter: SMO & EVN PCs              nationwide for Quarter Q-1          nationwide for Year N-1
+   Recipients: MOIT & in-charge                                              Reporter: EVN, SMO and PCs
+                                         Reporter: EVN                       Recipients: MOIT and in-charge
+        provincial People's Committees
+   Deadline: Before the 20th day of      Recipient: MOIT                          provincial People's Committees
+                                         Deadline: Before the 30th day of    Deadline: Before 30 January of
+        Month M
+   Frequency: On a monthly basis              the first month of Quarter Q        Year N
+                                                                             Frequency: On an annual basis
+(DPPA Decree, Article 28.2)              Frequency: On a quarterly basis
+                                                                                                     © 2025 Baker & McKenzie (Vietnam) Ltd.
+Q&A
+Contact
+
+Thanh Hai Nguyen
+
+Special Counsel
+Energy & Infrastructure / Major Projects / Environmental /
+Climate Change
+Baker McKenzie
+thanhhai.nguyen@bakermckenzie.com
++84 24 3936 9606
+Hanoi                                        Ho Chi Minh City
+
+Unit CP2.04.02, 4th Floor, Tower 2, Capital  15th Floor, Vietcombank Tower
+Place, 29 Lieu Giai Street, Ngoc Khanh Ward  5 Me Linh Square, Ben Nghe Ward
+Ba Dinh District                             District 1, Ho Chi Minh City 700000
+Hanoi 100000, Vietnam                        Vietnam
+Tel: +84 24 3825 1428                        Tel: +84 28 3820 5585
+Fax: +84 24 3825 1432                        Fax: +84 28 3829 5618
+
+Baker McKenzie delivers integrated solutions to complex challenges.
+
+Complex business challenges require an integrated response across different markets, sectors and areas of law. Baker McKenzie's client solutions
+provide seamless advice, underpinned by deep practice and sector expertise, as well as first-rate local market knowledge. Across more than 70 offices
+globally, Baker McKenzie works alongside our clients to deliver solutions for a connected world.
+
+bakermckenzie.com
+
+This presentation has been prepared for clients and professional associates of Baker & McKenzie. Whilst every effort has been made to ensure accuracy, this presentation is not an exhaustive treatment of
+the area of law discussed and no responsibility for any loss occasioned to any person acting or refraining from action as a result of material in this presentation is accepted by Baker & McKenzie.
+Baker & McKenzie (Vietnam) Ltd., a limited liability company, is a member firm of Baker & McKenzie International, a global law firm with member law firms around the world. In accordance with the
+common terminology used in professional service organisations, reference to a "partner" means a person who is a partner, or equivalent, in such a law firm. Similarly, reference to an "office" means an
+office of any such law firm. This may qualify as "Attorney Advertising" requiring notice in some jurisdictions. Prior results do not guarantee a similar outcome.
+© 2025 Baker & McKenzie (Vietnam) Ltd.
+
