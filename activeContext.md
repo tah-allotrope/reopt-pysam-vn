@@ -75,7 +75,7 @@
 - [x] Phase 3 - Implement the Case 2 hourly market-series replacement path and Phase F PySAM validation surfaces
 - [x] Phase 4 - Run targeted validation commands and regenerate the canonical Phase F artifacts
 - [x] Phase 5 - Publish a synchronized HTML Phase F report via the report skill flow
-- [ ] Phase 6 - Create the requested git commit after validation and report generation
+- [x] Phase 6 - Create the requested git commit after validation and report generation
 - [x] Review / Results - Record canonical files, validations, artifacts, commit, and next-step seeds
 
 ### Notes
@@ -92,6 +92,7 @@
 - Published the Phase F machine-readable artifacts at `artifacts/reports/ninhsim/2026-04-15_ninhsim_dppa-case-2_market-reference.json`, `artifacts/reports/ninhsim/2026-04-15_ninhsim_dppa-case-2_buyer-settlement-actual-market.json`, `artifacts/reports/ninhsim/2026-04-15_ninhsim_dppa-case-2_buyer-benchmark-actual-market.json`, `artifacts/reports/ninhsim/2026-04-15_ninhsim_dppa-case-2_pysam-results.json`, `artifacts/reports/ninhsim/2026-04-15_ninhsim_dppa-case-2_reopt-pysam-comparison.json`, and `artifacts/reports/ninhsim/2026-04-15_ninhsim_dppa-case-2_developer-screening.json`.
 - Published the synchronized Phase F HTML report at `reports/2026-04-15-dppa-case-2-phase-f.html` via the report-skill template flow.
 - Real Phase F outcome: replaced the retail-scaled proxy with the repo-local `saigon18` hourly `cfmp_vnd_per_mwh` transfer series, but the current Ninhsim Case 2 still fails both screens — buyer premium worsens to about `12.81B VND`, negative-CfD hours rise to `216`, PySAM after-tax IRR remains null with after-tax NPV about `-$47.28M`, and the combined screening decision is `reject_current_case`.
+- Recorded the synchronized Phase E/F work in git commit `489b1c0` (`dppa case 2 - validate market and developer screens`).
 
 ### Validation
 
