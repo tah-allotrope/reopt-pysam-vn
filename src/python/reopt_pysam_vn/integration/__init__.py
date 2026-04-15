@@ -3,9 +3,11 @@
 from reopt_pysam_vn.integration.dppa_case_2 import (
     build_dppa_case_2_assumptions_register,
     build_dppa_case_2_buyer_benchmark,
+    build_dppa_case_2_combined_decision_artifact,
     build_dppa_case_2_contract_risk_sensitivity,
     build_dppa_case_2_developer_screening,
     build_dppa_case_2_edge_case_matrix,
+    build_dppa_case_2_final_summary_artifact,
     build_dppa_case_2_market_proxy,
     build_dppa_case_2_market_reference_artifact,
     build_dppa_case_2_physical_summary,
@@ -31,9 +33,11 @@ from reopt_pysam_vn.integration.ninhsim_solar_storage_60pct import (
 __all__ = [
     "build_dppa_case_2_assumptions_register",
     "build_dppa_case_2_buyer_benchmark",
+    "build_dppa_case_2_combined_decision_artifact",
     "build_dppa_case_2_contract_risk_sensitivity",
     "build_dppa_case_2_developer_screening",
     "build_dppa_case_2_edge_case_matrix",
+    "build_dppa_case_2_final_summary_artifact",
     "build_dppa_case_2_market_proxy",
     "build_dppa_case_2_market_reference_artifact",
     "build_dppa_case_2_physical_summary",

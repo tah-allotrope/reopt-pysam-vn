@@ -1343,3 +1343,139 @@ def build_dppa_case_2_developer_screening(
             "The screening result should be interpreted together with the market-reference source quality before any commercial recommendation is treated as final.",
         ],
     }
+
+
+def build_dppa_case_2_combined_decision_artifact(
+    *,
+    physical_summary: dict,
+    strike_sensitivity: dict,
+    contract_risk: dict,
+    developer_screening: dict,
+) -> dict:
+    market_type = developer_screening["market_reference"]["market_reference_price_type"]
+    if market_type.startswith("repo_actual_"):
+        market_reference_quality = "transferred_repo_local"
+    elif market_type.startswith("proxy"):
+        market_reference_quality = "proxy"
+    else:
+        market_reference_quality = "site_specific_or_external"
+
+    recommended_position = developer_screening["decision"]["recommended_position"]
+    if recommended_position.startswith("advance"):
+        decision_class = "advance"
+    elif recommended_position.startswith("reject"):
+        decision_class = "reject"
+    else:
+        decision_class = "revise"
+
+    strike_results = strike_sensitivity["strike_sweep_results"]
+    lowest_buyer_premium = min(
+        float(entry["buyer_minus_benchmark_vnd"]) for entry in strike_results
+    )
+    best_developer_npv = max(
+        float(entry["developer_npv_usd"])
+        for entry in strike_results
+        if entry["developer_npv_usd"] is not None
+    )
+    excess_stress = contract_risk["excess_treatment_sensitivity"]["results"][-1]
+
+    return {
+        "model": "Ninhsim DPPA Case 2 Combined Decision",
+        "status": developer_screening.get("status", "unknown"),
+        "case_identity": dict(physical_summary.get("case_identity", {})),
+        "site_and_market_basis": {
+            **dict(physical_summary.get("site_load_basis", {})),
+            **dict(developer_screening.get("market_reference", {})),
+        },
+        "physical_summary": {
+            "optimal_mix": dict(physical_summary.get("optimal_mix", {})),
+            "energy_summary": dict(physical_summary.get("energy_summary", {})),
+            "reopt_financial": dict(physical_summary.get("financial", {})),
+        },
+        "buyer_summary": dict(developer_screening.get("buyer_view", {})),
+        "developer_summary": dict(developer_screening.get("developer_view", {})),
+        "contract_risk_summary": {
+            "adder_results": list(contract_risk["adder_sensitivity"]["results"]),
+            "kpp_results": list(contract_risk["kpp_sensitivity"]["results"]),
+            "excess_treatment_results": list(
+                contract_risk["excess_treatment_sensitivity"]["results"]
+            ),
+        },
+        "strike_summary": {
+            "negotiation_summary": dict(strike_sensitivity["negotiation_summary"]),
+            "strike_sweep_results": list(strike_results),
+        },
+        "critical_findings": {
+            "buyer_premium_vnd": float(
+                developer_screening["buyer_view"]["buyer_minus_benchmark_vnd"]
+            ),
+            "lowest_tested_buyer_premium_vnd": lowest_buyer_premium,
+            "best_tested_developer_npv_usd": best_developer_npv,
+            "excess_cfd_stress_vnd": float(
+                excess_stress["buyer_excess_cfd_payment_vnd"]
+            ),
+            "negative_or_null_irr": developer_screening["developer_view"][
+                "aftertax_irr_fraction"
+            ]
+            is None,
+        },
+        "decision": {
+            "combined_pass": bool(developer_screening["decision"]["combined_pass"]),
+            "recommended_position": recommended_position,
+            "decision_class": decision_class,
+            "market_reference_quality": market_reference_quality,
+        },
+        "notes": [
+            "Phase G combines the published Phase C-F artifacts without rerunning the underlying physical, settlement, or PySAM engines.",
+            "The current combined recommendation should be read as a case-screening closeout, not as a substitute for new commercial assumptions or a site-specific CFMP/FMP dataset.",
+        ],
+    }
+
+
+def build_dppa_case_2_final_summary_artifact(
+    *,
+    combined_decision: dict,
+    phase_artifact_paths: dict[str, str],
+) -> dict:
+    history = [
+        {
+            "phase": "Phase C",
+            "focus": "physical sizing and energy-balance summary",
+            "artifact_path": phase_artifact_paths["phase_c"],
+        },
+        {
+            "phase": "Phase D",
+            "focus": "buyer settlement and benchmark baseline",
+            "artifact_path": phase_artifact_paths["phase_d"],
+        },
+        {
+            "phase": "Phase E",
+            "focus": "strike and contract-risk sensitivities",
+            "artifact_path": phase_artifact_paths["phase_e"],
+        },
+        {
+            "phase": "Phase F",
+            "focus": "market replacement and developer validation",
+            "artifact_path": phase_artifact_paths["phase_f"],
+        },
+        {
+            "phase": "Phase G",
+            "focus": "combined decision package",
+            "artifact_path": phase_artifact_paths["phase_g"],
+        },
+    ]
+    return {
+        "model": "Ninhsim DPPA Case 2 Final Summary",
+        "status": combined_decision.get("status", "unknown"),
+        "case_identity": dict(combined_decision.get("case_identity", {})),
+        "final_decision": dict(combined_decision.get("decision", {})),
+        "critical_findings": dict(combined_decision.get("critical_findings", {})),
+        "case_history": history,
+        "closeout": {
+            "separate_final_report_warranted": True,
+            "reason": "The combined-decision artifact benefits from a separate closeout report because the Case 2 workflow spans multiple phases and ends with an explicit reject-or-revise recommendation.",
+        },
+        "notes": [
+            "The final summary exists to close out the full Case 2 phase sequence in one artifact and point reviewers to the canonical phase outputs.",
+        ],
+    }

@@ -106,6 +106,44 @@
 - Source a true Ninhsim hourly CFMP/FMP series if available; Phase F improves credibility over the proxy, but the transferred `saigon18` market series is still not site-specific.
 - If the project remains strategically important, revisit the case definition itself in Phase G or a follow-on phase by changing strike basis, DPPA adder assumptions, or physical sizing rather than continuing to widen sensitivities around an already rejected base case.
 
+## Phase 29 - DPPA Case 2 Implementation (Phase G) - 2026-04-15
+
+- [x] Phase 1 - Read the current Phase C-F artifacts, combined-decision patterns, and final-report expectations relevant to the Case 2 closeout package
+- [x] Phase 2 - Add failing regression coverage for the Phase G combined-decision artifact and final summary surfaces
+- [x] Phase 3 - Implement the combined decision artifact and final Case 2 reporting surfaces
+- [x] Phase 4 - Run targeted validation commands and regenerate the canonical Phase G artifacts
+- [x] Phase 5 - Publish a synchronized HTML Phase G report via the report skill flow
+- [x] Phase 6 - Publish a final Case 2 decision report if the combined package warrants a separate closeout artifact
+- [x] Review / Results - Record canonical files, validations, artifacts, and final decision guidance
+
+### Notes
+
+- Phase G should consume the already-published Phase C-F artifacts rather than recomputing the underlying physical, buyer, or PySAM analyses again.
+- The combined package should make the final decision explicit: advance, revise, reject, or escalate for new assumptions.
+- A separate final report is only warranted if it adds value beyond the Phase G implementation report by summarizing the whole Case 2 journey into one closeout artifact.
+
+### Review / Results
+
+- Implemented the final Case 2 decision builders in `src/python/reopt_pysam_vn/integration/dppa_case_2.py`, adding a combined-decision artifact that rolls up the published Phase C-F outputs and a closeout summary artifact that records the whole Case 2 phase history.
+- Added failing-then-passing regression coverage in `tests/python/integration/test_dppa_case_2_phase_g.py`, then added the canonical Phase G execution script at `scripts/python/integration/analyze_ninhsim_dppa_case_2_phase_g.py`.
+- Published the machine-readable Phase G artifacts at `artifacts/reports/ninhsim/2026-04-15_ninhsim_dppa-case-2_combined-decision.json` and `artifacts/reports/ninhsim/2026-04-15_ninhsim_dppa-case-2_final-summary.json`.
+- Published the synchronized Phase G HTML report at `reports/2026-04-15-dppa-case-2-phase-g.html` via the report-skill template flow.
+- Published a separate final closeout HTML report at `reports/2026-04-15-dppa-case-2-final.html` because the final summary explicitly warranted a compact stakeholder-facing wrap-up beyond the implementation-phase report.
+- Final Case 2 outcome is now explicit and stable across all published artifacts: `recommended_position = reject_current_case`, `decision_class = reject`, market-reference quality remains `transferred_repo_local`, buyer premium is about `12.81B VND`, the lowest tested buyer premium in the sweep is still about `1.55B VND`, best tested developer NPV stays negative at about `-$45.19M`, and excess-generation CfD stress adds about `4.23B VND` in the stress case.
+
+### Validation
+
+- `./.venv/Scripts/python.exe -m pytest tests/python/integration/test_dppa_case_2_phase_cd.py tests/python/integration/test_dppa_case_2_phase_e.py tests/python/integration/test_dppa_case_2_phase_f.py tests/python/integration/test_dppa_case_2_phase_g.py -q` - PASS (`12 passed`)
+- `./.venv/Scripts/python.exe scripts/python/integration/analyze_ninhsim_dppa_case_2_phase_g.py` - PASS
+- `./.venv/Scripts/python.exe scripts/python/integration/generate_ninhsim_dppa_case_2_phase_g_report.py` - PASS
+- `./.venv/Scripts/python.exe scripts/python/integration/generate_ninhsim_dppa_case_2_final_report.py` - PASS
+
+### Final Decision Guidance
+
+- Keep `DPPA Case 2` closed as `reject_current_case` under the current assumptions and transferred market basis.
+- Only reopen the case if a future pass changes at least one foundational assumption materially: site-specific hourly CFMP/FMP data, strike basis, DPPA adder/KPP basis, or the physical design scope itself.
+- If the case is reopened later, start from `artifacts/reports/ninhsim/2026-04-15_ninhsim_dppa-case-2_combined-decision.json` and `artifacts/reports/ninhsim/2026-04-15_ninhsim_dppa-case-2_final-summary.json` rather than replaying the whole phase history manually.
+
 ## Phase 25 - DPPA Case 2 Implementation (Phases A-B) - 2026-04-14
 
 - [x] Phase A - Freeze Case 2 definition, naming, and assumptions register
