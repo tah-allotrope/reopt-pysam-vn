@@ -32,6 +32,79 @@
 - Run Phase E sensitivities on strike, DPPA adder, KPP, and excess-generation treatment now that the base Phase D ledger is frozen and executable.
 - Feed the buyer settlement outputs into a future PySAM developer-side pass without collapsing the ledger back into one blended strike-only revenue assumption.
 
+## Phase 27 - DPPA Case 2 Implementation (Phase E) - 2026-04-15
+
+- [x] Phase 1 - Read the current DPPA Case 2 implementation, tests, artifacts, and report patterns relevant to Phase E sensitivities
+- [x] Phase 2 - Add failing regression coverage for strike, DPPA adder, KPP, and excess-treatment sensitivity outputs
+- [x] Phase 3 - Implement the Phase E sensitivity engine and publish machine-readable artifacts
+- [x] Phase 4 - Run targeted validation commands and regenerate the canonical Phase E artifacts
+- [x] Phase 5 - Publish a synchronized HTML Phase E report via the report skill flow
+- [x] Review / Results - Record canonical files, validations, artifacts, and next-step seeds
+
+### Notes
+
+- Phase E should build on the frozen Phase D buyer settlement ledger rather than re-deriving new commercial field names.
+- Sensitivities should stay explicit and auditable: strike, DPPA adder, KPP, and excess-generation treatment must be visible in the artifact inputs and outputs.
+- Reporting should follow the repo's explicit-height Chart.js pattern so the HTML output remains browser-safe.
+
+### Review / Results
+
+- Implemented Phase E sensitivity surfaces in `src/python/reopt_pysam_vn/integration/dppa_case_2.py`, adding the strike negotiation screen, contract-risk sensitivity engine, and helper logic that reuses the frozen Phase D settlement ledger instead of inventing a parallel model.
+- Added the Case 2 PySAM finance bridge in `src/python/reopt_pysam_vn/integration/bridge.py` so the developer screen can map the solved Case 2 physical result into the existing `Single Owner` runtime without collapsing buyer and developer metrics into one value.
+- Added failing-then-passing regression coverage in `tests/python/integration/test_dppa_case_2_phase_e.py`, then published the canonical Phase E artifact scripts at `scripts/python/integration/analyze_ninhsim_dppa_case_2_phase_e.py` and `scripts/python/integration/generate_ninhsim_dppa_case_2_phase_e_report.py`.
+- Published the machine-readable Phase E artifacts at `artifacts/reports/ninhsim/2026-04-15_ninhsim_dppa-case-2_strike-sensitivity.json` and `artifacts/reports/ninhsim/2026-04-15_ninhsim_dppa-case-2_contract-risk.json`.
+- Published the synchronized Phase E HTML report at `reports/2026-04-15-dppa-case-2-phase-e.html` via the report-skill template flow.
+- Real solved Phase E outcome for the current proxy-priced base case: there is no buyer/developer overlap across the tested `15%`, `10%`, `5%`, and `0%` strike discount points, the lowest buyer premium in the tested band is still about `1.55B VND` at `15%` below weighted EVN, and adding CfD exposure on excess generation would worsen buyer cost by about `4.23B VND` versus the current customer-first exclusion rule.
+
+### Validation
+
+- `./.venv/Scripts/python.exe -m pytest tests/python/integration/test_dppa_case_2_phase_cd.py tests/python/integration/test_dppa_case_2_phase_e.py -q` - PASS (`8 passed`)
+- `./.venv/Scripts/python.exe scripts/python/integration/analyze_ninhsim_dppa_case_2_phase_e.py` - PASS
+- `./.venv/Scripts/python.exe scripts/python/integration/generate_ninhsim_dppa_case_2_phase_e_report.py` - PASS
+
+### Next-Step Seeds
+
+- Move into Phase F with the new Case 2 Single Owner bridge, but treat the current no-overlap result as the baseline story to validate rather than assuming a financeable band exists.
+- Replace the proxy market-price series before negotiating any strike recommendation, because Phase E shows the commercial screen is highly sensitive even before developer viability clears.
+- Use Phase G to combine the Phase C-E buyer, developer, and contract-risk surfaces into one decision artifact that explicitly states whether the current Case 2 shape is reject, revise, or escalate for new assumptions.
+
+## Phase 28 - DPPA Case 2 Implementation (Phase F) - 2026-04-15
+
+- [x] Phase 1 - Read the current Phase E outputs, existing PySAM bridge/runtime surfaces, and available hourly market-price data inputs relevant to Case 2 replacement work
+- [x] Phase 2 - Add failing regression coverage for market-series replacement and Phase F developer validation artifacts
+- [x] Phase 3 - Implement the Case 2 hourly market-series replacement path and Phase F PySAM validation surfaces
+- [x] Phase 4 - Run targeted validation commands and regenerate the canonical Phase F artifacts
+- [x] Phase 5 - Publish a synchronized HTML Phase F report via the report skill flow
+- [ ] Phase 6 - Create the requested git commit after validation and report generation
+- [x] Review / Results - Record canonical files, validations, artifacts, commit, and next-step seeds
+
+### Notes
+
+- Phase F should reuse the Phase E strike and contract-risk results rather than rebuilding a separate commercial baseline.
+- Market-series replacement should prefer a repo-local actual or documented quasi-actual hourly series over the prior retail-scaled proxy, and the chosen source must be visible in the resulting artifacts.
+- The developer-side PySAM pass should preserve buyer and developer outputs as separate surfaces, then add an explicit comparison artifact instead of blending them into one number.
+
+### Review / Results
+
+- Implemented the Phase F market-reference replacement and developer-validation helpers in `src/python/reopt_pysam_vn/integration/dppa_case_2.py`, adding repo-local market-series selection, REopt-vs-PySAM comparison, and a final developer-screening artifact while keeping buyer and developer views separate.
+- Reused the existing Case 2 PySAM bridge in `src/python/reopt_pysam_vn/integration/bridge.py` and added failing-then-passing regression coverage in `tests/python/integration/test_dppa_case_2_phase_f.py` to lock the market replacement and screening contracts.
+- Added the canonical Phase F execution scripts at `scripts/python/integration/analyze_ninhsim_dppa_case_2_phase_f.py` and `scripts/python/integration/generate_ninhsim_dppa_case_2_phase_f_report.py`, and extended `scripts/python/integration/run_ninhsim_dppa_case_2.py` to regenerate Phase F outputs in the end-to-end flow.
+- Published the Phase F machine-readable artifacts at `artifacts/reports/ninhsim/2026-04-15_ninhsim_dppa-case-2_market-reference.json`, `artifacts/reports/ninhsim/2026-04-15_ninhsim_dppa-case-2_buyer-settlement-actual-market.json`, `artifacts/reports/ninhsim/2026-04-15_ninhsim_dppa-case-2_buyer-benchmark-actual-market.json`, `artifacts/reports/ninhsim/2026-04-15_ninhsim_dppa-case-2_pysam-results.json`, `artifacts/reports/ninhsim/2026-04-15_ninhsim_dppa-case-2_reopt-pysam-comparison.json`, and `artifacts/reports/ninhsim/2026-04-15_ninhsim_dppa-case-2_developer-screening.json`.
+- Published the synchronized Phase F HTML report at `reports/2026-04-15-dppa-case-2-phase-f.html` via the report-skill template flow.
+- Real Phase F outcome: replaced the retail-scaled proxy with the repo-local `saigon18` hourly `cfmp_vnd_per_mwh` transfer series, but the current Ninhsim Case 2 still fails both screens — buyer premium worsens to about `12.81B VND`, negative-CfD hours rise to `216`, PySAM after-tax IRR remains null with after-tax NPV about `-$47.28M`, and the combined screening decision is `reject_current_case`.
+
+### Validation
+
+- `./.venv/Scripts/python.exe -m pytest tests/python/integration/test_dppa_case_2_phase_cd.py tests/python/integration/test_dppa_case_2_phase_e.py tests/python/integration/test_dppa_case_2_phase_f.py -q` - PASS (`10 passed`)
+- `./.venv/Scripts/python.exe scripts/python/integration/analyze_ninhsim_dppa_case_2_phase_f.py` - PASS
+- `./.venv/Scripts/python.exe scripts/python/integration/generate_ninhsim_dppa_case_2_phase_f_report.py` - PASS
+
+### Next-Step Seeds
+
+- Use Phase G to package the now-consistent buyer, contract-risk, market-reference, and PySAM artifacts into one final decision report that explicitly records the current case as reject-or-revise rather than leaving that inference implicit.
+- Source a true Ninhsim hourly CFMP/FMP series if available; Phase F improves credibility over the proxy, but the transferred `saigon18` market series is still not site-specific.
+- If the project remains strategically important, revisit the case definition itself in Phase G or a follow-on phase by changing strike basis, DPPA adder assumptions, or physical sizing rather than continuing to widen sensitivities around an already rejected base case.
+
 ## Phase 25 - DPPA Case 2 Implementation (Phases A-B) - 2026-04-14
 
 - [x] Phase A - Freeze Case 2 definition, naming, and assumptions register

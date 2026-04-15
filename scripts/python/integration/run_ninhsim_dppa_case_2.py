@@ -25,6 +25,24 @@ SETTLEMENT_REPORT = (
 BENCHMARK_REPORT = (
     "artifacts/reports/ninhsim/2026-04-14_ninhsim_dppa-case-2_buyer-benchmark.json"
 )
+PHASE_E_STRIKE_REPORT = (
+    "artifacts/reports/ninhsim/2026-04-15_ninhsim_dppa-case-2_strike-sensitivity.json"
+)
+PHASE_E_RISK_REPORT = (
+    "artifacts/reports/ninhsim/2026-04-15_ninhsim_dppa-case-2_contract-risk.json"
+)
+PHASE_F_MARKET_REPORT = (
+    "artifacts/reports/ninhsim/2026-04-15_ninhsim_dppa-case-2_market-reference.json"
+)
+PHASE_F_SETTLEMENT_REPORT = "artifacts/reports/ninhsim/2026-04-15_ninhsim_dppa-case-2_buyer-settlement-actual-market.json"
+PHASE_F_BENCHMARK_REPORT = "artifacts/reports/ninhsim/2026-04-15_ninhsim_dppa-case-2_buyer-benchmark-actual-market.json"
+PHASE_F_PYSAM_REPORT = (
+    "artifacts/reports/ninhsim/2026-04-15_ninhsim_dppa-case-2_pysam-results.json"
+)
+PHASE_F_COMPARISON_REPORT = "artifacts/reports/ninhsim/2026-04-15_ninhsim_dppa-case-2_reopt-pysam-comparison.json"
+PHASE_F_SCREENING_REPORT = (
+    "artifacts/reports/ninhsim/2026-04-15_ninhsim_dppa-case-2_developer-screening.json"
+)
 
 
 def run_command(command: list[str]) -> None:
@@ -92,6 +110,46 @@ def main() -> None:
             SETTLEMENT_REPORT,
             "--benchmark-output",
             BENCHMARK_REPORT,
+        ]
+    )
+    run_command(
+        [
+            PYTHON,
+            "scripts/python/integration/analyze_ninhsim_dppa_case_2_phase_e.py",
+            "--reopt",
+            REOPT_RESULT,
+            "--scenario",
+            SCENARIO_PATH,
+            "--extracted",
+            EXTRACTED_PATH,
+            "--strike-output",
+            PHASE_E_STRIKE_REPORT,
+            "--risk-output",
+            PHASE_E_RISK_REPORT,
+        ]
+    )
+    run_command(
+        [
+            PYTHON,
+            "scripts/python/integration/analyze_ninhsim_dppa_case_2_phase_f.py",
+            "--reopt",
+            REOPT_RESULT,
+            "--scenario",
+            SCENARIO_PATH,
+            "--extracted",
+            EXTRACTED_PATH,
+            "--market-output",
+            PHASE_F_MARKET_REPORT,
+            "--settlement-output",
+            PHASE_F_SETTLEMENT_REPORT,
+            "--benchmark-output",
+            PHASE_F_BENCHMARK_REPORT,
+            "--pysam-output",
+            PHASE_F_PYSAM_REPORT,
+            "--comparison-output",
+            PHASE_F_COMPARISON_REPORT,
+            "--screening-output",
+            PHASE_F_SCREENING_REPORT,
         ]
     )
 

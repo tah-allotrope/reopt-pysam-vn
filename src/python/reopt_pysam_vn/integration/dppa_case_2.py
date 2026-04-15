@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
+
 from reopt_pysam_vn.reopt.preprocess import apply_vietnam_defaults, load_vietnam_data
 
 DEFAULT_STRIKE_DISCOUNT_FRACTION = 0.05
@@ -46,12 +48,91 @@ def _proxy_market_fraction(extracted: dict) -> float:
     return wholesale / weighted if weighted else 0.0
 
 
+def _normalize_market_series_vnd_per_kwh(
+    series: list[float],
+) -> tuple[list[float], str]:
+    if not series:
+        raise ValueError("Market reference series is empty")
+    values = [float(value) for value in series]
+    maximum = max(values)
+    minimum = min(values)
+    if maximum > 10_000.0:
+        return [
+            value / 1_000.0 for value in values
+        ], "vnd_per_mwh_converted_to_vnd_per_kwh"
+    if minimum >= 0.0:
+        return values, "vnd_per_kwh_as_extracted"
+    raise ValueError(
+        f"Unexpected market reference value range: min={minimum}, max={maximum}"
+    )
+
+
 def _load_series(values: list[float]) -> list[float]:
     return [float(value) for value in values]
 
 
 def _load_retail_series(extracted: dict) -> list[float]:
     return _load_series(extracted["evn_tariff"]["tou_energy_rates_vnd_per_kwh"])
+
+
+def _buyer_passes_benchmark(benchmark: dict) -> bool:
+    return bool(benchmark["decision"]["buyer_savings_positive"])
+
+
+def _developer_passes_target(result: dict | None, target_irr_fraction: float) -> bool:
+    if result is None:
+        return False
+    irr = result.get("outputs", {}).get("project_return_aftertax_irr_fraction")
+    return irr is not None and float(irr) >= float(target_irr_fraction)
+
+
+def _copy_settlement_inputs_with_overrides(
+    settlement_inputs: dict,
+    *,
+    strike_price_vnd_per_kwh: float | None = None,
+    dppa_adder_vnd_per_kwh: float | None = None,
+    kpp_factor: float | None = None,
+    excess_generation_treatment: str | None = None,
+) -> dict:
+    updated = dict(settlement_inputs)
+    if strike_price_vnd_per_kwh is not None:
+        updated["strike_price_vnd_per_kwh"] = float(strike_price_vnd_per_kwh)
+    if dppa_adder_vnd_per_kwh is not None:
+        updated["dppa_adder_vnd_per_kwh"] = float(dppa_adder_vnd_per_kwh)
+    if kpp_factor is not None:
+        updated["kpp_factor"] = float(kpp_factor)
+    if excess_generation_treatment is not None:
+        updated["excess_generation_treatment"] = excess_generation_treatment
+    return updated
+
+
+def _build_developer_case_result(
+    developer_base_inputs,
+    *,
+    strike_price_vnd_per_kwh: float,
+    exchange_rate_vnd_per_usd: float,
+    developer_runner,
+):
+    if developer_base_inputs is None:
+        return None
+    target_irr = float(developer_base_inputs.target_irr_fraction)
+    candidate_inputs = replace(
+        developer_base_inputs,
+        ppa_price_input_usd_per_kwh=float(strike_price_vnd_per_kwh)
+        / float(exchange_rate_vnd_per_usd),
+        metadata={
+            **dict(developer_base_inputs.metadata),
+            "year_one_ppa_price_vnd_per_kwh": float(strike_price_vnd_per_kwh),
+            "year_one_ppa_price_usd_per_kwh": float(strike_price_vnd_per_kwh)
+            / float(exchange_rate_vnd_per_usd),
+        },
+    )
+    result = developer_runner(candidate_inputs)
+    return {
+        "result": result,
+        "target_irr_fraction": target_irr,
+        "passes_target": _developer_passes_target(result, target_irr),
+    }
 
 
 def _pad_to_length(series: list[float], length: int) -> list[float]:
@@ -541,6 +622,7 @@ def build_dppa_case_2_settlement_inputs(
     *,
     actual_market_series_vnd_per_kwh: list[float] | None = None,
     market_reference_price_type: str | None = None,
+    market_reference_artifact: dict | None = None,
 ) -> dict:
     load_series = _load_series(extracted["loads_kw"])
     horizon = len(load_series)
@@ -551,7 +633,13 @@ def build_dppa_case_2_settlement_inputs(
         results.get("Wind", {}).get("electric_to_load_series_kw", []),
         results.get("Wind", {}).get("electric_to_grid_series_kw", []),
     )
-    if actual_market_series_vnd_per_kwh is None:
+    if market_reference_artifact is not None:
+        market_series = _pad_to_length(
+            market_reference_artifact["hourly_series_vnd_per_kwh"], horizon
+        )
+        market_type = market_reference_artifact["market_reference_price_type"]
+        notes = list(market_reference_artifact.get("notes", []))
+    elif actual_market_series_vnd_per_kwh is None:
         proxy = build_dppa_case_2_market_proxy(extracted)
         market_series = _pad_to_length(proxy["hourly_series_vnd_per_kwh"], horizon)
         market_type = proxy["market_reference_price_type"]
@@ -581,6 +669,11 @@ def build_dppa_case_2_settlement_inputs(
         ),
         "notes": notes,
         "scenario_metadata": scenario.get("_meta", {}),
+        "market_reference_source": (
+            None
+            if market_reference_artifact is None
+            else dict(market_reference_artifact)
+        ),
     }
 
 
@@ -852,4 +945,401 @@ def build_dppa_case_2_buyer_benchmark(
                 else "customer_premium_vs_evn"
             ),
         },
+    }
+
+
+def build_dppa_case_2_strike_sensitivity(
+    settlement_inputs: dict,
+    physical_summary: dict,
+    *,
+    strike_discount_fractions: tuple[float, ...] = (0.15, 0.10, 0.05, 0.0),
+    developer_base_inputs=None,
+    developer_runner=None,
+) -> dict:
+    benchmark_price = float(
+        physical_summary["financial"].get("weighted_evn_price_vnd_per_kwh")
+        or physical_summary.get("site_load_basis", {}).get(
+            "weighted_evn_price_vnd_per_kwh", 0.0
+        )
+        or settlement_inputs["strike_price_vnd_per_kwh"]
+        / (1.0 - DEFAULT_STRIKE_DISCOUNT_FRACTION)
+    )
+    exchange_rate = float(
+        settlement_inputs.get("exchange_rate_vnd_per_usd") or 25_000.0
+    )
+    active_runner = developer_runner
+    if developer_base_inputs is not None and active_runner is None:
+        from reopt_pysam_vn.pysam.single_owner import run_single_owner_model
+
+        active_runner = run_single_owner_model
+
+    strike_results = []
+    overlap = []
+    buyer_only = []
+    developer_only = []
+
+    for discount in strike_discount_fractions:
+        strike_price = benchmark_price * (1.0 - float(discount))
+        candidate_inputs = _copy_settlement_inputs_with_overrides(
+            settlement_inputs,
+            strike_price_vnd_per_kwh=strike_price,
+        )
+        settlement = run_dppa_case_2_buyer_settlement(candidate_inputs)
+        benchmark = build_dppa_case_2_buyer_benchmark(physical_summary, settlement)
+        developer_case = _build_developer_case_result(
+            developer_base_inputs,
+            strike_price_vnd_per_kwh=strike_price,
+            exchange_rate_vnd_per_usd=exchange_rate,
+            developer_runner=active_runner,
+        )
+        developer_result = developer_case["result"] if developer_case else None
+        developer_pass = developer_case["passes_target"] if developer_case else False
+        buyer_pass = _buyer_passes_benchmark(benchmark)
+        entry = {
+            "strike_discount_fraction": float(discount),
+            "strike_price_vnd_per_kwh": float(strike_price),
+            "buyer_blended_cost_vnd_per_kwh": float(
+                benchmark["year_one_costs"]["buyer_blended_cost_vnd_per_kwh"]
+            ),
+            "buyer_minus_benchmark_vnd": float(
+                benchmark["year_one_costs"]["buyer_minus_benchmark_vnd"]
+            ),
+            "buyer_passes": buyer_pass,
+            "developer_passes": developer_pass,
+            "developer_irr_fraction": (
+                None
+                if developer_result is None
+                else developer_result.get("outputs", {}).get(
+                    "project_return_aftertax_irr_fraction"
+                )
+            ),
+            "developer_npv_usd": (
+                None
+                if developer_result is None
+                else developer_result.get("outputs", {}).get(
+                    "project_return_aftertax_npv_usd"
+                )
+            ),
+        }
+        strike_results.append(entry)
+        if buyer_pass and developer_pass:
+            overlap.append(entry)
+        elif buyer_pass:
+            buyer_only.append(entry)
+        elif developer_pass:
+            developer_only.append(entry)
+
+    if overlap:
+        recommended_position = "buyer_and_developer_overlap"
+    elif buyer_only:
+        recommended_position = "buyer_only_no_overlap"
+    elif developer_only:
+        recommended_position = "developer_only_no_overlap"
+    else:
+        recommended_position = "no_viable_case_found"
+
+    return {
+        "model": "Ninhsim DPPA Case 2 Strike Sensitivity",
+        "status": "ok",
+        "case_identity": physical_summary.get("case_identity", {}),
+        "buyer_screen": {
+            "benchmark_anchor_vnd_per_kwh": benchmark_price,
+            "strike_discount_fractions": [
+                float(value) for value in strike_discount_fractions
+            ],
+        },
+        "developer_screen": {
+            "included": developer_base_inputs is not None,
+            "target_irr_fraction": (
+                None
+                if developer_base_inputs is None
+                else float(developer_base_inputs.target_irr_fraction)
+            ),
+        },
+        "strike_sweep_results": strike_results,
+        "negotiation_summary": {
+            "overlap_found": bool(overlap),
+            "overlap_candidates": overlap,
+            "buyer_only_candidates": buyer_only,
+            "developer_only_candidates": developer_only,
+            "recommended_position": recommended_position,
+        },
+        "notes": [
+            "Strike sensitivity reuses the frozen Phase D buyer ledger and varies only the year-one strike anchor for the negotiation screen.",
+            "Developer overlap is optional and uses the existing PySAM Single Owner runtime when finance inputs are supplied.",
+        ],
+    }
+
+
+def build_dppa_case_2_contract_risk_sensitivity(
+    settlement_inputs: dict,
+    physical_summary: dict,
+    *,
+    dppa_adder_multipliers: tuple[float, ...] = (0.75, 1.0, 1.25),
+    kpp_multipliers: tuple[float, ...] = (0.98, 1.0, 1.02),
+    excess_generation_treatments: tuple[str, ...] = (
+        "excluded_from_buyer_settlement",
+        "cfd_on_excess_generation",
+    ),
+) -> dict:
+    base_adder = float(settlement_inputs["dppa_adder_vnd_per_kwh"])
+    base_kpp = float(settlement_inputs["kpp_factor"])
+    base_strike = float(settlement_inputs["strike_price_vnd_per_kwh"])
+    market_series = _load_series(
+        settlement_inputs["market_reference_price_vnd_per_kwh_series"]
+    )
+    generation_series = _load_series(
+        settlement_inputs["contracted_generation_kwh_series"]
+    )
+    load_series = _load_series(settlement_inputs["load_kwh_series"])
+
+    adder_results = []
+    for multiplier in dppa_adder_multipliers:
+        candidate_inputs = _copy_settlement_inputs_with_overrides(
+            settlement_inputs,
+            dppa_adder_vnd_per_kwh=base_adder * float(multiplier),
+        )
+        settlement = run_dppa_case_2_buyer_settlement(candidate_inputs)
+        benchmark = build_dppa_case_2_buyer_benchmark(physical_summary, settlement)
+        adder_results.append(
+            {
+                "adder_multiplier": float(multiplier),
+                "dppa_adder_vnd_per_kwh": float(
+                    candidate_inputs["dppa_adder_vnd_per_kwh"]
+                ),
+                "buyer_minus_benchmark_vnd": float(
+                    benchmark["year_one_costs"]["buyer_minus_benchmark_vnd"]
+                ),
+                "buyer_blended_cost_vnd_per_kwh": float(
+                    benchmark["year_one_costs"]["buyer_blended_cost_vnd_per_kwh"]
+                ),
+            }
+        )
+
+    kpp_results = []
+    for multiplier in kpp_multipliers:
+        candidate_inputs = _copy_settlement_inputs_with_overrides(
+            settlement_inputs,
+            kpp_factor=base_kpp * float(multiplier),
+        )
+        settlement = run_dppa_case_2_buyer_settlement(candidate_inputs)
+        benchmark = build_dppa_case_2_buyer_benchmark(physical_summary, settlement)
+        kpp_results.append(
+            {
+                "kpp_multiplier": float(multiplier),
+                "kpp_factor": float(candidate_inputs["kpp_factor"]),
+                "buyer_minus_benchmark_vnd": float(
+                    benchmark["year_one_costs"]["buyer_minus_benchmark_vnd"]
+                ),
+                "buyer_blended_cost_vnd_per_kwh": float(
+                    benchmark["year_one_costs"]["buyer_blended_cost_vnd_per_kwh"]
+                ),
+            }
+        )
+
+    excess_results = []
+    base_settlement = run_dppa_case_2_buyer_settlement(settlement_inputs)
+    base_benchmark = build_dppa_case_2_buyer_benchmark(
+        physical_summary, base_settlement
+    )
+    for treatment in excess_generation_treatments:
+        extra_cfd_payment = 0.0
+        if treatment == "cfd_on_excess_generation":
+            extra_cfd_payment = sum(
+                max(0.0, generation - min(load, generation)) * (base_strike - market)
+                for load, generation, market in zip(
+                    load_series, generation_series, market_series
+                )
+            )
+        buyer_minus_benchmark = float(
+            base_benchmark["year_one_costs"]["buyer_minus_benchmark_vnd"]
+            + extra_cfd_payment
+        )
+        excess_results.append(
+            {
+                "excess_generation_treatment": treatment,
+                "buyer_excess_cfd_payment_vnd": extra_cfd_payment,
+                "buyer_minus_benchmark_vnd": buyer_minus_benchmark,
+                "buyer_blended_cost_vnd_per_kwh": (
+                    float(base_settlement["summary"]["buyer_blended_cost_vnd_per_kwh"])
+                    + extra_cfd_payment
+                    / float(base_settlement["summary"]["total_consumed_load_kwh"])
+                ),
+            }
+        )
+
+    return {
+        "model": "Ninhsim DPPA Case 2 Contract Risk Sensitivity",
+        "status": "ok",
+        "case_identity": physical_summary.get("case_identity", {}),
+        "adder_sensitivity": {
+            "base_dppa_adder_vnd_per_kwh": base_adder,
+            "results": adder_results,
+        },
+        "kpp_sensitivity": {
+            "base_kpp_factor": base_kpp,
+            "results": kpp_results,
+        },
+        "excess_treatment_sensitivity": {
+            "base_excess_generation_treatment": settlement_inputs[
+                "excess_generation_treatment"
+            ],
+            "results": excess_results,
+        },
+        "notes": [
+            "Contract-risk sensitivity keeps the solved physical output fixed and varies settlement-rule parameters only.",
+            "The excess-generation variant adds CfD exposure on excess renewable generation as a stress case against the customer-first base rule.",
+        ],
+    }
+
+
+def build_dppa_case_2_market_reference_artifact(
+    source_payload: dict,
+    *,
+    source_path: str,
+    source_case: str,
+) -> dict:
+    selected_field = None
+    market_type = None
+    for candidate_field, candidate_type in (
+        ("cfmp_vnd_per_mwh", "repo_actual_cfmp_transfer"),
+        ("fmp_vnd_per_mwh", "repo_actual_fmp_transfer"),
+        ("cfmp_vnd_per_kwh", "repo_actual_cfmp_transfer"),
+        ("fmp_vnd_per_kwh", "repo_actual_fmp_transfer"),
+    ):
+        values = source_payload.get(candidate_field)
+        if values:
+            selected_field = candidate_field
+            market_type = candidate_type
+            normalized, normalization_method = _normalize_market_series_vnd_per_kwh(
+                values
+            )
+            return {
+                "model": "Ninhsim DPPA Case 2 Market Reference",
+                "status": "repo_local_transfer",
+                "market_reference_price_type": market_type,
+                "selected_series_field": selected_field,
+                "normalization_method": normalization_method,
+                "source_case": source_case,
+                "source_path": source_path,
+                "hourly_series_vnd_per_kwh": normalized,
+                "notes": [
+                    "Market reference replaces the Phase D retail-scaled proxy with a repo-local extracted hourly series.",
+                    "Series is transferred from another Vietnam project input set and should still be validated against the target site before being treated as bankable.",
+                ],
+            }
+    raise ValueError(
+        "No supported market series field found; expected cfmp/fmp series in VND/MWh or VND/kWh."
+    )
+
+
+def build_dppa_case_2_reopt_pysam_comparison(
+    physical_summary: dict,
+    settlement: dict,
+    pysam_results: dict,
+) -> dict:
+    reopt_pv_kw = float(physical_summary["optimal_mix"]["pv_size_mw"]) * 1_000.0
+    reopt_generation_kwh = float(
+        physical_summary["energy_summary"]["contracted_generation_kwh"]
+    )
+    pysam_pv_kw = float(
+        pysam_results.get("inputs", {}).get("system_capacity_kw") or 0.0
+    )
+    pysam_generation_kwh = float(
+        pysam_results.get("inputs", {}).get("annual_generation_kwh") or 0.0
+    )
+    return {
+        "model": "Ninhsim DPPA Case 2 REopt vs PySAM Comparison",
+        "status": pysam_results.get("status", "unknown"),
+        "reopt": {
+            "pv_size_kw": reopt_pv_kw,
+            "contracted_generation_kwh": reopt_generation_kwh,
+            "buyer_blended_cost_vnd_per_kwh": float(
+                settlement["summary"]["buyer_blended_cost_vnd_per_kwh"]
+            ),
+        },
+        "pysam": {
+            "system_capacity_kw": pysam_pv_kw,
+            "annual_generation_kwh": pysam_generation_kwh,
+            "aftertax_irr_fraction": pysam_results.get("outputs", {}).get(
+                "project_return_aftertax_irr_fraction"
+            ),
+            "aftertax_npv_usd": pysam_results.get("outputs", {}).get(
+                "project_return_aftertax_npv_usd"
+            ),
+            "min_dscr": pysam_results.get("outputs", {}).get("min_dscr"),
+        },
+        "alignment": {
+            "pv_size_gap_kw": pysam_pv_kw - reopt_pv_kw,
+            "annual_generation_gap_kwh": pysam_generation_kwh - reopt_generation_kwh,
+        },
+    }
+
+
+def build_dppa_case_2_developer_screening(
+    benchmark: dict,
+    pysam_results: dict,
+    comparison: dict,
+    *,
+    market_reference_artifact: dict,
+    phase_e_reference: dict,
+    target_irr_fraction: float | None = None,
+) -> dict:
+    target_irr = float(
+        target_irr_fraction
+        if target_irr_fraction is not None
+        else pysam_results.get("inputs", {}).get("target_irr_fraction") or 0.15
+    )
+    irr = pysam_results.get("outputs", {}).get("project_return_aftertax_irr_fraction")
+    buyer_passes = bool(benchmark["decision"]["buyer_savings_positive"])
+    developer_passes = irr is not None and float(irr) >= target_irr
+    combined_pass = buyer_passes and developer_passes
+    if combined_pass:
+        recommended_position = "advance_current_case"
+    elif buyer_passes:
+        recommended_position = "buyer_only_revise_finance"
+    elif developer_passes:
+        recommended_position = "developer_only_revise_buyer_terms"
+    else:
+        recommended_position = "reject_current_case"
+
+    return {
+        "model": "Ninhsim DPPA Case 2 Developer Screening",
+        "status": pysam_results.get("status", "unknown"),
+        "market_reference": {
+            "market_reference_price_type": market_reference_artifact[
+                "market_reference_price_type"
+            ],
+            "source_case": market_reference_artifact["source_case"],
+            "source_path": market_reference_artifact["source_path"],
+            "selected_series_field": market_reference_artifact["selected_series_field"],
+        },
+        "phase_e_reference": dict(phase_e_reference),
+        "buyer_view": {
+            "buyer_passes": buyer_passes,
+            "buyer_minus_benchmark_vnd": float(
+                benchmark["year_one_costs"]["buyer_minus_benchmark_vnd"]
+            ),
+            "buyer_blended_cost_vnd_per_kwh": float(
+                benchmark["year_one_costs"]["buyer_blended_cost_vnd_per_kwh"]
+            ),
+        },
+        "developer_view": {
+            "target_irr_fraction": target_irr,
+            "developer_passes_target_irr": developer_passes,
+            "aftertax_irr_fraction": irr,
+            "aftertax_npv_usd": pysam_results.get("outputs", {}).get(
+                "project_return_aftertax_npv_usd"
+            ),
+            "min_dscr": pysam_results.get("outputs", {}).get("min_dscr"),
+        },
+        "comparison": comparison,
+        "decision": {
+            "combined_pass": combined_pass,
+            "recommended_position": recommended_position,
+        },
+        "notes": [
+            "Phase F keeps buyer and developer outputs separate, then combines them only in the final screening decision block.",
+            "The screening result should be interpreted together with the market-reference source quality before any commercial recommendation is treated as final.",
+        ],
     }

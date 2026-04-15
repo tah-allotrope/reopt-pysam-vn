@@ -28,6 +28,13 @@ def _float_list(values: list[Any]) -> list[float]:
     return [float(value) for value in values]
 
 
+def _pad_to_8760(values: list[float]) -> list[float]:
+    series = [float(value) for value in values[:8760]]
+    if len(series) < 8760:
+        series.extend([0.0] * (8760 - len(series)))
+    return series
+
+
 def _sum_series(*series_groups: list[float]) -> list[float]:
     lengths = {len(series) for series in series_groups}
     if len(lengths) != 1:
@@ -96,6 +103,107 @@ def _recommended_candidate(commercial_memo: dict) -> dict:
             return candidate
     raise ValueError(
         f"Recommended candidate '{recommended_label}' not found in commercial memo"
+    )
+
+
+def build_dppa_case_2_single_owner_inputs(
+    reopt_results: dict,
+    scenario: dict,
+    settlement_inputs: dict,
+    vn_data: VNData | None = None,
+) -> SingleOwnerInputs:
+    """Map Ninhsim DPPA Case 2 physical outputs into Single Owner finance inputs."""
+
+    vn = vn_data or load_vietnam_data()
+    defaults = build_vietnam_finance_defaults(vn)
+    financial = scenario.get("Financial", {})
+
+    pv_to_load = _float_list(
+        reopt_results.get("PV", {}).get("electric_to_load_series_kw", [])
+    )
+    pv_to_grid = _float_list(
+        reopt_results.get("PV", {}).get("electric_to_grid_series_kw", [])
+    )
+    if not pv_to_load:
+        raise ValueError(
+            "DPPA Case 2 bridge requires PV.electric_to_load_series_kw in the REopt results."
+        )
+    if not pv_to_grid:
+        pv_to_grid = [0.0] * len(pv_to_load)
+
+    generation_profile_kw = _pad_to_8760(_sum_series(pv_to_load, pv_to_grid))
+    pv_size_kw = float(reopt_results.get("PV", {}).get("size_kw") or 0.0)
+    storage_initial_capital_cost = float(
+        reopt_results.get("ElectricStorage", {}).get("initial_capital_cost") or 0.0
+    )
+    fixed_om_usd_per_year = pv_size_kw * float(
+        scenario["PV"].get("om_cost_per_kw") or 0.0
+    ) + storage_initial_capital_cost * float(
+        scenario["ElectricStorage"].get("om_cost_fraction_of_installed_cost") or 0.0
+    )
+
+    strike_vnd_per_kwh = float(settlement_inputs["strike_price_vnd_per_kwh"])
+    exchange_rate = float(
+        settlement_inputs.get("exchange_rate_vnd_per_usd") or vn.exchange_rate
+    )
+    benchmark_price = strike_vnd_per_kwh / (1.0 - 0.05) if strike_vnd_per_kwh else 0.0
+
+    return build_single_owner_inputs(
+        system_capacity_kw=pv_size_kw,
+        generation_profile_kw=generation_profile_kw,
+        annual_generation_kwh=sum(generation_profile_kw),
+        installed_cost_usd=float(
+            reopt_results.get("Financial", {}).get(
+                "initial_capital_costs_after_incentives"
+            )
+            or reopt_results.get("Financial", {}).get("initial_capital_costs")
+            or 0.0
+        ),
+        fixed_om_usd_per_year=fixed_om_usd_per_year,
+        ppa_price_input_usd_per_kwh=strike_vnd_per_kwh / exchange_rate,
+        analysis_years=int(financial.get("analysis_years") or defaults.analysis_years),
+        debt_fraction=defaults.debt_fraction,
+        target_irr_fraction=DEFAULT_TARGET_DEVELOPER_IRR_FRACTION,
+        owner_tax_rate_fraction=_value_or_default(
+            financial,
+            "owner_tax_rate_fraction",
+            defaults.owner_tax_rate_fraction,
+        ),
+        owner_discount_rate_fraction=_value_or_default(
+            financial,
+            "owner_discount_rate_fraction",
+            defaults.owner_discount_rate_fraction,
+        ),
+        offtaker_discount_rate_fraction=_value_or_default(
+            financial,
+            "offtaker_discount_rate_fraction",
+            defaults.offtaker_discount_rate_fraction,
+        ),
+        inflation_rate_fraction=defaults.inflation_rate_fraction,
+        debt_interest_rate_fraction=defaults.debt_interest_rate_fraction,
+        debt_tenor_years=defaults.debt_tenor_years,
+        ppa_escalation_rate_fraction=_value_or_default(
+            financial,
+            "elec_cost_escalation_rate_fraction",
+            defaults.elec_cost_escalation_rate_fraction,
+        ),
+        om_escalation_rate_fraction=_value_or_default(
+            financial,
+            "om_cost_escalation_rate_fraction",
+            defaults.om_cost_escalation_rate_fraction,
+        ),
+        depreciation_schedule=defaults.depreciation_schedule,
+        metadata={
+            "source_case": "ninhsim_dppa_case_2",
+            "contract_type": scenario.get("_meta", {}).get(
+                "contract_type", "synthetic_financial_dppa"
+            ),
+            "year_one_ppa_price_vnd_per_kwh": strike_vnd_per_kwh,
+            "weighted_evn_price_vnd_per_kwh": benchmark_price,
+            "reopt_npv_usd": float(
+                reopt_results.get("Financial", {}).get("npv") or 0.0
+            ),
+        },
     )
 
 
