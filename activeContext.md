@@ -1,5 +1,21 @@
 # Active Context — Saigon18 REopt Integration
 
+## Phase 30 - DPPA Case 3 Plan-vs-Implementation Review - 2026-04-21
+
+- [x] Read the canonical Case 3 markdown plan and repo workflow files
+- [x] Inspect implemented Case 3 scripts, scenarios, artifacts, and available tests across phases A-G
+- [x] Compare promised deliverables versus delivered surfaces to identify alignments, deviations, and likely defects
+- [x] Publish a markdown review report under `reports/`
+- [x] Review / Results - Record the most important strengths, gaps, and follow-up priorities
+
+### Review / Results
+
+- Published the implementation audit at `reports/2026-04-21-dppa-case-3-plan-implementation-review.md` after comparing the canonical plan to the delivered Case 3 code, scenarios, artifacts, tests, and final HTML report.
+- Strongest alignments: Phase A/B definition work is solid, the site-consistency block is genuinely implemented, and the bounded-opt physical lane does enforce nonzero storage so Case 3 does not collapse back to PV-only.
+- Biggest deviations: the strike sweep was planned but not executed, the 22kV two-part branch is only partially real, side-by-side tariff delta reporting was promised but not actually delivered, and no Phase C-F regression test suite was found.
+- Most important defects called out in the review: Phase E controller math is numerically broken, Phase E compares different physical candidates instead of the same candidate under two dispatch modes, Phase F writes null NPV into the screening decision despite negative PySAM NPV being available, and Phase G aggregates flat artifacts as if they were nested, which zeroes key benchmark/risk/physical values and contaminates the final HTML report.
+- Final review judgment: the current Case 3 implementation is directionally useful and plausibly points toward `reject_current_case`, but it is not yet fully faithful to the original markdown plan or reliable enough to treat as a final decision-grade workflow without fixing Phases D-G and adding the missing test coverage.
+
 ## Phase 26 - DPPA Case 2 Implementation (Phases C-D) - 2026-04-14
 
 - [x] Phase C - Add the canonical DPPA Case 2 REopt scenario builder and physical-summary surfaces
