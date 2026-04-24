@@ -1,5 +1,20 @@
 # Active Context — Saigon18 REopt Integration
 
+## Phase 31 - DPPA Case 1-3 Retrospective Review - 2026-04-23
+
+- [x] Review the canonical plans, implementation modules, tests, artifacts, and reports for DPPA Cases 1, 2, and 3
+- [x] Compare each case's documented intent against the delivered implementation and evidence
+- [x] Identify shortcomings, improvement opportunities, and reusable lessons across the three-case progression
+- [x] Publish a detailed markdown report under `reports/`
+- [x] Review / Results - Record the report path and the highest-priority follow-up themes
+
+### Review / Results
+
+- Published the consolidated retrospective review at `reports/2026-04-23-dppa-case-1-3-retrospective-review.md`, covering plans, implementation, tests, artifacts, reports, and the buyer-guide basis across Cases 1-3.
+- Main judgment: Case 1 is a useful private-wire reference but did not actually validate a PV+BESS candidate, Case 2 is the strongest and most reusable synthetic-DPPA workflow currently in the repo, and Case 3 has the strongest realism-first framing but is not yet decision-grade because downstream Phases D-G remain partial or defective.
+- Highest-priority repo follow-up: preserve Case 2 as the canonical settlement architecture, repair Case 3 by reusing that hourly settlement engine more faithfully, and avoid publishing final closeout reports until artifact contracts and downstream analytics are validated as strongly as the A/B planning surfaces.
+- Biggest documentation takeaway: the repo's DPPA case family is under-documented at the top level because `README.md` and `docs/` do not currently explain the role, status, and canonical outputs of Cases 1-3; critical truths are still concentrated in `activeContext.md` and review reports.
+
 ## Phase 30 - DPPA Case 3 Plan-vs-Implementation Review - 2026-04-21
 
 - [x] Read the canonical Case 3 markdown plan and repo workflow files
