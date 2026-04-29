@@ -225,6 +225,14 @@ end
         @test minimum(rates) ≈ expected_offpeak atol=1e-8
     end
 
+    @testset "build_vietnam_tariff — Decision 963 removes morning peak" begin
+        tariff = build_vietnam_tariff(VN, "industrial", "medium_voltage_22kv_to_110kv";
+                                      regime_id="decision_963_2026_windows_only", year=2025)
+        monday_rates = tariff["tou_energy_rates_per_kwh"][1:24]
+        @test monday_rates[10] ≈ monday_rates[9] atol=1e-10
+        @test monday_rates[18] > monday_rates[17]
+    end
+
     @testset "build_vietnam_tariff — commercial, low voltage" begin
         tariff = build_vietnam_tariff(VN, "commercial", "low_voltage_1kv_and_below"; year=2025)
         rates = tariff["tou_energy_rates_per_kwh"]
@@ -400,6 +408,14 @@ end
         @test d["_meta"]["decree57_max_export_fraction"] == 0.20
     end
 
+    @testset "apply_decree57_export! — regime-specific export fraction" begin
+        d = make_base_dict()
+        apply_decree57_export!(d, VN; regime_id="decree57_rooftop_50pct_draft")
+
+        @test d["_meta"]["decree57_max_export_fraction"] == 0.50
+        @test d["_meta"]["resolved_regime_id"] == "decree57_rooftop_50pct_draft"
+    end
+
     @testset "apply_decree57_export! — user wholesale rate preserved" begin
         d = make_base_dict()
         d["ElectricTariff"] = Dict{String,Any}("wholesale_rate" => 0.05)
@@ -464,6 +480,39 @@ end
         @test d["PV"]["can_net_meter"] == false
         @test d["ElectricTariff"]["wholesale_rate"] ≈ 0.0254 atol=1e-4
         @test d["_meta"]["decree57_max_export_fraction"] == 0.20
+        @test d["_meta"]["resolved_regime_id"] == "decision_14_2025_current"
+    end
+
+    @testset "apply_vietnam_defaults! — explicit baseline matches implicit default" begin
+        explicit = make_base_dict()
+        implicit = make_base_dict()
+
+        apply_vietnam_defaults!(explicit, VN; regime_id="decision_14_2025_current")
+        apply_vietnam_defaults!(implicit, VN)
+
+        @test implicit["_meta"]["resolved_regime_id"] == "decision_14_2025_current"
+        @test implicit["ElectricTariff"]["tou_energy_rates_per_kwh"] == explicit["ElectricTariff"]["tou_energy_rates_per_kwh"]
+        @test implicit["_meta"]["decree57_max_export_fraction"] == explicit["_meta"]["decree57_max_export_fraction"]
+    end
+
+    @testset "apply_vietnam_defaults! — two-part tariff trial injects demand rate" begin
+        d = make_base_dict()
+        apply_vietnam_defaults!(d, VN; regime_id="decree146_two_part_trial_2026")
+
+        @test d["ElectricTariff"]["monthly_demand_rates"] ≈ fill(235414 / VN.exchange_rate, 12)
+        @test d["_meta"]["resolved_regime_id"] == "decree146_two_part_trial_2026"
+        @test d["_meta"]["bess_capacity_payment_vnd_per_kw_month"] == 0
+    end
+
+    @testset "apply_vietnam_defaults! — Decision 963 changes tariff shape" begin
+        baseline = make_base_dict()
+        shifted = make_base_dict()
+
+        apply_vietnam_defaults!(baseline, VN)
+        apply_vietnam_defaults!(shifted, VN; regime_id="decision_963_2026_windows_only")
+
+        @test baseline["ElectricTariff"]["tou_energy_rates_per_kwh"] != shifted["ElectricTariff"]["tou_energy_rates_per_kwh"]
+        @test shifted["_meta"]["resolved_regime_id"] == "decision_963_2026_windows_only"
     end
 
     @testset "apply_vietnam_defaults! — selective disable" begin
@@ -525,6 +574,14 @@ end
         @test d["PV"]["om_cost_per_kw"] == 8
         @test d["ElectricStorage"]["installed_cost_constant"] == 0
         @test d["Financial"]["owner_discount_rate_fraction"] == 0.08
+    end
+
+    @testset "resolve_vietnam_regime" begin
+        resolved = resolve_vietnam_regime(VN; regime_id="decree57_rooftop_50pct_draft")
+        @test resolved["regime_id"] == "decree57_rooftop_50pct_draft"
+        @test resolved["export_rules"]["rooftop_solar"]["max_export_fraction"] == 0.5
+        @test resolved["tariff"]["base_avg_price_vnd_per_kwh"] == VN.tariff["base_avg_price_vnd_per_kwh"]
+        @test_throws Exception resolve_vietnam_regime(VN; regime_id="missing_regime")
     end
 
 end # top-level testset

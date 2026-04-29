@@ -1,5 +1,34 @@
 # Active Context — Saigon18 REopt Integration
 
+## Phase 33 - Vietnam Regulatory Scenario Engine (Phase 2) - 2026-04-29
+
+- [x] Phase 2 - Add mirrored Python and Julia regime-resolution helpers and wire `regime_id` into tariff/export preprocessing
+- [x] Phase 2 Validation - Add and pass Layer 2 plus multi-regime Layer 3 parity coverage for baseline, TOU-window, export-cap, and two-part tariff behavior
+- [x] Phase 2 Report - Publish a synchronized phase report via the report skill
+- [x] Phase 2 Git - Commit the Phase 2 implementation and push the branch
+- [x] Review / Results - Record canonical files, validations, report path, and commit
+
+### Review / Results
+
+- Added mirrored `resolve_vietnam_regime` helpers in `src/python/reopt_pysam_vn/reopt/preprocess.py` and `src/julia/REoptVietnam.jl`, using recursive override merges so named regime bundles resolve onto the base tariff and export-rule payloads instead of branching code paths.
+- Extended `build_vietnam_tariff`, `apply_decree57_export`, and `apply_vietnam_defaults` / `apply_vietnam_defaults!` to accept `regime_id`, default safely to `decision_14_2025_current`, and persist `resolved_regime_id`, `regime_registry_version`, and postprocess preview fields into `_meta`.
+- Added Phase 2 behavior coverage in `tests/python/reopt/test_unit.py` and `tests/julia/test_unit.jl` for Decision 963 window shifts, draft 50 percent rooftop export caps, Decree 146 two-part trial demand charges, and backward-compatible omission of `regime_id`.
+- Extended Layer 3 parity in `tests/cross_language/cross_validate.py` and `tests/julia/export_processed_dict.jl` to compare four explicit regimes end to end: baseline, Decision 963 windows-only, draft 50 percent rooftop export, and Decree 146 two-part tariff trial.
+- Published the synchronized phase report at `reports/2026-04-29-vietnam-regime-resolution-phase-2.html`.
+- Prepared the Phase 2 implementation as a scoped git change covering only the mirrored resolver logic, unit/parity coverage, the phase report, and the session record, leaving unrelated untracked files untouched.
+
+### Validation
+
+- `python -m pytest tests/python/reopt/test_unit.py -q` - PASS (`62 passed`, with one expected custom-export warning on the draft 50 percent regime)
+- `julia --project --compile=min tests/julia/test_unit.jl` - PASS (`168 / 168`, with the same non-blocking `ArchGDAL` precompile warning already present in the environment)
+- `python tests/cross_language/cross_validate.py` - PASS (exact parity across `decision_14_2025_current`, `decision_963_2026_windows_only`, `decree57_rooftop_50pct_draft`, and `decree146_two_part_trial_2026`)
+
+### Next-Step Seeds
+
+- Build Phase 3 deterministic matrix execution so one project input can materialize and run across multiple named regimes and assumption packs.
+- Add scenario-hash result storage that always preserves the resolved regime payload and run manifest together.
+- Fill the `decision_963_2026_repriced_multipliers` bundle with real multiplier overrides once published data exists, keeping the interface unchanged.
+
 ## Phase 32 - Vietnam Regulatory Scenario Engine (Phase 1) - 2026-04-29
 
 - [x] Phase 1 - Add the versioned regime registry file and wire it into the Vietnam data manifest

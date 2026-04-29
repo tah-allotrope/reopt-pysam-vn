@@ -44,6 +44,7 @@ VALID_REGIONS = ("north", "central", "south")
 
 HOURS_PER_YEAR = 8760
 DECREE57_META_KEY = "decree57_max_export_fraction"
+DEFAULT_REGIME_ID = "decision_14_2025_current"
 
 REOPT_API_BASE_URL = "https://developer.nlr.gov/api/reopt/stable"
 
@@ -95,6 +96,46 @@ class VNData:
     regimes: Dict[str, Any]
     exchange_rate: float
     data_dir: str
+
+
+def _deep_merge_dicts(base: Dict[str, Any], overrides: Dict[str, Any]) -> Dict[str, Any]:
+    """Recursively overlay overrides onto a deep copy of base."""
+    merged = deepcopy(base)
+    for key, value in overrides.items():
+        if isinstance(value, dict) and isinstance(merged.get(key), dict):
+            merged[key] = _deep_merge_dicts(merged[key], value)
+        else:
+            merged[key] = deepcopy(value)
+    return merged
+
+
+def resolve_vietnam_regime(vn: VNData, regime_id: str = DEFAULT_REGIME_ID) -> Dict[str, Any]:
+    """Resolve a named regime bundle onto the base tariff and export-rule payloads."""
+    regimes = vn.regimes.get("regimes", {})
+    if regime_id not in regimes:
+        available = ", ".join(sorted(regimes.keys()))
+        raise ValueError(f'Unknown regime_id "{regime_id}". Available: {available}')
+
+    bundle = deepcopy(regimes[regime_id])
+    tariff_overrides = bundle.get("tariff_overrides", {})
+    export_overrides = bundle.get("export_rule_overrides", {})
+    postprocess_overrides = bundle.get("postprocess_overrides", {})
+
+    resolved_tariff = _deep_merge_dicts(vn.tariff, tariff_overrides)
+    resolved_export_rules = _deep_merge_dicts(vn.export_rules, export_overrides)
+
+    return {
+        "regime_id": regime_id,
+        "registry_version": vn.regimes.get("_meta", {}).get("version"),
+        "label": bundle.get("label", regime_id),
+        "effective_date": bundle.get("effective_date"),
+        "status": bundle.get("status"),
+        "source_refs": deepcopy(bundle.get("source_refs", [])),
+        "notes": bundle.get("notes"),
+        "tariff": resolved_tariff,
+        "export_rules": resolved_export_rules,
+        "postprocess_overrides": deepcopy(postprocess_overrides),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -307,6 +348,7 @@ def build_vietnam_tariff(
     vn: VNData,
     customer_type: str,
     voltage_level: str,
+    regime_id: str = DEFAULT_REGIME_ID,
     exchange_rate: Optional[float] = None,
     year: Optional[int] = None,
 ) -> dict:
@@ -319,7 +361,7 @@ def build_vietnam_tariff(
     if year is None:
         year = date.today().year
 
-    tariff = vn.tariff
+    tariff = resolve_vietnam_regime(vn, regime_id)["tariff"]
     base_vnd = tariff["base_avg_price_vnd_per_kwh"]
     schedule = tariff["tou_schedule"]
     multipliers = tariff["rate_multipliers"]
@@ -603,12 +645,19 @@ def apply_vietnam_tech_costs(
 def apply_decree57_export(
     d: dict,
     vn: VNData,
-    max_export_fraction: float = 0.20,
+    regime_id: str = DEFAULT_REGIME_ID,
+    max_export_fraction: Optional[float] = None,
     exchange_rate: Optional[float] = None,
 ) -> dict:
     """Configure export rules per Decree 57/2025."""
     if exchange_rate is None:
         exchange_rate = vn.exchange_rate
+
+    resolved_regime = resolve_vietnam_regime(vn, regime_id)
+    er = resolved_regime["export_rules"]
+    rooftop = er.get("rooftop_solar", {})
+    if max_export_fraction is None:
+        max_export_fraction = rooftop.get("max_export_fraction", 0.20)
 
     if not 0 <= max_export_fraction <= 1:
         raise ValueError(
@@ -622,9 +671,6 @@ def apply_decree57_export(
             UserWarning,
             stacklevel=2,
         )
-
-    er = vn.export_rules
-    rooftop = er.get("rooftop_solar", {})
 
     et = _ensure_block(d, "ElectricTariff")
 
@@ -648,6 +694,11 @@ def apply_decree57_export(
 
     meta = _ensure_block(d, "_meta")
     _set_default(meta, DECREE57_META_KEY, float(max_export_fraction))
+    _set_default(meta, "resolved_regime_id", regime_id)
+    _set_default(meta, "regime_registry_version", resolved_regime["registry_version"])
+
+    for key, value in resolved_regime["postprocess_overrides"].items():
+        _set_default(meta, key, deepcopy(value))
 
     return d
 
@@ -666,6 +717,7 @@ def apply_vietnam_defaults(
     pv_type: str = "rooftop",
     wind_type: str = "onshore",
     financial_profile: str = "standard",
+    regime_id: str = DEFAULT_REGIME_ID,
     currency: str = "USD",
     exchange_rate: Optional[float] = None,
     apply_tariff: bool = True,
@@ -698,7 +750,11 @@ def apply_vietnam_defaults(
     # 3. TOU tariff
     if apply_tariff:
         tariff_dict = build_vietnam_tariff(
-            vn, customer_type, voltage_level, exchange_rate=exchange_rate
+            vn,
+            customer_type,
+            voltage_level,
+            regime_id=regime_id,
+            exchange_rate=exchange_rate,
         )
         et = _ensure_block(d, "ElectricTariff")
         for k, v in tariff_dict.items():
@@ -722,7 +778,20 @@ def apply_vietnam_defaults(
 
     # 6. Decree 57 export rules
     if apply_export_rules:
-        apply_decree57_export(d, vn, exchange_rate=exchange_rate)
+        apply_decree57_export(
+            d,
+            vn,
+            regime_id=regime_id,
+            exchange_rate=exchange_rate,
+        )
+
+    if apply_tariff or apply_export_rules:
+        meta = _ensure_block(d, "_meta")
+        resolved_regime = resolve_vietnam_regime(vn, regime_id)
+        _set_default(meta, "resolved_regime_id", regime_id)
+        _set_default(meta, "regime_registry_version", resolved_regime["registry_version"])
+        for key, value in resolved_regime["postprocess_overrides"].items():
+            _set_default(meta, key, deepcopy(value))
 
     return d
 

@@ -28,6 +28,7 @@ from reopt_pysam_vn.reopt.preprocess import (
     convert_usd_to_vnd,
     convert_vnd_to_usd,
     load_vietnam_data,
+    resolve_vietnam_regime,
     zero_us_incentives,
 )
 
@@ -263,6 +264,19 @@ class TestApplyVietnamFinancials:
 
 
 class TestBuildVietnamTariff:
+    def test_decision_963_window_shift_removes_morning_peak(self, vn):
+        tariff = build_vietnam_tariff(
+            vn,
+            "industrial",
+            "medium_voltage_22kv_to_110kv",
+            regime_id="decision_963_2026_windows_only",
+            year=2025,
+        )
+
+        monday_rates = tariff["tou_energy_rates_per_kwh"][0:24]
+        assert monday_rates[9] == pytest.approx(monday_rates[8], abs=1e-10)
+        assert monday_rates[17] > monday_rates[16]
+
     def test_industrial_medium_voltage(self, vn):
         tariff = build_vietnam_tariff(
             vn, "industrial", "medium_voltage_22kv_to_110kv", year=2025
@@ -455,6 +469,13 @@ class TestApplyVietnamTechCosts:
 
 
 class TestApplyDecree57Export:
+    def test_regime_specific_export_fraction(self, vn):
+        d = make_base_dict()
+        apply_decree57_export(d, vn, regime_id="decree57_rooftop_50pct_draft")
+
+        assert d["_meta"]["decree57_max_export_fraction"] == pytest.approx(0.50)
+        assert d["_meta"]["resolved_regime_id"] == "decree57_rooftop_50pct_draft"
+
     def test_export_rules_applied(self, vn):
         d = make_base_dict()
         apply_decree57_export(d, vn)
@@ -506,6 +527,39 @@ class TestApplyDecree57Export:
 
 
 class TestApplyVietnamDefaults:
+    def test_default_regime_preserves_baseline_behavior(self, vn):
+        explicit = make_base_dict()
+        implicit = make_base_dict()
+
+        apply_vietnam_defaults(explicit, vn, regime_id="decision_14_2025_current")
+        apply_vietnam_defaults(implicit, vn)
+
+        assert implicit["_meta"]["resolved_regime_id"] == "decision_14_2025_current"
+        assert implicit["ElectricTariff"]["tou_energy_rates_per_kwh"] == explicit["ElectricTariff"]["tou_energy_rates_per_kwh"]
+        assert implicit["_meta"]["decree57_max_export_fraction"] == explicit["_meta"]["decree57_max_export_fraction"]
+
+    def test_two_part_tariff_trial_injects_monthly_demand_rate(self, vn):
+        d = make_base_dict()
+        apply_vietnam_defaults(d, vn, regime_id="decree146_two_part_trial_2026")
+
+        assert d["ElectricTariff"]["monthly_demand_rates"] == pytest.approx([235414 / vn.exchange_rate] * 12)
+        assert d["_meta"]["resolved_regime_id"] == "decree146_two_part_trial_2026"
+        assert d["_meta"]["bess_capacity_payment_vnd_per_kw_month"] == 0
+
+    def test_decision_963_regime_changes_tariff_shape(self, vn):
+        baseline = make_base_dict()
+        shifted = make_base_dict()
+
+        apply_vietnam_defaults(baseline, vn)
+        apply_vietnam_defaults(
+            shifted,
+            vn,
+            regime_id="decision_963_2026_windows_only",
+        )
+
+        assert baseline["ElectricTariff"]["tou_energy_rates_per_kwh"] != shifted["ElectricTariff"]["tou_energy_rates_per_kwh"]
+        assert shifted["_meta"]["resolved_regime_id"] == "decision_963_2026_windows_only"
+
     def test_full_pipeline(self, vn):
         d = make_base_dict(wind=True, generator=True)
         apply_vietnam_defaults(
@@ -547,6 +601,20 @@ class TestApplyVietnamDefaults:
         assert d["PV"]["can_net_meter"] is False
         assert d["ElectricTariff"]["wholesale_rate"] == pytest.approx(0.0254, abs=1e-4)
         assert d["_meta"]["decree57_max_export_fraction"] == pytest.approx(0.20)
+        assert d["_meta"]["resolved_regime_id"] == "decision_14_2025_current"
+
+
+class TestResolveVietnamRegime:
+    def test_resolves_tariff_and_export_overrides(self, vn):
+        resolved = resolve_vietnam_regime(vn, "decree57_rooftop_50pct_draft")
+
+        assert resolved["regime_id"] == "decree57_rooftop_50pct_draft"
+        assert resolved["export_rules"]["rooftop_solar"]["max_export_fraction"] == pytest.approx(0.5)
+        assert resolved["tariff"]["base_avg_price_vnd_per_kwh"] == vn.tariff["base_avg_price_vnd_per_kwh"]
+
+    def test_unknown_regime_errors(self, vn):
+        with pytest.raises(ValueError):
+            resolve_vietnam_regime(vn, "missing_regime")
 
     def test_selective_disable(self, vn):
         d = make_base_dict()

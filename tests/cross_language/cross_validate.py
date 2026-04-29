@@ -44,13 +44,20 @@ MINIMAL_SCENARIO = {
     "Generator": {"max_kw": 100},
 }
 
+REGIME_CASES = [
+    "decision_14_2025_current",
+    "decision_963_2026_windows_only",
+    "decree57_rooftop_50pct_draft",
+    "decree146_two_part_trial_2026",
+]
+
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
 
-def _python_process(d: dict) -> dict:
+def _python_process(d: dict, regime_id: str) -> dict:
     """Apply Vietnam defaults in Python with fixed parameters."""
     vn = load_vietnam_data()
 
@@ -63,6 +70,7 @@ def _python_process(d: dict) -> dict:
         pv_type="rooftop",
         wind_type="onshore",
         financial_profile="standard",
+        regime_id=regime_id,
         currency="USD",
         exchange_rate=26400.0,
     )
@@ -72,6 +80,7 @@ def _python_process(d: dict) -> dict:
         vn,
         "industrial",
         "medium_voltage_22kv_to_110kv",
+        regime_id=regime_id,
         exchange_rate=26400.0,
         year=CROSS_VALIDATE_YEAR,
     )
@@ -81,7 +90,7 @@ def _python_process(d: dict) -> dict:
     return d
 
 
-def _julia_process(input_path: str, output_path: str) -> dict:
+def _julia_process(input_path: str, output_path: str, regime_id: str) -> dict:
     """Run Julia export_processed_dict.jl and return the output dict."""
     julia_script = str(REPO_ROOT / "tests" / "julia" / "export_processed_dict.jl")
 
@@ -92,6 +101,7 @@ def _julia_process(input_path: str, output_path: str) -> dict:
         str(input_path),
         str(output_path),
         str(CROSS_VALIDATE_YEAR),
+        regime_id,
     ]
 
     result = subprocess.run(
@@ -167,31 +177,18 @@ def _compare_values(py_val, jl_val, path: str, diffs: list, tol: float = TOLERAN
 class TestCrossValidation:
     """Layer 3: Verify Julia and Python produce identical processed dicts."""
 
-    @pytest.fixture(scope="class")
-    def processed_dicts(self, tmp_path_factory):
-        """Run both Julia and Python processing, return (py_dict, jl_dict)."""
-        tmp_dir = tmp_path_factory.mktemp("cross_validate")
-        input_path = tmp_dir / "input.json"
-        jl_output_path = tmp_dir / "julia_output.json"
-
-        # Write shared input
+    @pytest.mark.parametrize("regime_id", REGIME_CASES)
+    def test_dict_equality(self, tmp_path, regime_id):
+        """All values in the processed dicts must match within floating-point tolerance."""
+        input_path = tmp_path / f"{regime_id}_input.json"
+        jl_output_path = tmp_path / f"{regime_id}_julia_output.json"
         with open(input_path, "w", encoding="utf-8") as f:
             json.dump(MINIMAL_SCENARIO, f, indent=2)
 
-        # Python processing
         import copy
 
-        py_input = copy.deepcopy(MINIMAL_SCENARIO)
-        py_dict = _python_process(py_input)
-
-        # Julia processing
-        jl_dict = _julia_process(str(input_path), str(jl_output_path))
-
-        return py_dict, jl_dict
-
-    def test_dict_equality(self, processed_dicts):
-        """All values in the processed dicts must match within floating-point tolerance."""
-        py_dict, jl_dict = processed_dicts
+        py_dict = _python_process(copy.deepcopy(MINIMAL_SCENARIO), regime_id)
+        jl_dict = _julia_process(str(input_path), str(jl_output_path), regime_id)
         diffs = []
         _compare_values(py_dict, jl_dict, "root", diffs)
 
@@ -199,12 +196,21 @@ class TestCrossValidation:
             diff_report = "\n".join(diffs[:50])  # cap at 50 diffs
             total = len(diffs)
             pytest.fail(
-                f"Julia vs Python dict mismatch ({total} differences):\n{diff_report}"
+                f"Julia vs Python dict mismatch for {regime_id} ({total} differences):\n{diff_report}"
             )
 
-    def test_tariff_array_equality(self, processed_dicts):
+    @pytest.mark.parametrize("regime_id", REGIME_CASES)
+    def test_tariff_array_equality(self, tmp_path, regime_id):
         """Energy rate series must be identical between Julia and Python."""
-        py_dict, jl_dict = processed_dicts
+        input_path = tmp_path / f"{regime_id}_input.json"
+        jl_output_path = tmp_path / f"{regime_id}_julia_output.json"
+        with open(input_path, "w", encoding="utf-8") as f:
+            json.dump(MINIMAL_SCENARIO, f, indent=2)
+
+        import copy
+
+        py_dict = _python_process(copy.deepcopy(MINIMAL_SCENARIO), regime_id)
+        jl_dict = _julia_process(str(input_path), str(jl_output_path), regime_id)
 
         py_rates = py_dict["ElectricTariff"]["tou_energy_rates_per_kwh"]
         jl_rates = jl_dict["ElectricTariff"]["tou_energy_rates_per_kwh"]
@@ -223,9 +229,18 @@ class TestCrossValidation:
             f"Tariff arrays differ at {diff_count} hours, max diff = {max_diff:.2e}"
         )
 
-    def test_emissions_array_equality(self, processed_dicts):
+    @pytest.mark.parametrize("regime_id", REGIME_CASES)
+    def test_emissions_array_equality(self, tmp_path, regime_id):
         """Emissions factor series must be identical between Julia and Python."""
-        py_dict, jl_dict = processed_dicts
+        input_path = tmp_path / f"{regime_id}_input.json"
+        jl_output_path = tmp_path / f"{regime_id}_julia_output.json"
+        with open(input_path, "w", encoding="utf-8") as f:
+            json.dump(MINIMAL_SCENARIO, f, indent=2)
+
+        import copy
+
+        py_dict = _python_process(copy.deepcopy(MINIMAL_SCENARIO), regime_id)
+        jl_dict = _julia_process(str(input_path), str(jl_output_path), regime_id)
 
         py_ef = py_dict["ElectricUtility"]["emissions_factor_series_lb_CO2_per_kwh"]
         jl_ef = jl_dict["ElectricUtility"]["emissions_factor_series_lb_CO2_per_kwh"]
@@ -237,9 +252,18 @@ class TestCrossValidation:
                 f"Emissions differ at hour {i}: Python={py_ef[i]}, Julia={jl_ef[i]}"
             )
 
-    def test_financial_values_match(self, processed_dicts):
+    @pytest.mark.parametrize("regime_id", REGIME_CASES)
+    def test_financial_values_match(self, tmp_path, regime_id):
         """Financial block values must match exactly."""
-        py_dict, jl_dict = processed_dicts
+        input_path = tmp_path / f"{regime_id}_input.json"
+        jl_output_path = tmp_path / f"{regime_id}_julia_output.json"
+        with open(input_path, "w", encoding="utf-8") as f:
+            json.dump(MINIMAL_SCENARIO, f, indent=2)
+
+        import copy
+
+        py_dict = _python_process(copy.deepcopy(MINIMAL_SCENARIO), regime_id)
+        jl_dict = _julia_process(str(input_path), str(jl_output_path), regime_id)
 
         py_fin = py_dict["Financial"]
         jl_fin = jl_dict["Financial"]
@@ -253,9 +277,18 @@ class TestCrossValidation:
                     f"Financial.{key}: Python={py_val}, Julia={jl_val}"
                 )
 
-    def test_tech_costs_match(self, processed_dicts):
+    @pytest.mark.parametrize("regime_id", REGIME_CASES)
+    def test_tech_costs_match(self, tmp_path, regime_id):
         """Tech cost values must match for all tech blocks."""
-        py_dict, jl_dict = processed_dicts
+        input_path = tmp_path / f"{regime_id}_input.json"
+        jl_output_path = tmp_path / f"{regime_id}_julia_output.json"
+        with open(input_path, "w", encoding="utf-8") as f:
+            json.dump(MINIMAL_SCENARIO, f, indent=2)
+
+        import copy
+
+        py_dict = _python_process(copy.deepcopy(MINIMAL_SCENARIO), regime_id)
+        jl_dict = _julia_process(str(input_path), str(jl_output_path), regime_id)
 
         for tech in ["PV", "Wind", "ElectricStorage", "Generator"]:
             py_tech = py_dict[tech]
@@ -277,9 +310,18 @@ class TestCrossValidation:
                         f"{tech}.{key}: Python={py_val}, Julia={jl_val}"
                     )
 
-    def test_export_rules_match(self, processed_dicts):
+    @pytest.mark.parametrize("regime_id", REGIME_CASES)
+    def test_export_rules_match(self, tmp_path, regime_id):
         """Export rule settings must match between Julia and Python."""
-        py_dict, jl_dict = processed_dicts
+        input_path = tmp_path / f"{regime_id}_input.json"
+        jl_output_path = tmp_path / f"{regime_id}_julia_output.json"
+        with open(input_path, "w", encoding="utf-8") as f:
+            json.dump(MINIMAL_SCENARIO, f, indent=2)
+
+        import copy
+
+        py_dict = _python_process(copy.deepcopy(MINIMAL_SCENARIO), regime_id)
+        jl_dict = _julia_process(str(input_path), str(jl_output_path), regime_id)
 
         py_et = py_dict["ElectricTariff"]
         jl_et = jl_dict["ElectricTariff"]
@@ -322,39 +364,37 @@ if __name__ == "__main__":
 
         # Python processing
         print("\n[1/2] Running Python processing...")
-        py_input = copy.deepcopy(MINIMAL_SCENARIO)
-        py_dict = _python_process(py_input)
-        print(f"  Python dict keys: {sorted(py_dict.keys())}")
+        for regime_id in REGIME_CASES:
+            print(f"\n[1/3] Running Python processing for {regime_id}...")
+            py_input = copy.deepcopy(MINIMAL_SCENARIO)
+            py_dict = _python_process(py_input, regime_id)
+            print(f"  Python dict keys: {sorted(py_dict.keys())}")
 
-        # Julia processing
-        print("\n[2/2] Running Julia processing...")
-        try:
-            jl_dict = _julia_process(str(input_path), str(jl_output_path))
-            print(f"  Julia dict keys: {sorted(jl_dict.keys())}")
-        except RuntimeError as e:
-            print(f"  ERROR: {e}")
-            sys.exit(1)
+            print(f"\n[2/3] Running Julia processing for {regime_id}...")
+            try:
+                jl_dict = _julia_process(str(input_path), str(jl_output_path), regime_id)
+                print(f"  Julia dict keys: {sorted(jl_dict.keys())}")
+            except RuntimeError as e:
+                print(f"  ERROR: {e}")
+                sys.exit(1)
 
-        # Compare
-        print("\n[3/3] Comparing outputs...")
-        diffs = []
-        _compare_values(py_dict, jl_dict, "root", diffs)
+            print(f"\n[3/3] Comparing outputs for {regime_id}...")
+            diffs = []
+            _compare_values(py_dict, jl_dict, "root", diffs)
 
-        if diffs:
-            print(f"\n[FAIL] {len(diffs)} differences found:")
-            for d in diffs[:30]:
-                print(d)
-            if len(diffs) > 30:
-                print(f"  ... and {len(diffs) - 30} more")
-            sys.exit(1)
-        else:
-            print("\n[PASS] All values match within tolerance (1e-10)")
+            if diffs:
+                print(f"\n[FAIL] {len(diffs)} differences found for {regime_id}:")
+                for d in diffs[:30]:
+                    print(d)
+                if len(diffs) > 30:
+                    print(f"  ... and {len(diffs) - 30} more")
+                sys.exit(1)
 
-        # Tariff array spot-check
-        py_rates = py_dict["ElectricTariff"]["tou_energy_rates_per_kwh"]
-        jl_rates = jl_dict["ElectricTariff"]["tou_energy_rates_per_kwh"]
-        max_diff = max(abs(float(a) - float(b)) for a, b in zip(py_rates, jl_rates))
-        print(f"  Tariff array max diff: {max_diff:.2e}")
-        print(f"  Tariff array length: Python={len(py_rates)}, Julia={len(jl_rates)}")
+            print("  [PASS] All values match within tolerance (1e-10)")
+            py_rates = py_dict["ElectricTariff"]["tou_energy_rates_per_kwh"]
+            jl_rates = jl_dict["ElectricTariff"]["tou_energy_rates_per_kwh"]
+            max_diff = max(abs(float(a) - float(b)) for a, b in zip(py_rates, jl_rates))
+            print(f"  Tariff array max diff: {max_diff:.2e}")
+            print(f"  Tariff array length: Python={len(py_rates)}, Julia={len(jl_rates)}")
 
     print("\n[PASS] Layer 3: Cross-validation complete.")

@@ -28,6 +28,7 @@ const MOI = JuMP.MOI
 
 export VNData,
        load_vietnam_data,
+       resolve_vietnam_regime,
        apply_vietnam_defaults!,
        zero_us_incentives!,
        apply_vietnam_financials!,
@@ -54,6 +55,7 @@ const VALID_REGIONS = ("north", "central", "south")
 
 const HOURS_PER_YEAR = 8760
 const DECREE57_META_KEY = "decree57_max_export_fraction"
+const DEFAULT_REGIME_ID = "decision_14_2025_current"
 const DECREE57_CONSTRAINT_NAME = :Decree57AnnualExportCapCon
 
 # US incentive fields to zero out, grouped by tech
@@ -197,6 +199,44 @@ function _ensure_block!(d::Dict, key::String)
         d[key] = Dict{String,Any}()
     end
     return d[key]
+end
+
+function _deep_merge_dicts(base::Dict, overrides::Dict)
+    merged = deepcopy(base)
+    for (key, value) in overrides
+        if haskey(merged, key) && merged[key] isa Dict && value isa Dict
+            merged[key] = _deep_merge_dicts(merged[key], value)
+        else
+            merged[key] = deepcopy(value)
+        end
+    end
+    return merged
+end
+
+function resolve_vietnam_regime(vn::VNData; regime_id::String=DEFAULT_REGIME_ID)
+    regimes = get(vn.regimes, "regimes", Dict{String,Any}())
+    haskey(regimes, regime_id) || error("Unknown regime_id \"$regime_id\". Available: $(join(sort(collect(keys(regimes))), ", "))")
+
+    bundle = deepcopy(regimes[regime_id])
+    tariff_overrides = get(bundle, "tariff_overrides", Dict{String,Any}())
+    export_overrides = get(bundle, "export_rule_overrides", Dict{String,Any}())
+    postprocess_overrides = get(bundle, "postprocess_overrides", Dict{String,Any}())
+
+    resolved_tariff = _deep_merge_dicts(vn.tariff, tariff_overrides)
+    resolved_export_rules = _deep_merge_dicts(vn.export_rules, export_overrides)
+
+    return Dict{String,Any}(
+        "regime_id" => regime_id,
+        "registry_version" => get(get(vn.regimes, "_meta", Dict{String,Any}()), "version", nothing),
+        "label" => get(bundle, "label", regime_id),
+        "effective_date" => get(bundle, "effective_date", nothing),
+        "status" => get(bundle, "status", nothing),
+        "source_refs" => deepcopy(get(bundle, "source_refs", Any[])),
+        "notes" => get(bundle, "notes", nothing),
+        "tariff" => resolved_tariff,
+        "export_rules" => resolved_export_rules,
+        "postprocess_overrides" => deepcopy(postprocess_overrides),
+    )
 end
 
 function _scenario_input_dict(d::Dict)
@@ -397,9 +437,10 @@ Only `"industrial"` and `"commercial"` customer types support TOU. Household use
 block pricing which cannot be represented as an 8760 series — use a flat average instead.
 """
 function build_vietnam_tariff(vn::VNData, customer_type::String, voltage_level::String;
+                              regime_id::String=DEFAULT_REGIME_ID,
                               exchange_rate::Real=vn.exchange_rate,
                               year::Int=Dates.year(Dates.today()))
-    tariff = vn.tariff
+    tariff = resolve_vietnam_regime(vn; regime_id=regime_id)["tariff"]
     base_vnd = tariff["base_avg_price_vnd_per_kwh"]
     schedule = tariff["tou_schedule"]
     multipliers = tariff["rate_multipliers"]
@@ -678,17 +719,21 @@ The wholesale rate is set to the rooftop solar surplus purchase rate from the ex
 constraint before optimization. Plain `REopt.run_reopt(...)` does not read this metadata.
 """
 function apply_decree57_export!(d::Dict, vn::VNData;
-                                max_export_fraction::Real=0.20,
+                                regime_id::String=DEFAULT_REGIME_ID,
+                                max_export_fraction::Union{Nothing,Real}=nothing,
                                 exchange_rate::Real=vn.exchange_rate)
+    resolved_regime = resolve_vietnam_regime(vn; regime_id=regime_id)
+    er = resolved_regime["export_rules"]
+    rooftop = get(er, "rooftop_solar", Dict())
+    if max_export_fraction === nothing
+        max_export_fraction = get(rooftop, "max_export_fraction", 0.20)
+    end
+
     max_export_fraction = _validate_export_fraction(max_export_fraction)
     if max_export_fraction != 0.20
         @warn "max_export_fraction=$max_export_fraction is stored for Vietnam custom solve wrappers, " *
               "but plain REopt.run_reopt(...) will NOT enforce it automatically."
     end
-
-    er = vn.export_rules
-    rooftop = get(er, "rooftop_solar", Dict())
-    mapping = get(er, "reopt_mapping", Dict())
 
     et = _ensure_block!(d, "ElectricTariff")
 
@@ -717,6 +762,11 @@ function apply_decree57_export!(d::Dict, vn::VNData;
 
     meta = _ensure_block!(d, "_meta")
     _set_default!(meta, DECREE57_META_KEY, max_export_fraction)
+    _set_default!(meta, "resolved_regime_id", regime_id)
+    _set_default!(meta, "regime_registry_version", resolved_regime["registry_version"])
+    for (k, v) in resolved_regime["postprocess_overrides"]
+        _set_default!(meta, k, deepcopy(v))
+    end
 
     return d
 end
@@ -847,6 +897,7 @@ function apply_vietnam_defaults!(d::Dict, vn::VNData;
                                  pv_type::String="rooftop",
                                  wind_type::String="onshore",
                                  financial_profile::String="standard",
+                                 regime_id::String=DEFAULT_REGIME_ID,
                                  currency::String="USD",
                                  exchange_rate::Real=vn.exchange_rate,
                                  apply_tariff::Bool=true,
@@ -872,6 +923,7 @@ function apply_vietnam_defaults!(d::Dict, vn::VNData;
     # 3. TOU tariff
     if apply_tariff
         tariff_dict = build_vietnam_tariff(vn, customer_type, voltage_level;
+                                           regime_id=regime_id,
                                            exchange_rate=exchange_rate)
         et = _ensure_block!(d, "ElectricTariff")
         for (k, v) in tariff_dict
@@ -896,7 +948,17 @@ function apply_vietnam_defaults!(d::Dict, vn::VNData;
 
     # 6. Decree 57 export rules
     if apply_export_rules
-        apply_decree57_export!(d, vn; exchange_rate=exchange_rate)
+        apply_decree57_export!(d, vn; regime_id=regime_id, exchange_rate=exchange_rate)
+    end
+
+    if apply_tariff || apply_export_rules
+        meta = _ensure_block!(d, "_meta")
+        resolved_regime = resolve_vietnam_regime(vn; regime_id=regime_id)
+        _set_default!(meta, "resolved_regime_id", regime_id)
+        _set_default!(meta, "regime_registry_version", resolved_regime["registry_version"])
+        for (k, v) in resolved_regime["postprocess_overrides"]
+            _set_default!(meta, k, deepcopy(v))
+        end
     end
 
     return d
