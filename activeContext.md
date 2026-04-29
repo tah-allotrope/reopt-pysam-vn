@@ -16,6 +16,7 @@
 - Extended Layer 3 parity in `tests/cross_language/cross_validate.py` and `tests/julia/export_processed_dict.jl` to compare four explicit regimes end to end: baseline, Decision 963 windows-only, draft 50 percent rooftop export, and Decree 146 two-part tariff trial.
 - Published the synchronized phase report at `reports/2026-04-29-vietnam-regime-resolution-phase-2.html`.
 - Prepared the Phase 2 implementation as a scoped git change covering only the mirrored resolver logic, unit/parity coverage, the phase report, and the session record, leaving unrelated untracked files untouched.
+- Recorded the Phase 2 implementation in git commit `496f46c` (`add vietnam regime resolution preprocessing`) and pushed `main` to `origin`.
 
 ### Validation
 
