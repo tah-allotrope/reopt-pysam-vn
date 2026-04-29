@@ -1,5 +1,33 @@
 # Active Context — Saigon18 REopt Integration
 
+## Phase 32 - Vietnam Regulatory Scenario Engine (Phase 1) - 2026-04-29
+
+- [x] Phase 1 - Add the versioned regime registry file and wire it into the Vietnam data manifest
+- [x] Phase 1 Validation - Add and pass Layer 1 and Layer 2 coverage for the new `regimes` data contract in Python and Julia
+- [x] Phase 1 Report - Publish a synchronized phase report via the report skill
+- [x] Phase 1 Git - Commit the Phase 1 implementation and push the branch
+- [x] Review / Results - Record the canonical files, validations, report path, and commit
+
+### Review / Results
+
+- Added the new regime registry at `data/vietnam/vn_regime_registry_2026.json` with five initial bundles: `decision_14_2025_current`, `decision_963_2026_windows_only`, `decision_963_2026_repriced_multipliers`, `decree57_rooftop_50pct_draft`, and `decree146_two_part_trial_2026`.
+- Extended the Vietnam data contract in `data/vietnam/manifest.json`, `src/python/reopt_pysam_vn/reopt/preprocess.py`, and `src/julia/REoptVietnam.jl` so both Python and Julia `VNData` loaders expose `regimes` as a first-class payload.
+- Added Phase 1 validation coverage in `tests/python/reopt/test_data_validation.py`, `tests/julia/test_data_validation.jl`, `tests/python/reopt/test_unit.py`, and `tests/julia/test_unit.jl` to enforce the new manifest key, registry schema, and loader surface.
+- Published the synchronized phase report at `reports/2026-04-29-vietnam-regime-registry-phase-1.html`.
+- Prepared the Phase 1 implementation as a self-contained git change that stages only the new registry, loader/test updates, the phase report, and the session record, leaving unrelated untracked files untouched.
+
+### Validation
+
+- `python -m pytest tests/python/reopt/test_data_validation.py tests/python/reopt/test_unit.py -q` - PASS (`89 passed`)
+- `julia --project --compile=min tests/julia/test_data_validation.jl` - PASS (`268 / 268`)
+- `julia --project --compile=min tests/julia/test_unit.jl` - PASS (`151 / 151` with non-blocking `ArchGDAL` precompile warnings emitted in the environment)
+
+### Next-Step Seeds
+
+- Add Phase 2 regime-resolution helpers so `regime_id` can actually drive tariff and export-rule behavior.
+- Keep the default branch of behavior tied to `decision_14_2025_current` to avoid breaking existing scenario builders.
+- Extend the cross-language parity fixture once regime resolution exists so multiple named bundles are compared end to end.
+
 ## Phase 31 - DPPA Case 1-3 Retrospective Review - 2026-04-23
 
 - [x] Review the canonical plans, implementation modules, tests, artifacts, and reports for DPPA Cases 1, 2, and 3

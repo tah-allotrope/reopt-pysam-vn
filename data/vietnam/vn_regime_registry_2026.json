@@ -1,0 +1,121 @@
+{
+  "_meta": {
+    "version": "2026.1",
+    "effective_date": "2026-04-29",
+    "source": "Repo-defined Vietnam regulatory regime registry composed from Decision 14/2025/QD-TTg, Decision 963/QD-BCT, Decree 57/2025/ND-CP, and Decree 146/2025/ND-CP reference materials",
+    "last_updated": "2026-04-29",
+    "notes": "Named regulatory bundles used to resolve tariff, export-rule, and post-processing assumptions without duplicating the full Vietnam data layer. Base behavior remains decision_14_2025_current unless a different regime_id is selected.",
+    "source_refs": [
+      "research/2026-04-26_commercial-product-ideas.md",
+      "research/2026-04-25_vietnam-tou-rooftop-ppa.md",
+      "data/vietnam/vn_tariff_2025.json",
+      "data/vietnam/vn_export_rules_decree57.json"
+    ]
+  },
+  "data": {
+    "regimes": {
+      "decision_14_2025_current": {
+        "label": "Decision 14/2025 current retail TOU baseline",
+        "effective_date": "2025-05-29",
+        "status": "active",
+        "tariff_overrides": {},
+        "export_rule_overrides": {},
+        "postprocess_overrides": {},
+        "source_refs": [
+          "data/vietnam/vn_tariff_2025.json",
+          "data/vietnam/vn_export_rules_decree57.json"
+        ],
+        "notes": "Matches the repo's current baseline behavior with Decision 14/2025 TOU windows and Decree 57 rooftop export rules."
+      },
+      "decision_963_2026_windows_only": {
+        "label": "Decision 963/2026 windows-only sensitivity",
+        "effective_date": "2026-04-22",
+        "status": "preview",
+        "tariff_overrides": {
+          "tou_schedule": {
+            "weekday": {
+              "peak_hours": [17, 18, 19, 20, 21, 22],
+              "standard_hours": [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 23],
+              "offpeak_hours": [0, 1, 2, 3, 4, 5]
+            },
+            "sunday_and_public_holidays": {
+              "peak_hours": [],
+              "standard_hours": [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
+              "offpeak_hours": [0, 1, 2, 3, 4, 5]
+            }
+          }
+        },
+        "export_rule_overrides": {},
+        "postprocess_overrides": {},
+        "source_refs": [
+          "research/2026-04-25_vietnam-tou-rooftop-ppa.md"
+        ],
+        "notes": "Decision 963/QD-BCT window shift with existing Decision 14 multipliers held constant."
+      },
+      "decision_963_2026_repriced_multipliers": {
+        "label": "Decision 963/2026 repriced-multiplier sensitivity",
+        "effective_date": "2026-04-22",
+        "status": "draft",
+        "tariff_overrides": {
+          "tou_schedule": {
+            "weekday": {
+              "peak_hours": [17, 18, 19, 20, 21, 22],
+              "standard_hours": [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 23],
+              "offpeak_hours": [0, 1, 2, 3, 4, 5]
+            },
+            "sunday_and_public_holidays": {
+              "peak_hours": [],
+              "standard_hours": [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
+              "offpeak_hours": [0, 1, 2, 3, 4, 5]
+            }
+          },
+          "rate_multipliers_overrides": {
+            "notes": "Illustrative placeholder for repriced multipliers once MOIT publishes a replacement table."
+          }
+        },
+        "export_rule_overrides": {},
+        "postprocess_overrides": {},
+        "source_refs": [
+          "research/2026-04-25_vietnam-tou-rooftop-ppa.md"
+        ],
+        "notes": "Placeholder sensitivity bundle for a future multiplier reissue under Decision 963."
+      },
+      "decree57_rooftop_50pct_draft": {
+        "label": "Draft rooftop 50 percent surplus-export sensitivity",
+        "effective_date": "2026-01-01",
+        "status": "draft",
+        "tariff_overrides": {},
+        "export_rule_overrides": {
+          "rooftop_solar": {
+            "max_export_fraction": 0.5
+          }
+        },
+        "postprocess_overrides": {},
+        "source_refs": [
+          "research/2026-04-26_commercial-product-ideas.md"
+        ],
+        "notes": "Forward-looking draft scenario for a rooftop surplus-export cap increase from 20 percent to 50 percent."
+      },
+      "decree146_two_part_trial_2026": {
+        "label": "Decree 146/2025 two-part tariff trial",
+        "effective_date": "2026-01-01",
+        "status": "preview",
+        "tariff_overrides": {
+          "demand_charge": {
+            "monthly_demand_rate_vnd_per_kw": 235414
+          }
+        },
+        "export_rule_overrides": {},
+        "postprocess_overrides": {
+          "bess_capacity_payment_vnd_per_kw_month": 0,
+          "notes": "Capacity payment remains a post-processing placeholder in Phase 1."
+        },
+        "source_refs": [
+          "data/vietnam/vn_tariff_2025.json",
+          "scripts/python/reopt/two_part_tariff_sensitivity.py"
+        ],
+        "notes": "Maps the medium-voltage trial capacity charge into a named regime without changing the base export policy."
+      }
+    }
+  }
+}

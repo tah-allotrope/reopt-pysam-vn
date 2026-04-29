@@ -41,7 +41,14 @@ def _load_data_file(manifest: dict, key: str):
 
 
 class TestManifestStructure:
-    REQUIRED_KEYS = ["tariff", "tech_costs", "financials", "emissions", "export_rules"]
+    REQUIRED_KEYS = [
+        "tariff",
+        "tech_costs",
+        "financials",
+        "emissions",
+        "export_rules",
+        "regimes",
+    ]
 
     def test_required_keys_present(self, manifest):
         for k in self.REQUIRED_KEYS:
@@ -63,7 +70,8 @@ class TestSchemaCompliance:
     REQUIRED_META_FIELDS = ["version", "effective_date", "source", "last_updated"]
 
     @pytest.mark.parametrize(
-        "key", ["tariff", "tech_costs", "financials", "emissions", "export_rules"]
+        "key",
+        ["tariff", "tech_costs", "financials", "emissions", "export_rules", "regimes"],
     )
     def test_meta_and_data_blocks(self, manifest, key):
         raw, filename = _load_data_file(manifest, key)
@@ -151,6 +159,67 @@ class TestTariffSanity:
         for tk in tier_keys:
             assert hh[tk] > 0
             assert hh[tk] < 5.0
+
+
+# ===================================================================
+# 3b. Regime registry sanity
+# ===================================================================
+
+
+class TestRegimeRegistrySanity:
+    VALID_STATUS = {"active", "draft", "preview", "archived"}
+
+    @pytest.fixture(scope="class")
+    def regime_data(self, manifest):
+        raw, _ = _load_data_file(manifest, "regimes")
+        return raw["data"]
+
+    def test_regimes_block_present(self, regime_data):
+        assert "regimes" in regime_data
+        assert isinstance(regime_data["regimes"], dict)
+        assert regime_data["regimes"]
+
+    def test_baseline_regime_present(self, regime_data):
+        assert "decision_14_2025_current" in regime_data["regimes"]
+
+    def test_regime_structure(self, regime_data):
+        for regime_id, regime in regime_data["regimes"].items():
+            assert regime_id == regime_id.strip()
+            assert regime["label"]
+            assert regime["effective_date"]
+            assert regime["status"] in self.VALID_STATUS
+            assert isinstance(regime.get("source_refs", []), list)
+            assert isinstance(regime.get("notes", ""), str)
+
+    def test_non_baseline_regimes_have_sources(self, regime_data):
+        for regime_id, regime in regime_data["regimes"].items():
+            if regime_id == "decision_14_2025_current":
+                continue
+            assert regime.get("source_refs"), (
+                f"{regime_id} must include at least one source reference"
+            )
+
+    def test_tariff_override_schedule_completeness(self, regime_data):
+        for regime in regime_data["regimes"].values():
+            schedule = regime.get("tariff_overrides", {}).get("tou_schedule")
+            if not schedule:
+                continue
+            for day_type, block in schedule.items():
+                if not isinstance(block, dict):
+                    continue
+                all_hours = []
+                for period in ["peak_hours", "standard_hours", "offpeak_hours"]:
+                    assert period in block, f"{day_type} missing {period}"
+                    all_hours.extend(int(h) for h in block[period])
+                assert sorted(set(all_hours)) == list(range(24)), (
+                    f"{day_type} TOU hours don't cover 0-23: got {sorted(set(all_hours))}"
+                )
+
+    def test_export_cap_bounds(self, regime_data):
+        for regime in regime_data["regimes"].values():
+            rooftop = regime.get("export_rule_overrides", {}).get("rooftop_solar", {})
+            if "max_export_fraction" in rooftop:
+                assert 0 <= rooftop["max_export_fraction"] <= 1
 
 
 # ===================================================================

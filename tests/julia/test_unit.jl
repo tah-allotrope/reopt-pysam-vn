@@ -56,11 +56,14 @@ end
         @test VN.financials isa Dict
         @test VN.emissions isa Dict
         @test VN.export_rules isa Dict
+        @test VN.regimes isa Dict
         @test haskey(VN.tariff, "base_avg_price_vnd_per_kwh")
         @test haskey(VN.tech_costs, "PV")
         @test haskey(VN.financials, "standard")
         @test haskey(VN.emissions, "grid_emission_factor_lb_CO2_per_kwh")
         @test haskey(VN.export_rules, "rooftop_solar")
+        @test haskey(VN.regimes, "regimes")
+        @test haskey(VN.regimes["regimes"], "decision_14_2025_current")
     end
 
     @testset "load_vietnam_data — bad manifest path" begin

@@ -90,6 +90,11 @@ class TestLoadVietnamData:
         assert isinstance(vn.export_rules, dict)
         assert "rooftop_solar" in vn.export_rules
 
+    def test_regimes_is_dict(self, vn):
+        assert isinstance(vn.regimes, dict)
+        assert "regimes" in vn.regimes
+        assert "decision_14_2025_current" in vn.regimes["regimes"]
+
     def test_bad_manifest_path(self):
         with pytest.raises(Exception):
             load_vietnam_data(manifest_path="nonexistent.json")

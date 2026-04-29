@@ -92,6 +92,7 @@ class VNData:
     financials: Dict[str, Any]
     emissions: Dict[str, Any]
     export_rules: Dict[str, Any]
+    regimes: Dict[str, Any]
     exchange_rate: float
     data_dir: str
 
@@ -114,7 +115,14 @@ def load_vietnam_data(manifest_path: Optional[Union[str, Path]] = None) -> VNDat
     with open(manifest_path, "r", encoding="utf-8") as f:
         manifest = json.load(f)
 
-    required_keys = ("tariff", "tech_costs", "financials", "emissions", "export_rules")
+    required_keys = (
+        "tariff",
+        "tech_costs",
+        "financials",
+        "emissions",
+        "export_rules",
+        "regimes",
+    )
     for k in required_keys:
         if k not in manifest:
             raise KeyError(f'manifest.json missing required key: "{k}"')
@@ -137,6 +145,7 @@ def load_vietnam_data(manifest_path: Optional[Union[str, Path]] = None) -> VNDat
     financials_raw = _load("financials")
     emissions_raw = _load("emissions")
     export_rules_raw = _load("export_rules")
+    regimes_raw = _load("regimes")
 
     # Extract exchange rate from tariff _meta (VND-denominated file), with fallback
     exchange_rate = tariff_raw.get("_meta", {}).get(
@@ -149,6 +158,7 @@ def load_vietnam_data(manifest_path: Optional[Union[str, Path]] = None) -> VNDat
         financials=financials_raw["data"],
         emissions=emissions_raw["data"],
         export_rules=export_rules_raw["data"],
+        regimes=regimes_raw["data"],
         exchange_rate=float(exchange_rate),
         data_dir=str(data_dir),
     )

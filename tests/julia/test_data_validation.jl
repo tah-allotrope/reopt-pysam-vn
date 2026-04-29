@@ -34,7 +34,7 @@ const MANIFEST = JSON.parsefile(MANIFEST_PATH)
     # 1. Manifest structure
     # ===================================================================
     @testset "Manifest structure" begin
-        required_keys = ["tariff", "tech_costs", "financials", "emissions", "export_rules"]
+        required_keys = ["tariff", "tech_costs", "financials", "emissions", "export_rules", "regimes"]
         for k in required_keys
             @test haskey(MANIFEST, k)
         end
@@ -64,6 +64,19 @@ const MANIFEST = JSON.parsefile(MANIFEST_PATH)
                     for field in required_meta_fields
                         @test haskey(meta, field)
                     end
+                end
+            end
+        end
+
+        raw, filename = load_data_file(MANIFEST, "regimes")
+        @testset "$filename" begin
+            @test haskey(raw, "_meta")
+            @test haskey(raw, "data")
+
+            if haskey(raw, "_meta")
+                meta = raw["_meta"]
+                for field in required_meta_fields
+                    @test haskey(meta, field)
                 end
             end
         end
@@ -144,6 +157,53 @@ const MANIFEST = JSON.parsefile(MANIFEST_PATH)
             for tk in tier_keys
                 @test hh[tk] > 0
                 @test hh[tk] < 5.0
+            end
+        end
+    end
+
+    # ===================================================================
+    # 3b. Regime registry sanity
+    # ===================================================================
+    @testset "Regime registry sanity" begin
+        raw, _ = load_data_file(MANIFEST, "regimes")
+        data = raw["data"]
+        valid_status = Set(["active", "draft", "preview", "archived"])
+
+        @test haskey(data, "regimes")
+        @test data["regimes"] isa Dict
+        @test !isempty(data["regimes"])
+        @test haskey(data["regimes"], "decision_14_2025_current")
+
+        for (regime_id, regime) in data["regimes"]
+            @test regime_id == strip(regime_id)
+            @test haskey(regime, "label")
+            @test !isempty(regime["label"])
+            @test haskey(regime, "effective_date")
+            @test haskey(regime, "status")
+            @test regime["status"] in valid_status
+            @test get(regime, "source_refs", String[]) isa Vector
+            @test get(regime, "notes", "") isa AbstractString
+
+            if regime_id != "decision_14_2025_current"
+                @test !isempty(get(regime, "source_refs", Any[]))
+            end
+
+            schedule = get(get(regime, "tariff_overrides", Dict{String,Any}()), "tou_schedule", nothing)
+            if schedule !== nothing
+                for (day_type, block) in schedule
+                    block isa Dict || continue
+                    all_hours = Int[]
+                    for period in ["peak_hours", "standard_hours", "offpeak_hours"]
+                        @test haskey(block, period)
+                        append!(all_hours, Int.(block[period]))
+                    end
+                    @test sort(unique(all_hours)) == collect(0:23)
+                end
+            end
+
+            rooftop = get(get(regime, "export_rule_overrides", Dict{String,Any}()), "rooftop_solar", Dict{String,Any}())
+            if haskey(rooftop, "max_export_fraction")
+                @test 0 <= rooftop["max_export_fraction"] <= 1
             end
         end
     end
