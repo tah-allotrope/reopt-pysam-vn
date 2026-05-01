@@ -1,5 +1,39 @@
 # Active Context — Saigon18 REopt Integration
 
+## Phase 34 - Vietnam Regulatory Scenario Engine (Phase 3) - 2026-04-30
+
+- [x] Phase 3 - Add assumption-set artifacts, scenario materialization, and deterministic regime-matrix orchestration
+- [x] Phase 3 Validation - Add and pass targeted smoke coverage for `2 regimes x 2 assumption sets`, stable hashes, and artifact completeness
+- [x] Phase 3 Report - Publish a synchronized phase report via the report skill
+- [x] Phase 3 Git - Commit the Phase 3 implementation and push the branch
+- [x] Review / Results - Record canonical files, validations, report path, and commit
+
+### Review / Results
+
+- Added four named assumption-set JSON packs in `scenarios/regime_engine/assumption_sets/` (base, capacity_payment_preview, export_cap_sweep, repriced_multipliers) so sweeps are explicit artifacts rather than ad hoc CLI flags.
+- Added `src/python/reopt_pysam_vn/reopt/regime_runner.py` (288 lines) with `materialize_regime_scenario()`, `build_regime_matrix()`, `build_regime_scenarios()`, deterministic SHA-256 scenario hashing via `canonicalize_for_hash()` + `scenario_hash()`, and cache-first execution that skips reruns when a successful hash directory exists.
+- Added two CLI entrypoints: `scripts/python/reopt/build_regime_scenarios.py` (materialize only) and `scripts/python/reopt/run_regime_matrix.py` (full matrix with `--solve`, `--force` flags).
+- Extended `scripts/julia/run_vietnam_scenario.jl` with `--output-dir` argument so the regime engine can route results directly instead of relying on legacy case-study path markers.
+- Standardized per-run artifacts under `artifacts/results/regime_engine/<project_slug>/<scenario_hash>/` with `input.json`, `resolved_regime.json`, `reopt-results.json`, `summary.json`, and `run_manifest.json`.
+- Added three smoke tests in `tests/python/integration/test_regime_engine_smoke.py`: 2x2 matrix artifact completeness, hash stability, and cache reuse.
+- Fixed `tilt_rule` skip in tech-cost defaults (Python + Julia parity) and `_meta` propagation in regime registry loader.
+- Published the Phase 3 report at `reports/2026-04-30-vietnam-regime-engine-phase-3.html`.
+
+### Validation
+
+- `python -m pytest tests/python/reopt/test_data_validation.py -q` - PASS (34 passed)
+- `python -m pytest tests/python/reopt/test_unit.py -q` - PASS (62 passed, 1 expected warning)
+- `test_scenario_hash_is_stable_for_same_materialized_input` - PASS
+- `test_cached_run_is_reused_when_manifest_is_successful` - PASS (341s, Julia subprocess verified)
+- `test_regime_matrix_no_solve_writes_complete_artifacts` - PASS (4 Julia --no-solve subprocesses)
+
+### Next-Step Seeds
+
+- Build Phase 4 regime-delta reporting: `summarize_regime_matrix.py` + `generate_regime_comparison_report.py` for side-by-side HTML delta tables.
+- Use the medium-factory TOU comparison plan as the first acceptance case for the Phase 4 reporter.
+- Validate a second archetype to prove the reporter is not overfit to the TOU comparison case.
+- Populate the `decision_963_2026_repriced_multipliers` bundle when MOIT publishes official multiplier tables.
+
 ## Phase 33 - Vietnam Regulatory Scenario Engine (Phase 2) - 2026-04-29
 
 - [x] Phase 2 - Add mirrored Python and Julia regime-resolution helpers and wire `regime_id` into tariff/export preprocessing

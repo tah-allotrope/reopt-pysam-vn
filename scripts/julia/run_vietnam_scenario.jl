@@ -14,6 +14,8 @@ Flags:
                           defaults applied by build_saigon18_reopt_input.py). If omitted,
                           uses the default vn_commercial_rooftop_pv.json template with
                           Vietnam preprocessing applied at runtime.
+    --output-dir <path>   Write results into the provided directory instead of the legacy
+                          case-study routing logic.
 
 Environment (required for resource data fetch from NREL):
     NREL_DEVELOPER_API_KEY   your NREL developer API key
@@ -38,6 +40,8 @@ const NO_SOLVE = "--no-solve" in ARGS
 # Parse --scenario flag
 const SCENARIO_IDX = findfirst(==("--scenario"), ARGS)
 const SCENARIO_PATH = SCENARIO_IDX !== nothing ? ARGS[SCENARIO_IDX + 1] : nothing
+const OUTPUT_DIR_IDX = findfirst(==("--output-dir"), ARGS)
+const OUTPUT_DIR = OUTPUT_DIR_IDX !== nothing ? ARGS[OUTPUT_DIR_IDX + 1] : nothing
 const SAIGON18_SCENARIO_MARKER = joinpath("scenarios", "case_studies", "saigon18")
 const NORTH_THUAN_SCENARIO_MARKER = joinpath("scenarios", "case_studies", "north_thuan")
 const NINHSIM_SCENARIO_MARKER = joinpath("scenarios", "case_studies", "ninhsim")
@@ -153,7 +157,12 @@ else
     end
 
     # Save results to artifacts/results/ directory
-    if SCENARIO_PATH !== nothing
+    if OUTPUT_DIR !== nothing
+        out_dir = abspath(OUTPUT_DIR)
+        mkpath(out_dir)
+        basename_noext = SCENARIO_PATH !== nothing ? replace(basename(SCENARIO_PATH), r"\.json$" => "") : "scenario"
+        out_path = joinpath(out_dir, "reopt-results.json")
+    elseif SCENARIO_PATH !== nothing
         basename_noext = replace(basename(SCENARIO_PATH), r"\.json$" => "")
         normalized_scenario_path = replace(normpath(SCENARIO_PATH), '/' => Base.Filesystem.path_separator)
         if occursin(SAIGON18_SCENARIO_MARKER, normalized_scenario_path)

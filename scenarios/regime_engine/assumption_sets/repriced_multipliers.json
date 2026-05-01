@@ -1,0 +1,15 @@
+{
+  "_meta": {
+    "id": "repriced_multipliers",
+    "label": "Repriced multiplier sensitivity",
+    "description": "Flags the run as a future multiplier-repricing sensitivity without changing the solve contract until real multiplier data is available."
+  },
+  "scenario_overrides": {},
+  "meta_overrides": {
+    "repriced_multiplier_sensitivity": true,
+    "repriced_multiplier_status": "placeholder_until_published"
+  },
+  "notes": [
+    "Intended to pair with decision_963_2026_repriced_multipliers once published multiplier tables exist."
+  ]
+}

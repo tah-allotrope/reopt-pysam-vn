@@ -199,7 +199,7 @@ def load_vietnam_data(manifest_path: Optional[Union[str, Path]] = None) -> VNDat
         financials=financials_raw["data"],
         emissions=emissions_raw["data"],
         export_rules=export_rules_raw["data"],
-        regimes=regimes_raw["data"],
+        regimes={**regimes_raw["data"], "_meta": regimes_raw.get("_meta", {})},
         exchange_rate=float(exchange_rate),
         data_dir=str(data_dir),
     )
@@ -579,6 +579,8 @@ def apply_vietnam_tech_costs(
                 if not isinstance(t, dict):
                     continue
                 for k, v in pv_data["common_defaults"].items():
+                    if k == "tilt_rule":
+                        continue
                     _set_default(t, k, v)
 
     # --- Wind ---

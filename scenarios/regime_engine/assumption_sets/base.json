@@ -1,0 +1,12 @@
+{
+  "_meta": {
+    "id": "base",
+    "label": "Base assumption set",
+    "description": "No additional scenario or metadata overrides beyond the selected regime bundle."
+  },
+  "scenario_overrides": {},
+  "meta_overrides": {},
+  "notes": [
+    "Use this as the control assumption set when comparing named regulatory regimes."
+  ]
+}

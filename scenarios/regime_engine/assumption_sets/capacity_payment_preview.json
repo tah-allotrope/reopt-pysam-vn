@@ -1,0 +1,16 @@
+{
+  "_meta": {
+    "id": "capacity_payment_preview",
+    "label": "Capacity payment preview",
+    "description": "Tags the scenario for post-processing review of prospective BESS capacity payments."
+  },
+  "scenario_overrides": {},
+  "meta_overrides": {
+    "capacity_payment_preview_enabled": true,
+    "bess_capacity_payment_vnd_per_kw_month": 120000,
+    "capacity_payment_preview_source": "assumption_set_capacity_payment_preview"
+  },
+  "notes": [
+    "Preview only. No custom revenue term is injected into the REopt solve objective in Phase 3."
+  ]
+}

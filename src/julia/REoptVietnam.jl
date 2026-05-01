@@ -143,7 +143,7 @@ function load_vietnam_data(; manifest_path::String=DEFAULT_MANIFEST)
         financials_raw["data"],
         emissions_raw["data"],
         export_rules_raw["data"],
-        regimes_raw["data"],
+        merge(regimes_raw["data"], Dict("_meta" => get(regimes_raw, "_meta", Dict{String,Any}()))),
         Float64(exchange_rate),
         data_dir
     )
@@ -635,6 +635,7 @@ function apply_vietnam_tech_costs!(d::Dict, vn::VNData;
             for t in targets
                 t isa Dict || continue
                 for (k, v) in pv_data["common_defaults"]
+                    k == "tilt_rule" && continue
                     _set_default!(t, k, v)
                 end
             end

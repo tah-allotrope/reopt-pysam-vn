@@ -1,0 +1,16 @@
+{
+  "_meta": {
+    "id": "export_cap_sweep",
+    "label": "Export cap sweep assumption set",
+    "description": "Overrides the metadata export cap marker to support draft surplus-export sensitivity sweeps."
+  },
+  "scenario_overrides": {},
+  "meta_overrides": {
+    "decree57_max_export_fraction": 0.35,
+    "assumption_export_cap_fraction": 0.35,
+    "assumption_export_cap_source": "assumption_set_export_cap_sweep"
+  },
+  "notes": [
+    "This is a post-preprocessing sweep artifact. The export-cap solver enforcement path still reads the metadata marker."
+  ]
+}
