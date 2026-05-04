@@ -23,6 +23,23 @@
 - Published phase report at `reports/2026-05-04-allotrope-template-phase-1.html`.
 - Ready for Phases 2-4 (deck generation) to follow the rubric and carry lessons forward.
 
+## Phase 36 - Allotrope Template Iteration (Phase 2 — Deck 1) - 2026-05-04
+
+- [x] Generate Deck 1 PPTX from case-1 final report following the rubric
+- [x] Inspect deck slide-by-slide with python-pptx and score against all 12 rubric dimensions
+- [x] Write conformance file with scores, top 5 deviations, and lessons to carry forward
+- [x] Report — Generate synchronized HTML phase report via the report skill flow
+- [x] Git — Commit Phase 2 artifacts and push the current branch
+
+### Review / Results
+
+- Generated Deck 1 (`reports/decks/2026-04-09-dppa-case-1.pptx`) from `reports/2026-04-09-dppa-case-1-final.html` using pptxgenjs following the Allotrope template rubric.
+- Deck structure: 9 slides — Cover, Executive Summary, Section Divider, Key Findings (5 cards), Energy Results Table, Financial Summary, Tools & Methodology, Next Steps, Contact/Closing.
+- **Conformance score: 46/60** (aggregate across 12 dimensions).
+- Top deviations: missing logo images (text placeholder only), no slide numbers, bullet-based exec summary instead of table, only one section divider, color palette not pixel-perfect.
+- Published conformance delta at `reports/decks/conformance/2026-04-09-dppa-case-1-conformance.md` with 7 prescriptive lessons to carry forward to Deck 2.
+- Published phase report at `reports/2026-05-04-allotrope-template-phase-2.html`.
+
 ## Phase 34 - Vietnam Regulatory Scenario Engine (Phase 3) - 2026-04-30
 
 - [x] Phase 3 - Add assumption-set artifacts, scenario materialization, and deterministic regime-matrix orchestration
