@@ -1,5 +1,28 @@
 # Active Context — Saigon18 REopt Integration
 
+## Phase 35 - Allotrope Template Iteration (Phase 1) - 2026-05-04
+
+- [x] Phase 1 - Confirm the three target final reports, create deck/conformance directories, fetch the Allotrope template cache, and write the Phase 1 rubric
+- [x] Validation - Smoke check the cached template, confirm rubric target paths/scoring anchors, and verify cache exclusion policy
+- [x] Report - Publish a synchronized HTML phase report via the report skill flow
+- [x] Git - Commit the Phase 1 artifacts and push the current branch
+- [x] Review / Results - Record canonical files, validations, report path, and commit
+
+### Notes
+
+- This phase implements PHASE-01 from `plans/2026-05-03-allotrope-template-iterative-ppt-plan.md`.
+- The Allotrope template cache under `reports/decks/conformance/_template/` stays local-only as `.gitignore` already excludes it.
+- The Phase 1 rubric covers 12 dimensions with 0–5 scoring anchors, specific enough for later PPT generation and conformance scoring.
+
+### Review / Results
+
+- Confirmed three target inputs: `reports/2026-04-09-dppa-case-1-final.html`, `reports/2026-04-16-dppa-case-2-final.html`, `reports/2026-04-21-dppa-case-3-final.html` (excluded `2026-04-15` as superseded).
+- Fetched Allotrope template from Google Drive (Slides ID `1E0HTpklTMu8fjiZCVi_7Ka41WcKqfAMgt6PSN8Qcrtw`), exported as pptx, cached at `reports/decks/conformance/_template/allotrope-template.pptx`.
+- Analyzed template with python-pptx — 12 slides, Cabin font throughout, full color palette extracted (primary `#155B55`, teal card variants `#0C483F`-`#198F7E`, accent green `#38761D`, body `#222222`, footer `#000000`).
+- Published rubric at `reports/decks/conformance/allotrope-template-rubric.md` covering 12 dimensions (D01-D12) with 0–5 per-dimension scoring anchors and a scoring summary template.
+- Published phase report at `reports/2026-05-04-allotrope-template-phase-1.html`.
+- Ready for Phases 2-4 (deck generation) to follow the rubric and carry lessons forward.
+
 ## Phase 34 - Vietnam Regulatory Scenario Engine (Phase 3) - 2026-04-30
 
 - [x] Phase 3 - Add assumption-set artifacts, scenario materialization, and deterministic regime-matrix orchestration

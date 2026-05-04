@@ -38,3 +38,6 @@ artifacts/reports/test_runs/*.html
 
 # Regression baselines (auto-generated on first solver run)
 tests/baselines/*.json
+
+# Local-only deck template cache
+reports/decks/conformance/_template/
