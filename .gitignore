@@ -41,3 +41,13 @@ tests/baselines/*.json
 
 # Local-only deck template cache
 reports/decks/conformance/_template/
+
+# AI assistant worktree caches
+.claude/
+
+# Browser automation artifacts
+.playwright-mcp/
+
+# npm (used ad-hoc for pptx generation; not project code)
+node_modules/
+package-lock.json
