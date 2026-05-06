@@ -40,6 +40,36 @@
 - Published conformance delta at `reports/decks/conformance/2026-04-09-dppa-case-1-conformance.md` with 7 prescriptive lessons to carry forward to Deck 2.
 - Published phase report at `reports/2026-05-04-allotrope-template-phase-2.html`.
 
+## Phase 37 - Allotrope Template Iteration (Phase 3 — Deck 2) - 2026-05-06
+
+- [x] Generate Deck 2 PPTX from case-2 final report applying Deck 1's 7 lessons
+- [x] Inspect deck with python-pptx: verify tables, exact hex colors, slide numbers, section dividers, green rule accents
+- [x] Write conformance file with scores, top 5 deviations, lessons to carry forward, and Deck 1 vs Deck 2 delta
+- [x] Report — Generate synchronized HTML phase report via the report skill template flow
+- [x] Git — Commit Phase 3 artifacts and push the current branch
+
+### Review / Results
+
+- Generated Deck 2 (`reports/decks/2026-04-16-dppa-case-2.pptx`) from `reports/2026-04-16-dppa-case-2-final.html` using python-pptx with all 7 Deck 1 lessons applied.
+- Deck structure: 10 slides — Cover, Executive Summary (table), Section Divider (Context), Key Findings (5 cards), Section Divider (Analysis), Financial Summary (table), Settlement & Methodology, Section Divider (Next Steps), Next Steps, Contact/Closing.
+- **Conformance score: 53/60** (+7 improvement over Deck 1's 46/60).
+- Improvements applied: slide numbers on all slides (D08 +1), table format for Executive Summary (D02 +1), three section dividers (D03 +1), exact hex colors locked (D04 +1), typography within 1pt (D05 +1), improved sequence with dividers (D06 +1), content density with 11pt cards (D10 +1), visual consistency with green rule accents (D12 +1).
+- Persistent gap: missing actual logo images (D09 stays at 2/5). Addressable gaps for Deck 3: suppress footer on cover, add embedded charts, full teal closing background, partner logo placeholders.
+- Published conformance delta at `reports/decks/conformance/2026-04-16-dppa-case-2-conformance.md` with 7 lessons to carry forward and a full Deck 1 vs Deck 2 delta table.
+- Published phase report at `reports/2026-05-06-allotrope-template-phase-3.html`.
+
+### Validation
+
+- `python scripts/python/generate_deck_2.py` — PASS (10 slides saved)
+- `python -c "..."` slide inspection — PASS (table present, exact hex colors confirmed, footer on all slides, slide numbers present)
+- `python scripts/python/generate_phase3_report.py` — PASS (report written to `reports/2026-05-06-allotrope-template-phase-3.html`)
+
+### Next-Step Seeds
+
+- Phase 4 (Deck 3): Generate from case-3 final report applying cumulative lessons from Decks 1+2 (7 unresolved + 4 new = 11 lessons, capped at top 7 by impact).
+- Focus Deck 3 improvements: suppress footer on cover, add simple chart, full teal closing background.
+- After Deck 3, produce Phase 5 trajectory summary `2026-05-03-allotrope-conformance-trajectory.md`.
+
 ## Phase 34 - Vietnam Regulatory Scenario Engine (Phase 3) - 2026-04-30
 
 - [x] Phase 3 - Add assumption-set artifacts, scenario materialization, and deterministic regime-matrix orchestration
