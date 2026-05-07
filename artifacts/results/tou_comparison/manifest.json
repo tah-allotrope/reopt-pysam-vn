@@ -1,0 +1,41 @@
+[
+  {
+    "scenario_slug": "saigon18",
+    "scenario_path": "scenarios/case_studies/saigon18/2026-03-20_scenario-a_fixed-sizing_evntou.json",
+    "pair": [
+      {
+        "regime_id": "unknown",
+        "run": {
+          "result_dir": "artifacts\\results\\tou_comparison\\saigon18\\2026-03-20-scenario-a-fixed-sizing-evntou",
+          "manifest": {}
+        }
+      }
+    ]
+  },
+  {
+    "scenario_slug": "ninhsim",
+    "scenario_path": "scenarios/case_studies/ninhsim/2026-04-01_ninhsim_scenario-a_baseline-evn.json",
+    "pair": [
+      {
+        "regime_id": "unknown",
+        "run": {
+          "result_dir": "artifacts\\results\\tou_comparison\\ninhsim\\2026-04-01-ninhsim-scenario-a-baseline-evn",
+          "manifest": {}
+        }
+      }
+    ]
+  },
+  {
+    "scenario_slug": "north_thuan",
+    "scenario_path": "scenarios/case_studies/north_thuan/north_thuan_scenario_a.json",
+    "pair": [
+      {
+        "regime_id": "unknown",
+        "run": {
+          "result_dir": "artifacts\\results\\tou_comparison\\north_thuan\\north-thuan-scenario-a",
+          "manifest": {}
+        }
+      }
+    ]
+  }
+]
