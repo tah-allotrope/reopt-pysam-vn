@@ -44,6 +44,43 @@
 - PHASE-04: Financial delta analysis and HTML report generation
 - Answer the 3 Grill Me questions from the plan before proceeding
 
+## Phase 41 - Decision 963 TOU Migration (PHASE-02) - 2026-05-07
+
+- [x] TASK-02-01: Create run_tou_comparison.py orchestration script
+- [x] TASK-02-02: Create tou_financial_delta.py extraction/delta script
+- [x] TASK-02-03: Create tou_comparison_report.py HTML report generator
+- [x] TASK-02-04: Create run_tou_comparison.ps1 convenience entrypoint
+- [x] Validate: dry-run materialization writes manifest JSON
+- [x] Validate: financial_delta produces valid CSV
+- [x] Validate: report produces valid HTML
+- [x] Git - Confirm all changes already committed; record completion
+
+### Notes
+
+- All PHASE-02 scripts were already committed in `f64474a` (feat: add TOU comparison workflow scripts).
+- This session validated all scripts work end-to-end without Julia solver.
+
+### Review / Results
+
+- `run_tou_comparison.py`: Accepts `--scenarios`, `--solve`, `--force` flags. Calls `build_regime_matrix()` for each scenario × regime pair. Writes manifest JSON to `artifacts/results/tou_comparison/manifest.json`.
+- `tou_financial_delta.py`: Reads manifest, extracts 7 financial metrics from REopt results per regime pair. Computes deltas and % changes. Emits CSV with 30 columns.
+- `tou_comparison_report.py`: Reads CSV, generates self-contained HTML with Chart.js bar chart, per-scenario detail tables, assumptions section.
+- `run_tou_comparison.ps1`: Chains all 3 scripts with default case study scenarios.
+- Validation: materialized 6 scenarios (3 × 2 regimes), CSV generated with correct schema, HTML report 6.7KB.
+
+### Validation
+
+- `python scripts/python/reopt/validate_tou_materialize.py` — PASS (6 materializations, manifest written)
+- `python scripts/python/reopt/tou_financial_delta.py` — PASS (CSV with 3 rows, 30 columns)
+- `python scripts/python/reopt/tou_comparison_report.py` — PASS (HTML 6756 bytes)
+- Note: No REopt results available (Julia solve not run); CSV shows "no_results" status. Financial deltas require PHASE-03 solve-mode execution.
+
+### Next-Step Seeds
+
+- PHASE-03: Run Julia solve on materialized scenarios to produce actual REopt results
+- PHASE-04: Re-run financial_delta and report after PHASE-03 solve completes
+- Consider running with `--solve=false` dry-run for scenario validation only
+
 ## Phase 35 - Allotrope Template Iteration (Phase 1) - 2026-05-04
 
 - [x] Phase 1 - Confirm the three target final reports, create deck/conformance directories, fetch the Allotrope template cache, and write the Phase 1 rubric
