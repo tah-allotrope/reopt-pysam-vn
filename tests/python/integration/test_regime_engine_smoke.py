@@ -24,7 +24,7 @@ def test_regime_matrix_no_solve_writes_complete_artifacts(tmp_path: Path):
 
     runs = build_regime_matrix(
         scenario_path=scenario_path,
-        regime_ids=["decision_14_2025_current", "decree146_two_part_trial_2026"],
+        regime_ids=["decision_963_2026_current", "decree146_two_part_trial_2026"],
         assumption_set_ids=["base", "capacity_payment_preview"],
         generated_root=tmp_path / "generated",
         result_store_root=tmp_path / "results",
@@ -60,7 +60,7 @@ def test_regime_matrix_no_solve_writes_complete_artifacts(tmp_path: Path):
 def test_scenario_hash_is_stable_for_same_materialized_input(tmp_path: Path):
     canonical = canonicalize_for_hash(
         {
-            "regime_id": "decision_14_2025_current",
+            "regime_id": "decision_963_2026_current",
             "assumption_set_id": "base",
             "scenario": {"ElectricLoad": {"annual_kwh": 1000}, "_meta": {"skip": True}},
         }
@@ -78,7 +78,7 @@ def test_cached_run_is_reused_when_manifest_is_successful(tmp_path: Path):
 
     first_runs = build_regime_matrix(
         scenario_path=scenario_path,
-        regime_ids=["decision_14_2025_current"],
+        regime_ids=["decision_963_2026_current"],
         assumption_set_ids=["base"],
         generated_root=tmp_path / "generated",
         result_store_root=tmp_path / "results",
@@ -87,7 +87,7 @@ def test_cached_run_is_reused_when_manifest_is_successful(tmp_path: Path):
 
     second_runs = build_regime_matrix(
         scenario_path=scenario_path,
-        regime_ids=["decision_14_2025_current"],
+        regime_ids=["decision_963_2026_current"],
         assumption_set_ids=["base"],
         generated_root=tmp_path / "generated",
         result_store_root=tmp_path / "results",

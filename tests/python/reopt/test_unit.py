@@ -1,9 +1,9 @@
-"""
+﻿"""
 Layer 2: Unit Tests for reopt_vietnam.py (Python)
 
-Tests the preprocessing logic in isolation — fast, no API keys or solver needed.
+Tests the preprocessing logic in isolation â€” fast, no API keys or solver needed.
 Each function is tested for correct behavior, edge cases, and non-destructive merging.
-Mirror of tests/julia/test_unit.jl — identical checks, same data files.
+Mirror of tests/julia/test_unit.jl â€” identical checks, same data files.
 
 Run: pytest tests/python/reopt/test_unit.py -v
 """
@@ -94,7 +94,7 @@ class TestLoadVietnamData:
     def test_regimes_is_dict(self, vn):
         assert isinstance(vn.regimes, dict)
         assert "regimes" in vn.regimes
-        assert "decision_14_2025_current" in vn.regimes["regimes"]
+        assert "decision_963_2026_current" in vn.regimes["regimes"]
 
     def test_bad_manifest_path(self):
         with pytest.raises(Exception):
@@ -269,13 +269,73 @@ class TestBuildVietnamTariff:
             vn,
             "industrial",
             "medium_voltage_22kv_to_110kv",
-            regime_id="decision_963_2026_windows_only",
+            regime_id="decision_963_2026_current",
             year=2025,
         )
 
         monday_rates = tariff["tou_energy_rates_per_kwh"][0:24]
         assert monday_rates[9] == pytest.approx(monday_rates[8], abs=1e-10)
         assert monday_rates[17] > monday_rates[16]
+
+    def test_default_tariff_uses_decision_963_windows(self, vn):
+        tariff = build_vietnam_tariff(
+            vn, "industrial", "medium_voltage_22kv_to_110kv", year=2025
+        )
+
+        rates = tariff["tou_energy_rates_per_kwh"]
+        assert len(rates) == 8760
+
+        base_vnd = vn.tariff["base_avg_price_vnd_per_kwh"]
+        mults = vn.tariff["rate_multipliers"]["industrial"][
+            "medium_voltage_22kv_to_110kv"
+        ]
+        peak_rate = base_vnd * mults["peak"] / vn.exchange_rate
+        standard_rate = base_vnd * mults["standard"] / vn.exchange_rate
+
+        monday_rates = rates[0:24]
+        for h in [17, 18, 19, 20, 21, 22]:
+            assert monday_rates[h] == pytest.approx(peak_rate, abs=1e-8), f"Hour {h} should be peak"
+        for h in [9, 10]:
+            assert monday_rates[h] == pytest.approx(standard_rate, abs=1e-8), f"Hour {h} should be standard (not peak)"
+
+    def test_legacy_decision_14_still_works(self, vn):
+        tariff = build_vietnam_tariff(
+            vn,
+            "industrial",
+            "medium_voltage_22kv_to_110kv",
+            regime_id="decision_14_2025_legacy",
+            year=2025,
+        )
+
+        rates = tariff["tou_energy_rates_per_kwh"]
+        base_vnd = vn.tariff["base_avg_price_vnd_per_kwh"]
+        mults = vn.tariff["rate_multipliers"]["industrial"]["medium_voltage_22kv_to_110kv"]
+        peak_rate = base_vnd * mults["peak"] / vn.exchange_rate
+        standard_rate = base_vnd * mults["standard"] / vn.exchange_rate
+
+        monday_rates = rates[0:24]
+        for h in [9, 10, 17, 18, 19]:
+            assert monday_rates[h] == pytest.approx(peak_rate, abs=1e-8), f"Hour {h} should be peak under Decision 14"
+        for h in [20, 21]:
+            assert monday_rates[h] == pytest.approx(standard_rate, abs=1e-8), f"Hour {h} should be standard under Decision 14"
+
+    def test_alias_resolves_to_legacy(self, vn):
+        tariff_alias = build_vietnam_tariff(
+            vn,
+            "industrial",
+            "medium_voltage_22kv_to_110kv",
+            regime_id="decision_14_2025_current",
+            year=2025,
+        )
+        tariff_legacy = build_vietnam_tariff(
+            vn,
+            "industrial",
+            "medium_voltage_22kv_to_110kv",
+            regime_id="decision_14_2025_legacy",
+            year=2025,
+        )
+
+        assert tariff_alias["tou_energy_rates_per_kwh"] == tariff_legacy["tou_energy_rates_per_kwh"]
 
     def test_industrial_medium_voltage(self, vn):
         tariff = build_vietnam_tariff(
@@ -287,7 +347,7 @@ class TestBuildVietnamTariff:
         assert len(rates) == 8760
         assert all(r > 0 for r in rates)
 
-        # Peak rate should be highest, off-peak lowest
+        # Decision 963 default: peak hours 17-22, standard includes 9 and 10
         base_vnd = vn.tariff["base_avg_price_vnd_per_kwh"]
         mults = vn.tariff["rate_multipliers"]["industrial"][
             "medium_voltage_22kv_to_110kv"
@@ -310,7 +370,7 @@ class TestBuildVietnamTariff:
         tariff = build_vietnam_tariff(vn, "household", "", year=2025)
         rates = tariff["tou_energy_rates_per_kwh"]
         assert len(rates) == 8760
-        # Household is flat — all values should be identical
+        # Household is flat â€” all values should be identical
         assert all(r == pytest.approx(rates[0]) for r in rates)
         assert rates[0] > 0
 
@@ -323,7 +383,7 @@ class TestBuildVietnamTariff:
         # 2025-01-01 is a Wednesday. First Sunday = Jan 5 (day index 4, 0-based)
         # Sunday hours: index 4*24 to 4*24+23 = 96 to 119
         sunday_rates = rates[96:120]
-        # Sunday has no peak hours — max should be standard rate
+        # Sunday has no peak hours â€” max should be standard rate
         base_vnd = vn.tariff["base_avg_price_vnd_per_kwh"]
         mults = vn.tariff["rate_multipliers"]["industrial"][
             "medium_voltage_22kv_to_110kv"
@@ -342,6 +402,14 @@ class TestBuildVietnamTariff:
             assert expected_peak not in sunday_rates
         # Sunday max should be standard
         assert max(sunday_rates) == pytest.approx(expected_standard, abs=1e-8)
+
+        # Decision 963: off-peak hours are 0-5, not 22-23
+        # Monday (weekday) hour 22 should be peak, not off-peak
+        monday_rates = rates[0:24]
+        assert monday_rates[22] == pytest.approx(expected_peak, abs=1e-8)
+        # Monday hour 5 should be off-peak
+        expected_offpeak = base_vnd * mults["offpeak"] / vn.exchange_rate
+        assert monday_rates[5] == pytest.approx(expected_offpeak, abs=1e-8)
 
     def test_demand_charges(self, vn):
         tariff = build_vietnam_tariff(vn, "industrial", "medium_voltage_22kv_to_110kv")
@@ -522,7 +590,7 @@ class TestApplyDecree57Export:
 
 
 # ===================================================================
-# 9. apply_vietnam_defaults — master function
+# 9. apply_vietnam_defaults â€” master function
 # ===================================================================
 
 
@@ -531,10 +599,10 @@ class TestApplyVietnamDefaults:
         explicit = make_base_dict()
         implicit = make_base_dict()
 
-        apply_vietnam_defaults(explicit, vn, regime_id="decision_14_2025_current")
+        apply_vietnam_defaults(explicit, vn, regime_id="decision_963_2026_current")
         apply_vietnam_defaults(implicit, vn)
 
-        assert implicit["_meta"]["resolved_regime_id"] == "decision_14_2025_current"
+        assert implicit["_meta"]["resolved_regime_id"] == "decision_963_2026_current"
         assert implicit["ElectricTariff"]["tou_energy_rates_per_kwh"] == explicit["ElectricTariff"]["tou_energy_rates_per_kwh"]
         assert implicit["_meta"]["decree57_max_export_fraction"] == explicit["_meta"]["decree57_max_export_fraction"]
 
@@ -546,7 +614,7 @@ class TestApplyVietnamDefaults:
         assert d["_meta"]["resolved_regime_id"] == "decree146_two_part_trial_2026"
         assert d["_meta"]["bess_capacity_payment_vnd_per_kw_month"] == 0
 
-    def test_decision_963_regime_changes_tariff_shape(self, vn):
+    def test_decision_14_legacy_changes_tariff_shape(self, vn):
         baseline = make_base_dict()
         shifted = make_base_dict()
 
@@ -554,11 +622,11 @@ class TestApplyVietnamDefaults:
         apply_vietnam_defaults(
             shifted,
             vn,
-            regime_id="decision_963_2026_windows_only",
+            regime_id="decision_14_2025_legacy",
         )
 
         assert baseline["ElectricTariff"]["tou_energy_rates_per_kwh"] != shifted["ElectricTariff"]["tou_energy_rates_per_kwh"]
-        assert shifted["_meta"]["resolved_regime_id"] == "decision_963_2026_windows_only"
+        assert shifted["_meta"]["resolved_regime_id"] == "decision_14_2025_legacy"
 
     def test_full_pipeline(self, vn):
         d = make_base_dict(wind=True, generator=True)
@@ -601,7 +669,7 @@ class TestApplyVietnamDefaults:
         assert d["PV"]["can_net_meter"] is False
         assert d["ElectricTariff"]["wholesale_rate"] == pytest.approx(0.0254, abs=1e-4)
         assert d["_meta"]["decree57_max_export_fraction"] == pytest.approx(0.20)
-        assert d["_meta"]["resolved_regime_id"] == "decision_14_2025_current"
+        assert d["_meta"]["resolved_regime_id"] == "decision_963_2026_current"
 
 
 class TestResolveVietnamRegime:
@@ -678,3 +746,4 @@ class TestResolveVietnamRegime:
         assert d["PV"]["om_cost_per_kw"] == 8
         assert d["ElectricStorage"]["installed_cost_constant"] == 0
         assert d["Financial"]["owner_discount_rate_fraction"] == 0.08
+

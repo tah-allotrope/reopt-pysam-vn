@@ -44,7 +44,7 @@ VALID_REGIONS = ("north", "central", "south")
 
 HOURS_PER_YEAR = 8760
 DECREE57_META_KEY = "decree57_max_export_fraction"
-DEFAULT_REGIME_ID = "decision_14_2025_current"
+DEFAULT_REGIME_ID = "decision_963_2026_current"
 
 REOPT_API_BASE_URL = "https://developer.nlr.gov/api/reopt/stable"
 
@@ -110,13 +110,30 @@ def _deep_merge_dicts(base: Dict[str, Any], overrides: Dict[str, Any]) -> Dict[s
 
 
 def resolve_vietnam_regime(vn: VNData, regime_id: str = DEFAULT_REGIME_ID) -> Dict[str, Any]:
-    """Resolve a named regime bundle onto the base tariff and export-rule payloads."""
+    """Resolve a named regime bundle onto the base tariff and export-rule payloads.
+
+    If the regime entry contains an ``alias_of`` key, the alias is followed
+    transparently so that callers receive the target bundle's data while
+    still referencing the original (alias) identifier.
+    """
     regimes = vn.regimes.get("regimes", {})
     if regime_id not in regimes:
         available = ", ".join(sorted(regimes.keys()))
         raise ValueError(f'Unknown regime_id "{regime_id}". Available: {available}')
 
-    bundle = deepcopy(regimes[regime_id])
+    entry = regimes[regime_id]
+
+    # Follow alias_of redirects (e.g. decision_14_2025_current -> decision_14_2025_legacy)
+    if "alias_of" in entry:
+        target_id = entry["alias_of"]
+        if target_id not in regimes:
+            raise ValueError(
+                f'Alias target "{target_id}" not found in regime registry.'
+            )
+        bundle = deepcopy(regimes[target_id])
+    else:
+        bundle = deepcopy(entry)
+
     tariff_overrides = bundle.get("tariff_overrides", {})
     export_overrides = bundle.get("export_rule_overrides", {})
     postprocess_overrides = bundle.get("postprocess_overrides", {})

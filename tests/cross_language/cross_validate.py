@@ -45,8 +45,8 @@ MINIMAL_SCENARIO = {
 }
 
 REGIME_CASES = [
-    "decision_14_2025_current",
-    "decision_963_2026_windows_only",
+    "decision_963_2026_current",
+    "decision_14_2025_legacy",
     "decree57_rooftop_50pct_draft",
     "decree146_two_part_trial_2026",
 ]

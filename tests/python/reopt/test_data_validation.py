@@ -1,9 +1,9 @@
-"""
+﻿"""
 Layer 1: Data File Validation Tests (Python)
 
 Pure schema and sanity checks on the Vietnam JSON data files.
-Runs WITHOUT a solver — only reads and validates the data layer.
-Mirror of tests/julia/test_data_validation.jl — identical checks, same data files.
+Runs WITHOUT a solver â€” only reads and validates the data layer.
+Mirror of tests/julia/test_data_validation.jl â€” identical checks, same data files.
 
 Run: pytest tests/python/reopt/test_data_validation.py -v
 """
@@ -62,7 +62,7 @@ class TestManifestStructure:
 
 
 # ===================================================================
-# 2. Schema compliance — every file has _meta + data
+# 2. Schema compliance â€” every file has _meta + data
 # ===================================================================
 
 
@@ -167,7 +167,7 @@ class TestTariffSanity:
 
 
 class TestRegimeRegistrySanity:
-    VALID_STATUS = {"active", "draft", "preview", "archived"}
+    VALID_STATUS = {"active", "legacy", "draft", "preview", "archived"}
 
     @pytest.fixture(scope="class")
     def regime_data(self, manifest):
@@ -180,10 +180,12 @@ class TestRegimeRegistrySanity:
         assert regime_data["regimes"]
 
     def test_baseline_regime_present(self, regime_data):
-        assert "decision_14_2025_current" in regime_data["regimes"]
+        assert "decision_963_2026_current" in regime_data["regimes"]
 
     def test_regime_structure(self, regime_data):
         for regime_id, regime in regime_data["regimes"].items():
+            if "alias_of" in regime:
+                continue
             assert regime_id == regime_id.strip()
             assert regime["label"]
             assert regime["effective_date"]
@@ -193,7 +195,9 @@ class TestRegimeRegistrySanity:
 
     def test_non_baseline_regimes_have_sources(self, regime_data):
         for regime_id, regime in regime_data["regimes"].items():
-            if regime_id == "decision_14_2025_current":
+            if "alias_of" in regime:
+                continue
+            if regime_id == "decision_963_2026_current":
                 continue
             assert regime.get("source_refs"), (
                 f"{regime_id} must include at least one source reference"
@@ -396,3 +400,4 @@ class TestExportRules:
                 continue
             for region, rate in regions.items():
                 assert rate > 0, f"DPPA {tech}/{region} rate must be > 0"
+

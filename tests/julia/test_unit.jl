@@ -63,7 +63,7 @@ end
         @test haskey(VN.emissions, "grid_emission_factor_lb_CO2_per_kwh")
         @test haskey(VN.export_rules, "rooftop_solar")
         @test haskey(VN.regimes, "regimes")
-        @test haskey(VN.regimes["regimes"], "decision_14_2025_current")
+        @test haskey(VN.regimes["regimes"], "decision_963_2026_current")
     end
 
     @testset "load_vietnam_data — bad manifest path" begin
@@ -480,17 +480,17 @@ end
         @test d["PV"]["can_net_meter"] == false
         @test d["ElectricTariff"]["wholesale_rate"] ≈ 0.0254 atol=1e-4
         @test d["_meta"]["decree57_max_export_fraction"] == 0.20
-        @test d["_meta"]["resolved_regime_id"] == "decision_14_2025_current"
+        @test d["_meta"]["resolved_regime_id"] == "decision_963_2026_current"
     end
 
     @testset "apply_vietnam_defaults! — explicit baseline matches implicit default" begin
         explicit = make_base_dict()
         implicit = make_base_dict()
 
-        apply_vietnam_defaults!(explicit, VN; regime_id="decision_14_2025_current")
+        apply_vietnam_defaults!(explicit, VN; regime_id="decision_963_2026_current")
         apply_vietnam_defaults!(implicit, VN)
 
-        @test implicit["_meta"]["resolved_regime_id"] == "decision_14_2025_current"
+        @test implicit["_meta"]["resolved_regime_id"] == "decision_963_2026_current"
         @test implicit["ElectricTariff"]["tou_energy_rates_per_kwh"] == explicit["ElectricTariff"]["tou_energy_rates_per_kwh"]
         @test implicit["_meta"]["decree57_max_export_fraction"] == explicit["_meta"]["decree57_max_export_fraction"]
     end
@@ -504,15 +504,15 @@ end
         @test d["_meta"]["bess_capacity_payment_vnd_per_kw_month"] == 0
     end
 
-    @testset "apply_vietnam_defaults! — Decision 963 changes tariff shape" begin
+    @testset "apply_vietnam_defaults! — Decision 14 legacy changes tariff shape" begin
         baseline = make_base_dict()
         shifted = make_base_dict()
 
         apply_vietnam_defaults!(baseline, VN)
-        apply_vietnam_defaults!(shifted, VN; regime_id="decision_963_2026_windows_only")
+        apply_vietnam_defaults!(shifted, VN; regime_id="decision_14_2025_legacy")
 
         @test baseline["ElectricTariff"]["tou_energy_rates_per_kwh"] != shifted["ElectricTariff"]["tou_energy_rates_per_kwh"]
-        @test shifted["_meta"]["resolved_regime_id"] == "decision_963_2026_windows_only"
+        @test shifted["_meta"]["resolved_regime_id"] == "decision_14_2025_legacy"
     end
 
     @testset "apply_vietnam_defaults! — selective disable" begin

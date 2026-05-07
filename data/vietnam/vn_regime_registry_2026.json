@@ -1,10 +1,10 @@
 {
   "_meta": {
-    "version": "2026.1",
-    "effective_date": "2026-04-29",
+    "version": "2026.2",
+    "effective_date": "2026-05-07",
     "source": "Repo-defined Vietnam regulatory regime registry composed from Decision 14/2025/QD-TTg, Decision 963/QD-BCT, Decree 57/2025/ND-CP, and Decree 146/2025/ND-CP reference materials",
-    "last_updated": "2026-04-29",
-    "notes": "Named regulatory bundles used to resolve tariff, export-rule, and post-processing assumptions without duplicating the full Vietnam data layer. Base behavior remains decision_14_2025_current unless a different regime_id is selected.",
+    "last_updated": "2026-05-07",
+    "notes": "Named regulatory bundles used to resolve tariff, export-rule, and post-processing assumptions without duplicating the full Vietnam data layer. Decision 963 is now the active default (effective 2026-04-22); Decision 14 is preserved as decision_14_2025_legacy.",
     "source_refs": [
       "research/2026-04-26_commercial-product-ideas.md",
       "research/2026-04-25_vietnam-tou-rooftop-ppa.md",
@@ -15,8 +15,38 @@
   "data": {
     "regimes": {
       "decision_14_2025_current": {
-        "label": "Decision 14/2025 current retail TOU baseline",
+        "alias_of": "decision_14_2025_legacy",
+        "notes": "Backward-compatible redirect. Resolves to decision_14_2025_legacy for all tariff and export computations."
+      },
+      "decision_14_2025_legacy": {
+        "label": "Decision 14/2025 legacy TOU (pre-963 split peak)",
         "effective_date": "2025-05-29",
+        "status": "legacy",
+        "tariff_overrides": {
+          "tou_schedule": {
+            "weekday": {
+              "peak_hours": [9, 10, 17, 18, 19],
+              "standard_hours": [4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 16, 20, 21],
+              "offpeak_hours": [0, 1, 2, 3, 22, 23]
+            },
+            "sunday_and_public_holidays": {
+              "peak_hours": [],
+              "standard_hours": [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21],
+              "offpeak_hours": [0, 1, 2, 3, 22, 23]
+            }
+          }
+        },
+        "export_rule_overrides": {},
+        "postprocess_overrides": {},
+        "source_refs": [
+          "data/vietnam/vn_tariff_2025.json",
+          "data/vietnam/vn_export_rules_decree57.json"
+        ],
+        "notes": "Preserves the pre-Decision 963 TOU schedule: split peak 09:30-11:30 + 17:00-20:00 Mon-Sat. Use this regime to reproduce results under the old tariff structure."
+      },
+      "decision_963_2026_current": {
+        "label": "Decision 963/2026 current active TOU (evening-only peak)",
+        "effective_date": "2026-04-22",
         "status": "active",
         "tariff_overrides": {},
         "export_rule_overrides": {},
@@ -25,32 +55,7 @@
           "data/vietnam/vn_tariff_2025.json",
           "data/vietnam/vn_export_rules_decree57.json"
         ],
-        "notes": "Matches the repo's current baseline behavior with Decision 14/2025 TOU windows and Decree 57 rooftop export rules."
-      },
-      "decision_963_2026_windows_only": {
-        "label": "Decision 963/2026 windows-only sensitivity",
-        "effective_date": "2026-04-22",
-        "status": "preview",
-        "tariff_overrides": {
-          "tou_schedule": {
-            "weekday": {
-              "peak_hours": [17, 18, 19, 20, 21, 22],
-              "standard_hours": [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 23],
-              "offpeak_hours": [0, 1, 2, 3, 4, 5]
-            },
-            "sunday_and_public_holidays": {
-              "peak_hours": [],
-              "standard_hours": [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
-              "offpeak_hours": [0, 1, 2, 3, 4, 5]
-            }
-          }
-        },
-        "export_rule_overrides": {},
-        "postprocess_overrides": {},
-        "source_refs": [
-          "research/2026-04-25_vietnam-tou-rooftop-ppa.md"
-        ],
-        "notes": "Decision 963/QD-BCT window shift with existing Decision 14 multipliers held constant."
+        "notes": "Matches the repo's current baseline behavior with Decision 963/QD-BCT TOU windows (evening peak 17:30-22:30). Since the base tariff file now reflects Decision 963, no tariff_overrides are needed."
       },
       "decision_963_2026_repriced_multipliers": {
         "label": "Decision 963/2026 repriced-multiplier sensitivity",
@@ -78,7 +83,7 @@
         "source_refs": [
           "research/2026-04-25_vietnam-tou-rooftop-ppa.md"
         ],
-        "notes": "Placeholder sensitivity bundle for a future multiplier reissue under Decision 963."
+        "notes": "Placeholder sensitivity bundle for a future multiplier reissue under Decision 963. Currently uses existing Decision 14 multipliers with Decision 963 windows."
       },
       "decree57_rooftop_50pct_draft": {
         "label": "Draft rooftop 50 percent surplus-export sensitivity",

@@ -1,17 +1,18 @@
 {
   "_meta": {
-    "version": "2025.2",
-    "effective_date": "2025-05-10",
-    "source": "Decision 14/2025/QD-TTg (tariff structure, effective 2025-05-29), Decision 599/QD-EVN (avg price, effective 2025-05-10), Decision 1279/QD-BCT (retail pricing by customer group, 2025-05-09)",
+    "version": "2026.1",
+    "effective_date": "2026-04-22",
+    "source": "Decision 963/QD-BCT (TOU windows, effective 2026-04-22), Decision 14/2025/QD-TTg (tariff structure, effective 2025-05-29), Decision 599/QD-EVN (avg price, effective 2025-05-10), Decision 1279/QD-BCT (retail pricing by customer group, 2025-05-09)",
     "source_urls": [
       "https://www.dfdl.com/insights/legal-and-tax-updates/vietnams-2025-retail-electricity-rates/",
       "https://en.evn.com.vn/d/en-US/news/RETAIL-ELECTRICITY-TARIFF-Decision-No-1279QD-BCT-dated-9-May-2025-of-Ministry-of-Industry-and-Trade-60-28-252"
     ],
-    "notes": "Average retail electricity price VND 2,204.0655/kWh excl. VAT as of 2025-05-10 per Decision 599/QD-EVN. Rate multipliers are percentages of the average price per Decision 14/2025/QD-TTg. TOU hours per DFDL analysis of Decision 14. Multipliers expressed as decimal (e.g., 157% = 1.57). EVN can adjust avg price by 2-5% with 3-month minimum interval per Decision 07/2025/QD-TTg (price band VND 1,826.22 - 2,444.09/kWh).",
-    "last_updated": "2026-03-10",
+    "notes": "Average retail electricity price VND 2,204.0655/kWh excl. VAT as of 2025-05-10 per Decision 599/QD-EVN. Rate multipliers are percentages of the average price per Decision 14/2025/QD-TTg. TOU hours updated per Decision 963/QD-BCT (effective 2026-04-22): evening-only peak 17:30-22:30 Mon-Sat. Multipliers expressed as decimal (e.g., 157% = 1.57). EVN can adjust avg price by 2-5% with 3-month minimum interval per Decision 07/2025/QD-TTg (price band VND 1,826.22 - 2,444.09/kWh). ASSUMPTION: Decision 14 multipliers carry forward unchanged under Decision 963 windows; MOIT has not issued replacement multipliers.",
+    "last_updated": "2026-05-07",
     "currency": "VND",
     "exchange_rate_vnd_per_usd": 26400,
     "changelog": [
+      "2026.1: Updated TOU schedule to Decision 963/QD-BCT (effective 2026-04-22). Peak hours now 17:30-22:30 Mon-Sat only (no morning peak). Standard hours 06:00-17:30 + 22:30-24:00 Mon-Sat, 06:00-24:00 Sun/holidays. Off-peak 00:00-06:00 all days. Hourly discretization maps 17:30 boundary to hour [17], causing ~2.8% overcount of peak-hour energy. Multipliers unchanged from Decision 14/2025 pending MOIT reissuance. Decision 14/2025 window schedule preserved in regime registry as decision_14_2025_legacy.",
       "2025.2: Corrected all rate multipliers to match Decision 14/2025/QD-TTg table. Fixed voltage tier breakpoints for production tariff (220kV, >35kV-<220kV, >1kV-35kV, ≤1kV). Expanded commercial into 3 subcategories per Decision 14. Corrected household from 6 tiers to 5 tiers. Added two-part tariff trial data per Decree 146/2025/ND-CP. Updated Decree 57 DPPA data.",
       "2025.1: Initial version based on preliminary sources. Contained incorrect multipliers and voltage tier breakpoints."
     ]
@@ -22,14 +23,14 @@
 
     "tou_schedule": {
       "weekday": {
-        "peak_hours":     [9, 10, 17, 18, 19],
-        "standard_hours": [4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 16, 20, 21],
-        "offpeak_hours":  [0, 1, 2, 3, 22, 23]
+        "peak_hours":     [17, 18, 19, 20, 21, 22],
+        "standard_hours": [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 23],
+        "offpeak_hours":  [0, 1, 2, 3, 4, 5]
       },
       "sunday_and_public_holidays": {
         "peak_hours":     [],
-        "standard_hours": [4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21],
-        "offpeak_hours":  [0, 1, 2, 3, 22, 23]
+        "standard_hours": [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
+        "offpeak_hours":  [0, 1, 2, 3, 4, 5]
       },
       "public_holidays": [
         "New Year (Jan 1)",
@@ -39,7 +40,7 @@
         "International Labour Day (May 1)",
         "National Day (Sep 2 + Sep 3)"
       ],
-      "notes": "Hours are 0-indexed (0=midnight-1am). Decision 14 specifies: Peak Mon-Sat 9:30-11:30 & 17:00-20:00; Standard Mon-Sat 4:00-9:30, 11:30-17:00, 20:00-22:00; Sunday+holidays 4:00-22:00; Off-peak all days 22:00-4:00. APPROXIMATION: Hourly discretization maps 9:30-11:30 to hours [9,10] and 17:00-20:00 to hours [17,18,19]. Hour 9 (9:00-10:00) is actually ~50% standard / ~50% peak. Hour 11 (11:00-12:00) is ~50% peak / ~50% standard. For higher fidelity, use 30-minute timesteps."
+      "notes": "Hours are 0-indexed (0=midnight-1am). Decision 963/QD-BCT effective 2026-04-22: Peak Mon-Sat 17:30-22:30; Standard Mon-Sat 06:00-17:30 + 22:30-24:00; Sunday+holidays 06:00-24:00 standard rate (no peak); Off-peak all days 00:00-06:00. APPROXIMATION: Hourly discretization maps 17:30 boundary to hour [17], causing ~30 min overcount of peak-hour energy (~2.8% of peak window). For higher fidelity, use 30-minute timesteps. Multipliers unchanged from Decision 14/2025 pending MOIT reissuance (ASM-001)."
     },
 
     "rate_multipliers": {

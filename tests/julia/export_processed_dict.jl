@@ -28,7 +28,7 @@ function main()
     input_path = ARGS[1]
     output_path = ARGS[2]
     year = length(ARGS) >= 3 ? parse(Int, ARGS[3]) : 2025
-    regime_id = length(ARGS) >= 4 ? ARGS[4] : "decision_14_2025_current"
+    regime_id = length(ARGS) >= 4 ? ARGS[4] : "decision_963_2026_current"
 
     # Load input scenario
     d = JSON.parsefile(input_path)

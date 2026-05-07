@@ -167,14 +167,16 @@ const MANIFEST = JSON.parsefile(MANIFEST_PATH)
     @testset "Regime registry sanity" begin
         raw, _ = load_data_file(MANIFEST, "regimes")
         data = raw["data"]
-        valid_status = Set(["active", "draft", "preview", "archived"])
+        valid_status = Set(["active", "legacy", "draft", "preview", "archived"])
 
         @test haskey(data, "regimes")
         @test data["regimes"] isa Dict
         @test !isempty(data["regimes"])
-        @test haskey(data["regimes"], "decision_14_2025_current")
+        @test haskey(data["regimes"], "decision_963_2026_current")
 
         for (regime_id, regime) in data["regimes"]
+            # Skip alias entries (they don't have full structure)
+            haskey(regime, "alias_of") && continue
             @test regime_id == strip(regime_id)
             @test haskey(regime, "label")
             @test !isempty(regime["label"])
@@ -184,7 +186,7 @@ const MANIFEST = JSON.parsefile(MANIFEST_PATH)
             @test get(regime, "source_refs", String[]) isa Vector
             @test get(regime, "notes", "") isa AbstractString
 
-            if regime_id != "decision_14_2025_current"
+            if regime_id != "decision_963_2026_current"
                 @test !isempty(get(regime, "source_refs", Any[]))
             end
 

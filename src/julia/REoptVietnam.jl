@@ -55,7 +55,7 @@ const VALID_REGIONS = ("north", "central", "south")
 
 const HOURS_PER_YEAR = 8760
 const DECREE57_META_KEY = "decree57_max_export_fraction"
-const DEFAULT_REGIME_ID = "decision_14_2025_current"
+const DEFAULT_REGIME_ID = "decision_963_2026_current"
 const DECREE57_CONSTRAINT_NAME = :Decree57AnnualExportCapCon
 
 # US incentive fields to zero out, grouped by tech
@@ -217,7 +217,17 @@ function resolve_vietnam_regime(vn::VNData; regime_id::String=DEFAULT_REGIME_ID)
     regimes = get(vn.regimes, "regimes", Dict{String,Any}())
     haskey(regimes, regime_id) || error("Unknown regime_id \"$regime_id\". Available: $(join(sort(collect(keys(regimes))), ", "))")
 
-    bundle = deepcopy(regimes[regime_id])
+    entry = regimes[regime_id]
+
+    # Follow alias_of redirects (e.g. decision_14_2025_current -> decision_14_2025_legacy)
+    if haskey(entry, "alias_of")
+        target_id = entry["alias_of"]
+        haskey(regimes, target_id) || error("Alias target \"$target_id\" not found in regime registry.")
+        bundle = deepcopy(regimes[target_id])
+    else
+        bundle = deepcopy(entry)
+    end
+
     tariff_overrides = get(bundle, "tariff_overrides", Dict{String,Any}())
     export_overrides = get(bundle, "export_rule_overrides", Dict{String,Any}())
     postprocess_overrides = get(bundle, "postprocess_overrides", Dict{String,Any}())
