@@ -17611,6 +17611,8 @@
     "om_cost_escalation_rate_fraction": 0.04
   },
   "ElectricTariff": {
+    "wholesale_rate": 0.0254,
+    "export_rate_beyond_net_metering_limit": 0,
     "urdb_label": "",
     "blended_annual_energy_rate": 0,
     "tou_energy_rates_per_kwh": [
@@ -26388,9 +26390,7 @@
       0.0,
       0.0,
       0.0
-    ],
-    "wholesale_rate": 0.0254,
-    "export_rate_beyond_net_metering_limit": 0
+    ]
   },
   "ElectricUtility": {
     "emissions_factor_series_lb_CO2_per_kwh": [
@@ -35168,12 +35168,11 @@
     },
     "description": "No new solar, wind, or BESS. Uses the current EVN TOU tariff at 22kV-110kV as the customer price benchmark for the bundled CPPA study.",
     "decree57_max_export_fraction": 0.2,
-    "resolved_regime_id": "decision_963_2026_current",
+    "resolved_regime_id": "decision_14_2025_legacy",
     "regime_registry_version": "2026.2",
-    "source_scenario_path": "scenarios\\case_studies\\ninhsim\\2026-04-01_ninhsim_scenario-a_baseline-evn.json",
+    "source_scenario_path": "C:\\Users\\tukum\\Downloads\\reopt-pysam\\scenarios\\case_studies\\ninhsim\\2026-04-01_ninhsim_scenario-a_baseline-evn.json",
     "assumption_set_id": "base",
-    "assumption_set_path": "C:\\Users\\tukum\\Downloads\\reopt-pysam\\scenarios\\regime_engine\\assumption_sets\\base.json",
-    "regime_runner_version": "phase3",
-    "scenario_hash": "890fdafd09b8bc4d"
+    "tou_comparison": true,
+    "scenario_hash": "4197f09595c116bf"
   }
 }

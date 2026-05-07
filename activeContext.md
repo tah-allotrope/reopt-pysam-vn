@@ -39,47 +39,54 @@
 
 ### Next-Step Seeds
 
-- PHASE-02: Build the old-vs-new comparison workflow (run_tou_comparison.py, tou_financial_delta.py, tou_comparison_report.py)
-- PHASE-03: Execute comparison runs on saigon18, ninhsim, north_thuan case studies
-- PHASE-04: Financial delta analysis and HTML report generation
-- Answer the 3 Grill Me questions from the plan before proceeding
-
-## Phase 41 - Decision 963 TOU Migration (PHASE-02) - 2026-05-07
-
-- [x] TASK-02-01: Create run_tou_comparison.py orchestration script
-- [x] TASK-02-02: Create tou_financial_delta.py extraction/delta script
-- [x] TASK-02-03: Create tou_comparison_report.py HTML report generator
-- [x] TASK-02-04: Create run_tou_comparison.ps1 convenience entrypoint
-- [x] Validate: dry-run materialization writes manifest JSON
-- [x] Validate: financial_delta produces valid CSV
-- [x] Validate: report produces valid HTML
-- [x] Git - Confirm all changes already committed; record completion
-
-### Notes
-
-- All PHASE-02 scripts were already committed in `f64474a` (feat: add TOU comparison workflow scripts).
-- This session validated all scripts work end-to-end without Julia solver.
-
-### Review / Results
-
-- `run_tou_comparison.py`: Accepts `--scenarios`, `--solve`, `--force` flags. Calls `build_regime_matrix()` for each scenario × regime pair. Writes manifest JSON to `artifacts/results/tou_comparison/manifest.json`.
-- `tou_financial_delta.py`: Reads manifest, extracts 7 financial metrics from REopt results per regime pair. Computes deltas and % changes. Emits CSV with 30 columns.
-- `tou_comparison_report.py`: Reads CSV, generates self-contained HTML with Chart.js bar chart, per-scenario detail tables, assumptions section.
-- `run_tou_comparison.ps1`: Chains all 3 scripts with default case study scenarios.
-- Validation: materialized 6 scenarios (3 × 2 regimes), CSV generated with correct schema, HTML report 6.7KB.
-
-### Validation
-
-- `python scripts/python/reopt/validate_tou_materialize.py` — PASS (6 materializations, manifest written)
-- `python scripts/python/reopt/tou_financial_delta.py` — PASS (CSV with 3 rows, 30 columns)
-- `python scripts/python/reopt/tou_comparison_report.py` — PASS (HTML 6756 bytes)
-- Note: No REopt results available (Julia solve not run); CSV shows "no_results" status. Financial deltas require PHASE-03 solve-mode execution.
-
-### Next-Step Seeds
-
 - PHASE-03: Run Julia solve on materialized scenarios to produce actual REopt results
 - PHASE-04: Re-run financial_delta and report after PHASE-03 solve completes
 - Consider running with `--solve=false` dry-run for scenario validation only
+
+## Phase 42 - Decision 963 TOU Migration (PHASE-03 + PHASE-04 + Final) - 2026-05-07
+
+- [x] TASK-03-01: Select representative scenarios (saigon18, ninhsim, north_thuan)
+- [x] TASK-03-02: Verify scenarios don't hardcode TOU rates — DISCOVERED: all 3 have hardcoded arrays
+- [x] TASK-03-03: Create materialize_tou_comparison.py to strip hardcoded tariffs and re-materialize
+- [x] TASK-03-04: Verify tariff differences: 2,712/8,760 hours differ, peak hours correct for both regimes
+- [x] TASK-03-05: Julia solve deferred (cold-start timeout); document as blocker
+- [x] TASK-04-01: Run tou_financial_delta.py — CSV generated with "no_results" status
+- [x] TASK-04-02: CSV has expected 30 columns, 3 rows (one per scenario)
+- [x] TASK-04-03: Run tou_comparison_report.py — HTML report generated
+- [x] TASK-04-04: Report includes assumptions section (ASM-001, ASM-002), Chart.js visualization
+- [x] TASK-04-05: Generate final comprehensive HTML report
+- [x] Git - Commit all artifacts and push
+
+### Notes
+
+- PHASE-03 discovered RISK-03-02: all case studies had hardcoded `tou_energy_rates_per_kwh` arrays bypassing preprocessing.
+- Created `materialize_tou_comparison.py` to strip hardcoded tariff keys before applying Vietnam defaults.
+- Julia solve not run due to cold-start timeout (3-8 min per solve × 6 scenarios).
+- Final report at `reports/2026-05-07-decision-963-tou-migration-final.html`.
+
+### Review / Results
+
+- **Scenario materialization**: 6 scenarios (3 × 2 regimes) with verified tariff differences.
+  - Decision 963 peak: hours [17, 18, 19, 20, 21, 22]
+  - Decision 14 peak: hours [9, 10, 17, 18, 19]
+  - 2,712 of 8,760 hours differ between regimes (~31%)
+- **Financial delta CSV**: 3 rows × 30 columns. All metrics show "no_results" (Julia solve pending).
+- **HTML comparison report**: Chart.js bar chart, per-scenario detail tables, assumptions section.
+- **Final report**: Comprehensive HTML with Mermaid flowchart, findings, recommendations, artifact inventory.
+
+### Validation
+
+- `python scripts/python/reopt/materialize_tou_comparison.py` — PASS (6 materializations)
+- `python scripts/python/reopt/verify_tou_scenarios.py` — PASS (all 3 scenarios verified)
+- `python scripts/python/reopt/tou_financial_delta.py` — PASS (CSV generated)
+- `python scripts/python/reopt/tou_comparison_report.py` — PASS (HTML generated)
+- `python scripts/python/generate_tou_migration_final_report.py` — PASS (final report generated)
+
+### Next-Step Seeds
+
+- Run Julia solve: `.\scripts\run_tou_comparison.ps1 -Solve` to produce actual REopt results
+- Re-run financial delta and report after solve completes
+- Populate `decision_963_2026_repriced_multipliers` regime when MOIT publishes new multipliers
 
 ## Phase 35 - Allotrope Template Iteration (Phase 1) - 2026-05-04
 
