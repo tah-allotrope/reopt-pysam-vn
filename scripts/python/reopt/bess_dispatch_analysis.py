@@ -4,17 +4,17 @@ BESS dispatch analysis: REopt free-optimization vs Excel Option B (time-locked w
 Compares two dispatch strategies:
   - REopt (free optimization): BESS charges/discharges wherever the TOU spread
     is highest, with no hourly constraints. Already in the results.
-  - Excel Option B (time-locked): BESS charges during off-peak hours (hours 0-3,
-    22-23) and discharges only during peak hours (hours 9-10, 17-19 weekday).
-    This mirrors the fixed dispatch schedule used in the Excel model.
+  - Excel Option B (time-locked): BESS charges during off-peak hours and
+    discharges only during peak hours (weekday).
 
-The value difference between strategies is quantified by the tariff-period spread
-multiplied by the volume shifted.
+TOU period definitions are loaded from vn_tariff_2025.json (via --tariff or
+the data/vietnam/ manifest) so they track regime changes (Decision 963 vs 14).
 
 Usage:
-    python scripts/python/bess_dispatch_analysis.py \
+    python scripts/python/reopt/bess_dispatch_analysis.py \
         --reopt artifacts/results/saigon18/2026-03-23_scenario-a_fixed-sizing_evntou_reopt-results.json \
         --scenario scenarios/case_studies/saigon18/2026-03-20_scenario-a_fixed-sizing_evntou.json \
+        --config data/vietnam/vn_deal_defaults_2026.json \
         --output artifacts/reports/saigon18/2026-03-29_bess-dispatch-analysis.json
 """
 
@@ -23,12 +23,33 @@ import json
 from pathlib import Path
 
 
-EXCHANGE_RATE_VND_PER_USD = 26_000.0
+EXCHANGE_RATE_VND_PER_USD = 26_400.0
 
-# EVN TOU period definitions (hour-of-day, weekday only)
-# Consistent with vn_tariff_2025.json schedule
-PEAK_HOURS_WEEKDAY = {9, 10, 17, 18, 19}
-OFFPEAK_HOURS = {0, 1, 2, 3, 22, 23}
+DEFAULT_TARIFF_PATH = "data/vietnam/vn_tariff_2025.json"
+DEFAULT_ROUND_TRIP_EFFICIENCY = 0.92
+
+# Fallback TOU periods (Decision 963 windows) if tariff JSON not loadable
+PEAK_HOURS_WEEKDAY = {17, 18, 19, 20, 21, 22}
+OFFPEAK_HOURS = {0, 1, 2, 3, 4, 5}
+
+
+def load_tou_periods_from_tariff(tariff_path: str | None = None) -> tuple[set[int], set[int]]:
+    """Load peak and off-peak hour sets from vn_tariff_2025.json."""
+    path = Path(tariff_path or DEFAULT_TARIFF_PATH)
+    if not path.exists():
+        return set(PEAK_HOURS_WEEKDAY), set(OFFPEAK_HOURS)
+    tariff = json.loads(path.read_text(encoding="utf-8"))
+    schedule = tariff.get("tou_schedule", {}).get("weekday", {})
+    peak = set(schedule.get("peak_hours", list(PEAK_HOURS_WEEKDAY)))
+    offpeak = set(schedule.get("offpeak_hours", list(OFFPEAK_HOURS)))
+    return peak, offpeak
+
+
+def load_deal_config(config_path: str | None) -> dict:
+    """Load deal defaults from JSON config. Returns empty dict if no path."""
+    if not config_path:
+        return {}
+    return json.loads(Path(config_path).read_text(encoding="utf-8"))
 
 
 def _pad_to_8760(series: list[float]) -> list[float]:

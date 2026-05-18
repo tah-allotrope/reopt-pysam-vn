@@ -1,15 +1,15 @@
 """
-Compute Saigon18 DPPA CfD settlement revenue from REopt dispatch.
+Compute DPPA CfD settlement revenue from REopt dispatch.
 
-Scenario D reuses the fixed-size REopt dispatch from the EVN TOU solve and then
-adds a DPPA top-up settlement in Python because REopt does not model Vietnam's
+Reuses the fixed-size REopt dispatch from the EVN TOU solve and then adds a
+DPPA top-up settlement in Python because REopt does not model Vietnam's
 contract-for-difference structure directly.
 
 Usage:
     python scripts/python/reopt/dppa_settlement.py \
         --extracted data/interim/saigon18/2026-03-20_saigon18_extracted_inputs.json \
         --reopt artifacts/results/saigon18/2026-03-20_scenario-d_dppa-baseline_reopt-results.json \
-        --strike-vnd 1100 --contract-type private_wire \
+        --config data/vietnam/vn_deal_defaults_2026.json \
         --output artifacts/reports/saigon18/2026-03-26_scenario-d_dppa-settlement.json
 """
 
@@ -19,13 +19,20 @@ import warnings
 from pathlib import Path
 
 
-EXCHANGE_RATE_VND_PER_USD = 26_000.0
+EXCHANGE_RATE_VND_PER_USD = 26_400.0
 DEFAULT_ANALYSIS_YEARS = 20
 DEFAULT_ESCALATION = 0.05
 DEFAULT_DISCOUNT_RATE = 0.08
 DEFAULT_CONTRACT_TYPE = "private_wire"
 DEFAULT_DELIVERY_FACTOR = 0.98
 PRIVATE_WIRE_SOUTH_CEILING_VND_PER_KWH = 1_149.86
+
+
+def load_deal_config(config_path: str | None) -> dict:
+    """Load deal defaults from JSON config. Returns empty dict if no path."""
+    if not config_path:
+        return {}
+    return json.loads(Path(config_path).read_text(encoding="utf-8"))
 
 
 def _pad_to_8760(series: list[float]) -> list[float]:
@@ -97,6 +104,7 @@ def compute_dppa_annual_revenue(
     strike_price_vnd_per_kwh: float,
     delivery_factor: float = DEFAULT_DELIVERY_FACTOR,
     contract_type: str = DEFAULT_CONTRACT_TYPE,
+    exchange_rate_vnd_per_usd: float = EXCHANGE_RATE_VND_PER_USD,
 ) -> dict:
     """Compute one year of DPPA CfD settlement revenue.
 
@@ -166,7 +174,7 @@ def compute_dppa_annual_revenue(
         "delivery_factor": round(delivery_factor, 6),
         "total_settlement_vnd": round(total_settlement_vnd, 0),
         "total_settlement_usd": round(
-            total_settlement_vnd / EXCHANGE_RATE_VND_PER_USD, 2
+            total_settlement_vnd / exchange_rate_vnd_per_usd, 2
         ),
         "total_q_kwh": round(total_q_kwh, 0),
         "total_q_mwh": round(total_q_kwh / 1_000.0, 2),
@@ -248,7 +256,7 @@ def project_dppa_cashflows(
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Compute Saigon18 DPPA settlement revenue"
+        description="Compute DPPA CfD settlement revenue from REopt dispatch"
     )
     parser.add_argument(
         "--extracted",
@@ -256,43 +264,48 @@ def main():
         help="Extracted Excel data JSON (contains FMP series)",
     )
     parser.add_argument(
-        "--reopt", required=True, help="REopt results JSON (Scenario D)"
+        "--reopt", required=True, help="REopt results JSON"
+    )
+    parser.add_argument(
+        "--config",
+        help="Deal defaults JSON (e.g. data/vietnam/vn_deal_defaults_2026.json). "
+        "CLI args override config values.",
     )
     parser.add_argument(
         "--strike-vnd",
         type=float,
-        default=1_100.0,
+        default=None,
         dest="strike_vnd",
-        help="DPPA strike price in VND/kWh (default: 1100 — private-wire south-ceiling assumption)",
+        help="DPPA strike price in VND/kWh (default: 1100)",
     )
     parser.add_argument(
         "--contract-type",
         choices=["private_wire", "grid_connected"],
-        default=DEFAULT_CONTRACT_TYPE,
-        help="DPPA contract structure used for legal framing of the strike price",
+        default=None,
+        help="DPPA contract structure",
     )
     parser.add_argument(
         "--delivery-factor",
         type=float,
-        default=DEFAULT_DELIVERY_FACTOR,
+        default=None,
         help="Net multiplier applied to hourly buyer delivery before settlement",
     )
     parser.add_argument(
         "--analysis-years",
         type=int,
-        default=DEFAULT_ANALYSIS_YEARS,
+        default=None,
         help="Years used for settlement NPV projection",
     )
     parser.add_argument(
         "--escalation-rate",
         type=float,
-        default=DEFAULT_ESCALATION,
+        default=None,
         help="Annual escalation applied to settlement cash flows",
     )
     parser.add_argument(
         "--discount-rate",
         type=float,
-        default=DEFAULT_DISCOUNT_RATE,
+        default=None,
         help="Discount rate used for settlement NPV",
     )
     parser.add_argument(
@@ -301,6 +314,19 @@ def main():
         help="Output JSON path",
     )
     args = parser.parse_args()
+
+    cfg = load_deal_config(args.config)
+    dppa_cfg = cfg.get("dppa", {})
+    analysis_cfg = cfg.get("analysis", {})
+    xr_cfg = cfg.get("exchange_rate", {})
+
+    strike_vnd = args.strike_vnd if args.strike_vnd is not None else dppa_cfg.get("strike_vnd_per_kwh", 1100.0)
+    contract_type = args.contract_type or dppa_cfg.get("contract_type", DEFAULT_CONTRACT_TYPE)
+    delivery_factor = args.delivery_factor if args.delivery_factor is not None else dppa_cfg.get("delivery_factor", DEFAULT_DELIVERY_FACTOR)
+    analysis_years = args.analysis_years if args.analysis_years is not None else analysis_cfg.get("analysis_years", DEFAULT_ANALYSIS_YEARS)
+    escalation_rate = args.escalation_rate if args.escalation_rate is not None else dppa_cfg.get("escalation_rate", DEFAULT_ESCALATION)
+    discount_rate = args.discount_rate if args.discount_rate is not None else analysis_cfg.get("discount_rate", DEFAULT_DISCOUNT_RATE)
+    exchange_rate = xr_cfg.get("vnd_per_usd", EXCHANGE_RATE_VND_PER_USD)
 
     extracted = json.loads(Path(args.extracted).read_text(encoding="utf-8"))
     results = json.loads(Path(args.reopt).read_text(encoding="utf-8"))
@@ -312,20 +338,23 @@ def main():
     settlement = compute_dppa_annual_revenue(
         q_delivered_kw=q_delivered,
         fmp_vnd_per_kwh=fmp_vnd_per_kwh,
-        strike_price_vnd_per_kwh=args.strike_vnd,
-        delivery_factor=args.delivery_factor,
-        contract_type=args.contract_type,
+        strike_price_vnd_per_kwh=strike_vnd,
+        delivery_factor=delivery_factor,
+        contract_type=contract_type,
+        exchange_rate_vnd_per_usd=exchange_rate,
     )
     settlement_projection = project_dppa_cashflows(
         year_one_settlement_usd=settlement["total_settlement_usd"],
-        analysis_years=args.analysis_years,
-        escalation_rate=args.escalation_rate,
-        discount_rate=args.discount_rate,
+        analysis_years=analysis_years,
+        escalation_rate=escalation_rate,
+        discount_rate=discount_rate,
     )
 
     output = {
         **settlement,
         **settlement_projection,
+        "exchange_rate_vnd_per_usd": exchange_rate,
+        "config_source": args.config or "built-in defaults",
         "fmp_units_used": fmp_units_used,
         "source_reopt": str(Path(args.reopt)),
         "source_extracted": str(Path(args.extracted)),
