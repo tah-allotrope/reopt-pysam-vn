@@ -1889,3 +1889,43 @@ artifacts/reports/saigon18/
 - `reports/<date>-dppa-case-1-phase-b.html`
 - `reports/<date>-dppa-case-1-phase-c.html`
 - `reports/<date>-dppa-case-1-final.html`
+
+
+---
+
+## Validation Sprint - Operational Decision Engine (PHASE-01 to PHASE-04) - 2026-05-19
+
+- [x] PHASE-01: Fix bounded-opt REPO_ROOT, verify imports, 107 tests PASS
+- [x] PHASE-02: API solve pipeline validated — saigon18 D963 (NPV=$4.93M), D14 (NPV=$12.27M)
+- [x] PHASE-03: Sysimage attempt — FAILED (ArchGDAL precompilation bug). Pipeline PS5.1 fixed, stages 3-5 validated
+- [x] PHASE-04: Baselines tightened IRR [21.5%, 24.0%], E2E test fixed, Julia test fixed
+
+### Validation Results
+
+| Metric | Result |
+|---|---|
+| API solve status | optimal (2/2 scenarios) |
+| Sysimage build | FAILED — ArchGDAL method overwriting |
+| Pipeline dry-run | PASS |
+| Equity IRR (saigon18 D963) | 17.1% (vs 19.4% Excel target) |
+| BESS arbitrage (D963) | $1.84M/yr |
+| Sensitivity sweep | 455 rows, IRR -21.4% to -18.8% |
+| E2E test (tight baseline) | PASS (IRR 22.7%) |
+| Python unit + data validation | 107/107 PASS |
+| Julia unit tests | 166/167 PASS (1 regime_id fixed) |
+| Layer 3-4 tests | Not run (cold-start timeout, sprint scope) |
+| CF benchmark (PySAM) | Skipped (not in global Python) |
+
+### Commits
+
+- `801cb87` PHASE-01: bounded-opt fix, import validation
+- `06a2638` PHASE-02: API solve pipeline validated
+- `0a5a855` PHASE-03: sysimage attempt, pipeline fix
+- `bb0071e` PHASE-04: baselines tightened, test fixes
+
+### Reports
+
+- `reports/2026-05-19-validation-sprint-phase-01.html`
+- `reports/2026-05-19-validation-sprint-phase-02.html`
+- `reports/2026-05-19-validation-sprint-phase-03.html`
+- `reports/2026-05-19-validation-sprint-phase-04.html`
