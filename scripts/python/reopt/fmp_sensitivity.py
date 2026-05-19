@@ -262,18 +262,7 @@ def main():
             exchange_rate=exchange_rate,
         )
 
-        combined_ebitda = [
-            b + s
-            for b, s in zip(
-                base_ebitda,
-                settlement["year_one_settlement_usd"]
-                * (
-                    (1 + ESCALATION_RATE) ** y
-                    for y in range(ANALYSIS_YEARS)
-                ),
-            )
-        ]
-        # Recompute: settlement creates a flat series from year-1 value
+        # Build settlement series: escalate year-1 value annually
         settlement_series = [
             settlement["year_one_settlement_usd"] * (1 + ESCALATION_RATE) ** y
             for y in range(ANALYSIS_YEARS)

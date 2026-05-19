@@ -39,21 +39,27 @@ def _extract_base_ebitda(results: dict, analysis_years: int = DEFAULT_ANALYSIS_Y
     fin = results.get("Financial", {})
     npv = fin.get("npv", 0) or 0
     lcc = fin.get("lcc", 0) or 0
-    capital_cost = fin.get("initial_capital_costs", 0) or 0
 
-    et = results.get("ElectricTariff", {})
-    base_cost = et.get("year_one_energy_cost_before", 0) or 0
-    with_solar = et.get("year_one_energy_cost_after", 0) or 0
+    year_one_savings = fin.get("year_one_total_operating_cost_savings_before_tax")
 
-    if base_cost and with_solar:
-        year_one_savings = base_cost - with_solar
-    elif npv != 0:
-        year_one_savings = abs(npv) / max(analysis_years, 1)
-    elif lcc != 0:
-        bau_lcc = fin.get("lcc_bau", lcc * 1.5)
-        year_one_savings = abs(lcc - bau_lcc) / max(analysis_years, 1)
-    else:
-        year_one_savings = 0.0
+    if not year_one_savings:
+        et = results.get("ElectricTariff", {})
+        bau = et.get("year_one_energy_cost_before_tax_bau", 0) or 0
+        opt = et.get("year_one_energy_cost_before_tax", 0) or 0
+        if bau and opt:
+            year_one_savings = bau - opt
+        else:
+            bau = et.get("year_one_energy_cost_before", 0) or 0
+            opt = et.get("year_one_energy_cost_after", 0) or 0
+            if bau and opt:
+                year_one_savings = bau - opt
+            elif npv != 0:
+                year_one_savings = abs(npv) / max(analysis_years, 1)
+            elif lcc != 0:
+                bau_lcc = fin.get("lcc_bau", lcc * 1.5)
+                year_one_savings = abs(lcc - bau_lcc) / max(analysis_years, 1)
+            else:
+                year_one_savings = 0.0
 
     return [
         year_one_savings * (1 + DEFAULT_ESCALATION_RATE) ** y

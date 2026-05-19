@@ -227,7 +227,7 @@ end
 
     @testset "build_vietnam_tariff — Decision 963 removes morning peak" begin
         tariff = build_vietnam_tariff(VN, "industrial", "medium_voltage_22kv_to_110kv";
-                                      regime_id="decision_963_2026_windows_only", year=2025)
+                                      regime_id="decision_963_2026_current", year=2025)
         monday_rates = tariff["tou_energy_rates_per_kwh"][1:24]
         @test monday_rates[10] ≈ monday_rates[9] atol=1e-10
         @test monday_rates[18] > monday_rates[17]
