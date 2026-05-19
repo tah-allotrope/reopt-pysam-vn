@@ -1,11 +1,12 @@
 ---
 title: "Operational Decision Engine: REopt-PySAM-VN Practical Refinements"
 date: "2026-05-18"
-status: "draft"
+status: "ready"
 request: "Transform reopt-pysam-vn from research-grade toolkit to operational decision engine for live deal evaluation at Allotrope VC"
 plan_type: "multi-phase"
 research_inputs:
   - "research/2026-05-18_practical-refinements-operational-engine.md"
+  - "research/2026-05-18_operational-decision-engine-next.md"
   - "research/2026-05-07_vietnam-tou-tariff-implications.md"
   - "research/2026-04-26_commercial-product-ideas.md"
 ---
@@ -35,11 +36,12 @@ Transform the repo from a research toolkit with materialized-but-unsolved scenar
 
 - `research/2026-05-18_practical-refinements-operational-engine.md` — Identifies PackageCompiler sysimage as best solve-pipeline fix (1-2 day effort, eliminates 30-60s JIT). Documents NREL REopt API as fallback. Confirms no public FMP data (use VND 1,400-2,000 sensitivity range). Cites 50MW Binh Thuan benchmark (16.49% CF, $5.7M revenue shortfall vs model). Notes Circular 62/2025 BESS tariff framework and single-cycle economics under Decision 963.
 - `research/2026-05-07_vietnam-tou-tariff-implications.md` — Confirms Decision 963 as legally active regime. Documents half-hour boundary approximation error (~2.8% at 17:30). Notes multiplier uncertainty (MOIT has not confirmed repricing). Identifies code action items all completed in Phase 40-42.
+- `research/2026-05-18_operational-decision-engine-next.md` — Confirms PackageCompiler sysimage feasibility (~200-400MB, well under 2GB limit). Identifies NREL API domain migration to `developer.nlr.gov` (old `nrel.gov` domain ceases May 29, 2026). Discovers `vn_deal_defaults_2026.json` already exists in `data/vietnam/` and is registered in `manifest.json`. Finds stale hardcoded path bug in `bounded-opt` Julia scripts (`reopt-pysam-vn` vs `reopt-pysam`). Recommends API fallback first (reuse existing `preprocess.py` `run_vietnam_reopt()`), sysimage second.
 - `research/2026-04-26_commercial-product-ideas.md` — Idea 2 (TOU Regime Engine) is partially implemented via regime registry + TOU comparison workflow. This plan completes the "run and report" gap that prevents Idea 2 from producing quantitative results. Idea 3 (Bankability Studio) depends on parameterized financial modules delivered in PHASE-02 of this plan.
 
 ## Assumptions and Constraints
 
-- **ASM-001:** Julia 1.10+ and PackageCompiler.jl are compatible with REopt.jl v0.56.4 and HiGHS. PackageCompiler sysimage build should take 5-15 minutes and produce a reusable artifact.
+- **ASM-001:** Julia 1.10+ and PackageCompiler.jl are compatible with REopt.jl v0.56.4 and HiGHS. PackageCompiler sysimage build should take 5-15 minutes and produce ~200-400MB artifact (well under 2GB limit per PackageCompiler Issue #1019). Avoid `filter_stdlibs` on Windows (PackageCompiler Issue #914).
 - **ASM-002:** NREL REopt API (v3) accepts the same scenario JSON schema used by local Julia solve. Rate limits may constrain batch validation runs but individual scenario validation is feasible.
 - **ASM-003:** Decision 14 multipliers apply unchanged under Decision 963 windows (the `decision_963_2026_windows_only` regime). If MOIT publishes repriced multipliers, the `decision_963_2026_repriced_multipliers` regime placeholder in `vn_regime_registry_2026.json` should be populated.
 - **ASM-004:** FMP central estimate of VND 1,700/kWh (from DPPA buyer guide) with +/-20% sensitivity range (VND 1,400-2,000) is adequate for deal screening. Baringa subscription is not available.
@@ -70,10 +72,11 @@ Eliminate the Julia JIT cold-start bottleneck and produce the first actual REopt
 - [ ] TASK-01-03: Create `scripts/build_sysimage.ps1` PowerShell wrapper that invokes the sysimage build and stores the artifact at `artifacts/sysimage/reopt_sysimage.dll` (Windows) or `.so` (Linux)
 - [ ] TASK-01-04: Update `scripts/julia/run_vietnam_scenario.jl` to accept `--sysimage <path>` flag and document usage in docstring. Default behavior unchanged (no sysimage = standard JIT).
 - [ ] TASK-01-05: Create `scripts/run_solve.ps1` — wrapper that invokes Julia with sysimage flag, accepts `--scenario` and `--output-dir` arguments, validates input exists before invoking Julia
-- [ ] TASK-01-06: Wire NREL REopt API as validation fallback — create `scripts/python/reopt/solve_via_api.py` that POSTs scenario JSON to `https://developer.nrel.gov/api/reopt/v3/job`, polls for results, and writes output in the same schema as local Julia solve
-- [ ] TASK-01-07: Run all 6 TOU comparison scenarios (`scenarios/generated/tou_comparison/`) through the solve pipeline. Store results in `artifacts/results/tou_comparison/`
-- [ ] TASK-01-08: Re-run `scripts/python/reopt/tou_financial_delta.py` and `tou_comparison_report.py` with actual solve results to populate the financial delta CSV and HTML report
-- [ ] TASK-01-09: Run existing case study scenarios (saigon18, ninhsim, north_thuan) and store results
+- [ ] TASK-01-06: Wire NREL REopt API as validation fallback — create `scripts/python/reopt/solve_via_api.py` that wraps existing `run_vietnam_reopt()` from `src/python/reopt_pysam_vn/reopt/preprocess.py` (already POSTs to `https://developer.nlr.gov/api/reopt/stable`). Must use `nlr.gov` domain — old `nrel.gov` ceases May 29, 2026. Poll for results and write output in the same schema as local Julia solve.
+- [ ] TASK-01-07: Fix stale hardcoded path in bounded-opt Julia scripts — `scripts/julia/run_bounded_opt_22kv_solve.jl` and `scripts/julia/run_bounded_opt_solve.jl` have `REPO_ROOT = raw"C:\Users\tukum\Downloads\reopt-pysam-vn"` which should be `reopt-pysam`. Replace with dynamic `@__DIR__`-based path resolution.
+- [ ] TASK-01-08: Run all 6 TOU comparison scenarios (`scenarios/generated/tou_comparison/`) through the solve pipeline. Store results in `artifacts/results/tou_comparison/`
+- [ ] TASK-01-09: Re-run `scripts/python/reopt/tou_financial_delta.py` and `tou_comparison_report.py` with actual solve results to populate the financial delta CSV and HTML report
+- [ ] TASK-01-10: Run existing case study scenarios (saigon18, ninhsim, north_thuan) and store results
 
 **Files / Surfaces**
 - `Project.toml` — Add PackageCompiler dependency
@@ -84,6 +87,8 @@ Eliminate the Julia JIT cold-start bottleneck and produce the first actual REopt
 - `scripts/python/reopt/solve_via_api.py` — New: NREL API fallback solver
 - `artifacts/sysimage/` — New: sysimage artifact storage
 - `artifacts/results/tou_comparison/` — Solve results for TOU scenarios
+- `scripts/julia/run_bounded_opt_22kv_solve.jl` — Fix stale REPO_ROOT path
+- `scripts/julia/run_bounded_opt_solve.jl` — Fix stale REPO_ROOT path
 - `scenarios/generated/tou_comparison/` — Input scenarios (already materialized)
 
 **Dependencies**
@@ -109,17 +114,17 @@ Eliminate the Julia JIT cold-start bottleneck and produce the first actual REopt
 Replace hardcoded financial constants with CLI arguments and a shared config file so that sensitivity sweeps across strike price, debt terms, and tariff regime can be run without code changes.
 
 **Tasks**
-- [ ] TASK-02-01: Create `data/vietnam/vn_deal_defaults_2026.json` — shared financial config with sections for `debt_terms` (fraction, rate, tenor), `analysis` (years, discount_rate, escalation), `dppa` (strike_vnd, delivery_factor, contract_type), `exchange_rate`. Include reasonable defaults matching current hardcoded values.
+- [ ] TASK-02-01: Audit and extend existing `data/vietnam/vn_deal_defaults_2026.json` (already exists and is registered in `manifest.json`) — verify it has sections for `debt_terms` (fraction, rate, tenor), `analysis` (years, discount_rate, escalation), `dppa` (strike_vnd, delivery_factor, contract_type), `exchange_rate`. Add any missing keys with defaults matching current hardcoded values in the financial modules.
 - [ ] TASK-02-02: Update `scripts/python/reopt/equity_irr.py` — add `--config` CLI arg that loads `vn_deal_defaults_2026.json`; keep existing CLI args as overrides. Remove hardcoded `TOTAL_CAPEX_USD`, `DEBT_FRACTION`, `INTEREST_RATE` module-level constants; move to `compute_equity_irr()` parameter defaults loaded from config.
 - [ ] TASK-02-03: Update `scripts/python/reopt/dppa_settlement.py` — add `--config` CLI arg; replace `EXCHANGE_RATE_VND_PER_USD` hardcode (line 22) with config value; add FMP sensitivity range parameter (`--fmp-range VND_MIN VND_MAX VND_STEP`).
 - [ ] TASK-02-04: Update `scripts/python/reopt/bess_dispatch_analysis.py` — replace hardcoded `PEAK_HOURS_WEEKDAY` (line 30) and `OFFPEAK_HOURS` (line 31) with values loaded from `vn_tariff_2025.json` via manifest; replace `EXCHANGE_RATE_VND_PER_USD` (line 26) with config; replace `efficiency = 0.92` (line 88) with config.
 - [ ] TASK-02-05: Create `scripts/python/reopt/sensitivity_sweep.py` — given a solved scenario, sweep across: strike price (VND 800-1,400, step 50), debt fraction (60%-80%, step 5%), interest rate (7%-10%, step 0.5%), FMP (VND 1,400-2,000, step 100). Output CSV matrix of equity IRR × parameter combinations.
-- [ ] TASK-02-06: Add `data/vietnam/vn_deal_defaults_2026.json` to `data/vietnam/manifest.json` registry
+- [ ] TASK-02-06: Verify `data/vietnam/vn_deal_defaults_2026.json` is properly registered in `data/vietnam/manifest.json` (already has `deal_defaults` key — confirm schema matches extended config)
 - [ ] TASK-02-07: Update unit tests to verify config loading and CLI override behavior
 
 **Files / Surfaces**
-- `data/vietnam/vn_deal_defaults_2026.json` — New: shared financial config
-- `data/vietnam/manifest.json` — Add deal defaults pointer
+- `data/vietnam/vn_deal_defaults_2026.json` — Already exists; audit and extend with missing keys
+- `data/vietnam/manifest.json` — Already has `deal_defaults` key; verify completeness
 - `scripts/python/reopt/equity_irr.py` — Parameterize constants (lines 32-37)
 - `scripts/python/reopt/dppa_settlement.py` — Parameterize constants (line 22), add FMP sweep
 - `scripts/python/reopt/bess_dispatch_analysis.py` — Parameterize constants (lines 26, 30-31, 88)
