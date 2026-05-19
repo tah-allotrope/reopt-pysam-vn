@@ -5,7 +5,7 @@ using JuMP
 using HiGHS
 using REopt
 
-const REPO_ROOT = raw"C:\Users\tukum\Downloads\reopt-pysam-vn"
+const REPO_ROOT = abspath(joinpath(@__DIR__, "..", ".."))
 include(joinpath(REPO_ROOT, "src", "julia", "REoptVietnam.jl"))
 using .REoptVietnam
 
