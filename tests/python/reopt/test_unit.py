@@ -747,3 +747,84 @@ class TestResolveVietnamRegime:
         assert d["ElectricStorage"]["installed_cost_constant"] == 0
         assert d["Financial"]["owner_discount_rate_fraction"] == 0.08
 
+
+class TestDealDefaultsConfig:
+    def test_config_file_exists(self):
+        config_path = REPO_ROOT / "data" / "vietnam" / "vn_deal_defaults_2026.json"
+        assert config_path.exists(), "vn_deal_defaults_2026.json not found"
+
+    def test_config_file_is_valid_json(self):
+        config_path = REPO_ROOT / "data" / "vietnam" / "vn_deal_defaults_2026.json"
+        import json
+        cfg = json.loads(config_path.read_text(encoding="utf-8"))
+        assert "exchange_rate" in cfg
+        assert "debt_terms" in cfg
+        assert "analysis" in cfg
+        assert "dppa" in cfg
+        assert "bess" in cfg
+        assert "sensitivity_ranges" in cfg
+
+    def test_config_debt_terms_are_reasonable(self):
+        import json
+        config_path = REPO_ROOT / "data" / "vietnam" / "vn_deal_defaults_2026.json"
+        cfg = json.loads(config_path.read_text(encoding="utf-8"))
+        debt = cfg["debt_terms"]
+        assert 0.0 < debt["debt_fraction"] < 1.0
+        assert 0.0 < debt["interest_rate"] < 0.20
+        assert debt["debt_tenor_years"] >= 1
+
+    def test_config_exchange_rate_is_reasonable(self):
+        import json
+        config_path = REPO_ROOT / "data" / "vietnam" / "vn_deal_defaults_2026.json"
+        cfg = json.loads(config_path.read_text(encoding="utf-8"))
+        rate = cfg["exchange_rate"]["vnd_per_usd"]
+        assert 20_000 <= rate <= 30_000
+
+    def test_manifest_registers_deal_defaults(self):
+        manifest_path = REPO_ROOT / "data" / "vietnam" / "manifest.json"
+        import json
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        assert "deal_defaults" in manifest
+        assert manifest["deal_defaults"] == "vn_deal_defaults_2026.json"
+
+
+class TestSensitivitySweep:
+    def test_range_f_utility(self):
+        from reopt_pysam_vn.reopt.preprocess import load_vietnam_data
+        vn = load_vietnam_data()
+        cfg = vn.financials
+        assert cfg is not None
+        assert "standard" in cfg
+        assert "owner_discount_rate_fraction" in cfg["standard"]
+
+    def test_extract_ebitda_from_minimal_results(self):
+        minimal_results = {
+            "Financial": {
+                "lcc": 1_000_000,
+                "npv": 200_000,
+                "initial_capital_costs": 500_000,
+            },
+            "ElectricTariff": {
+                "year_one_energy_cost_before": 100_000,
+                "year_one_energy_cost_after": 80_000,
+            },
+        }
+        from scripts.python.reopt.sensitivity_sweep import extract_base_ebitda
+        ebitda = extract_base_ebitda(minimal_results, analysis_years=20)
+        assert len(ebitda) == 20
+        assert ebitda[0] > 0
+
+    def test_compute_equity_irr_returns_dict(self):
+        from scripts.python.reopt.sensitivity_sweep import compute_equity_irr
+        result = compute_equity_irr(
+            ebitda_series=[1_000_000] * 20,
+            total_capex=49_510_000,
+            debt_fraction=0.70,
+            interest_rate=0.085,
+            debt_tenor_years=10,
+            analysis_years=20,
+        )
+        assert "equity_irr" in result
+        assert "equity_npv" in result
+        assert result["equity_investment"] > 0
+

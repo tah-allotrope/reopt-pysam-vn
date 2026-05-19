@@ -1,13 +1,14 @@
 <#
 .SYNOPSIS
     REopt PySAM VN - Master Test Runner.
-    Runs all 4 test layers in order with summary report.
+    Runs all 5 test layers in order with summary report.
 
 .DESCRIPTION
     Layer 1: Data validation     - fast, no deps
     Layer 2: Unit tests          - fast, no solver
     Layer 3: Cross-validation    - fast, no solver
     Layer 4: Integration tests   - slow, needs solver + API key
+    Layer 5: Financial E2E       - optional, equity IRR / NPV validation baselines (opt-in)
 
 .PARAMETER SkipLayer4
     Skip Layer 4 solver-dependent integration tests. Useful for quick CI checks.
@@ -16,7 +17,11 @@
     Run Layer 4 in smoke-only mode - Scenario construction, no solver.
 
 .PARAMETER Layer
-    Run only a specific layer: 1, 2, 3, or 4.
+    Run only a specific layer: 1, 2, 3, 4, or 5.
+
+.PARAMETER IncludeFinancial
+    Include Layer 5 (financial E2E / capacity factor benchmark) tests. These are
+    opt-in because they depend on example result files and optionally PySAM.
 
 .PARAMETER JuliaTimeoutSeconds
     Kill a Julia test process if it exceeds this many seconds (default: 0 = no limit).
@@ -28,14 +33,19 @@
     .\tests\run_all_tests.ps1 -SkipLayer4
     .\tests\run_all_tests.ps1 -SmokeOnly
     .\tests\run_all_tests.ps1 -Layer 2
+    .\tests\run_all_tests.ps1 -IncludeFinancial
+    .\tests\run_all_tests.ps1 -Layer 5
     .\tests\run_all_tests.ps1 -SmokeOnly -JuliaTimeoutSeconds 1200
 #>
 
 param(
     [switch]$SkipLayer4,
     [switch]$SmokeOnly,
-    [ValidateSet('1','2','3','4')]
+    [ValidateSet('1','2','3','4','5')]
     [string]$Layer,
+    # Include Layer 5 (financial E2E + capacity factor benchmarks).
+    # These are opt-in because they depend on example result files and optionally PySAM.
+    [switch]$IncludeFinancial,
     # Maximum seconds to wait for a single Julia test process.
     # Julia cold-start (first run, no sysimage) for REopt.jl can take 3-8 min.
     # Set 0 to wait indefinitely (original behaviour).
@@ -181,16 +191,18 @@ Write-Host '  REopt PySAM VN - Test Suite' -ForegroundColor White
 Write-Host ('  Repo: ' + $script:REPO_ROOT) -ForegroundColor DarkGray
 Write-Host ''
 
-$run1 = $true; $run2 = $true; $run3 = $true; $run4 = $true
+$run1 = $true; $run2 = $true; $run3 = $true; $run4 = $true; $run5 = $false
 if ($Layer) {
-    $run1 = $false; $run2 = $false; $run3 = $false; $run4 = $false
+    $run1 = $false; $run2 = $false; $run3 = $false; $run4 = $false; $run5 = $false
     switch ($Layer) {
         '1' { $run1 = $true }
         '2' { $run2 = $true }
         '3' { $run3 = $true }
         '4' { $run4 = $true }
+        '5' { $run5 = $true }
     }
 }
+if ($IncludeFinancial) { $run5 = $true }
 if ($SkipLayer4) { $run4 = $false }
 
 # ===== LAYER 1: Data Validation ===========================================
@@ -247,6 +259,17 @@ if ($run4) {
         Invoke-Pytest -TestName 'L4-Python Saigon18 regression tests' `
             -Script 'tests\python\integration\test_saigon18_phase3.py'
     }
+}
+
+# ===== LAYER 5: Financial E2E (Optional) ====================================
+if ($run5) {
+    Show-Banner 'Layer 5: Financial E2E / Capacity Factor Benchmarks'
+
+    Invoke-Pytest -TestName 'L5-Python Financial E2E pipeline' `
+        -Script 'tests\python\integration\test_e2e_financial.py'
+
+    Invoke-Pytest -TestName 'L5-Python PVWatts capacity factor benchmark' `
+        -Script 'tests\python\integration\test_capacity_factor_benchmark.py'
 }
 
 # ===== SUMMARY =============================================================

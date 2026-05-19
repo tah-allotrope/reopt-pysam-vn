@@ -6,6 +6,8 @@ Usage:
     julia --project --compile=min scripts/julia/run_vietnam_scenario.jl --no-solve
     julia --project --compile=min scripts/julia/run_vietnam_scenario.jl \\
         --scenario scenarios/case_studies/saigon18/2026-03-20_scenario-a_fixed-sizing_evntou.json --no-solve
+    julia --sysimage=artifacts/sysimage/reopt_sysimage.dll --project \\
+        scripts/julia/run_vietnam_scenario.jl --scenario <path>
 
 Flags:
     --no-solve            Build and validate Scenario() but skip the HiGHS solver.
@@ -16,6 +18,9 @@ Flags:
                           Vietnam preprocessing applied at runtime.
     --output-dir <path>   Write results into the provided directory instead of the legacy
                           case-study routing logic.
+    --sysimage <path>     Path to a PackageCompiler sysimage for faster startup.
+                          Note: this flag must come BEFORE --project or be passed via
+                          the Julia CLI: julia --sysimage=<path> --project ...
 
 Environment (required for resource data fetch from NREL):
     NREL_DEVELOPER_API_KEY   your NREL developer API key
