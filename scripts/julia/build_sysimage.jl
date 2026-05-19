@@ -79,14 +79,22 @@ end
 println("Building sysimage with packages: $(join(pkgs, ", "))")
 println("Output directory: $SYSLIB")
 
-create_sysimage(
-    pkgs;
-    sysimage_path = joinpath(SYSLIB, "reopt_sysimage"),
-    precompile_execution_file = precompile_file,
-    replace_default = false,
-    # Avoid filter_stdlibs on Windows (Issue #914)
-    filter_stdlibs = Sys.iswindows() ? false : true,
-)
+if precompile_file !== nothing
+    create_sysimage(
+        pkgs;
+        sysimage_path = joinpath(SYSLIB, "reopt_sysimage"),
+        precompile_execution_file = precompile_file,
+        filter_stdlibs = Sys.iswindows() ? false : true,
+        cpu_target = "native",
+    )
+else
+    create_sysimage(
+        pkgs;
+        sysimage_path = joinpath(SYSLIB, "reopt_sysimage"),
+        filter_stdlibs = Sys.iswindows() ? false : true,
+        cpu_target = "native",
+    )
+end
 
 if precompile_file !== nothing && isfile(precompile_file)
     rm(precompile_file)

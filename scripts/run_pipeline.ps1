@@ -3,8 +3,8 @@
 Master orchestration pipeline for a complete case study evaluation.
 
 .DESCRIPTION
-Runs a case study through 5 stages: materialize → solve → financial analysis
-→ BESS dispatch → report generation. Stages are cached via .done markers;
+Runs a case study through 5 stages: materialize -> solve -> financial analysis
+-> BESS dispatch -> report generation. Stages are cached via .done markers;
 re-runs skip cached stages unless --force is used.
 
 .PARAMETER CaseStudy
@@ -30,8 +30,6 @@ Use NREL API instead of local Julia for solve.
 
 .EXAMPLE
 .\scripts\run_pipeline.ps1 --case-study saigon18 --regime decision_963_2026_current
-.\scripts\run_pipeline.ps1 --case-study ninhsim --regime decision_14_2025_legacy --skip-solve
-.\scripts\run_pipeline.ps1 --case-study north_thuan --regime decision_963_2026_current --dry-run
 #>
 
 param(
@@ -49,7 +47,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 $RepoRoot = Split-Path -Parent $PSScriptRoot
-$CacheDir = Join-Path $RepoRoot "artifacts" "pipeline_cache"
+$CacheDir = Join-Path $RepoRoot "pipeline_cache" | Join-Path -ChildPath "artifacts"
+$CacheDir = Join-Path $RepoRoot "artifacts" | Join-Path -ChildPath "pipeline_cache"
 $Timestamp = Get-Date -Format "yyyy-MM-dd_HHmmss"
 $CaseSlug = "$CaseStudy-$Regime"
 
@@ -58,18 +57,23 @@ if ($Force -and (Test-Path $CacheDir)) {
     Remove-Item -Path (Join-Path $CacheDir "$CaseSlug*") -ErrorAction SilentlyContinue
 }
 
-# ---------------------------------------------------------------------------
-# Stage mapping: case study → build script
-# ---------------------------------------------------------------------------
+# Stage mapping
 $BuildScripts = @{
-    saigon18   = "scripts/python/reopt/build_saigon18_reopt_input.py"
-    ninhsim    = "scripts/python/integration/build_ninhsim_reopt_input.py"
-    north_thuan = "scripts/python/integration/build_north_thuan_reopt_input.py"
+    saigon18   = "scripts\python\reopt\build_saigon18_reopt_input.py"
+    ninhsim    = "scripts\python\integration\build_ninhsim_reopt_input.py"
+    north_thuan = "scripts\python\integration\build_north_thuan_reopt_input.py"
 }
 
-# ---------------------------------------------------------------------------
-# Input hashing for cache invalidation
-# ---------------------------------------------------------------------------
+# Resolve common paths
+$PythonExe = "python"
+$VenvPython = Join-Path $RepoRoot ".venv" | Join-Path -ChildPath "Scripts" | Join-Path -ChildPath "python.exe"
+if (Test-Path $VenvPython) { $PythonExe = $VenvPython }
+
+$buildScript = Join-Path $RepoRoot $BuildScripts[$CaseStudy]
+$configArg = @()
+if ($Config) { $configArg = @("--config", $Config) }
+
+# Input hashing
 function Get-InputHash {
     param([string[]]$Paths)
     $hashInput = ""
@@ -83,38 +87,34 @@ function Get-InputHash {
     return [System.BitConverter]::ToString($provider.ComputeHash($bytes)) -replace '-', ''
 }
 
-# ---------------------------------------------------------------------------
 # Stage helpers
-# ---------------------------------------------------------------------------
-function Get-StageMarker { param([string]$Stage) => Join-Path $CacheDir "$CaseSlug-$Stage.done" }
+function Get-StageMarkerPath {
+    param([string]$StageName, [string]$CacheDirPath, [string]$Slug)
+    return Join-Path $CacheDirPath "$Slug-$StageName.done"
+}
 
 function Is-StageCached {
-    param([string]$Stage, [string]$Hash)
-    $marker = Get-StageMarker $Stage
+    param([string]$Stage, [string]$Hash, [string]$CacheDirPath, [string]$Slug)
+    $marker = Get-StageMarkerPath $Stage $CacheDirPath $Slug
     if (-not (Test-Path $marker)) { return $false }
     $cachedHash = (Get-Content $marker -Raw).Trim()
     return $cachedHash -eq $Hash
 }
 
 function Write-StageCache {
-    param([string]$Stage, [string]$Hash)
-    $marker = Get-StageMarker $Stage
-    New-Item -ItemType Directory -Path (Split-Path $marker -Parent) -Force | Out-Null
+    param([string]$Stage, [string]$Hash, [string]$CacheDirPath, [string]$Slug)
+    $marker = Get-StageMarkerPath $Stage $CacheDirPath $Slug
+    $parent = Split-Path $marker -Parent
+    if (-not (Test-Path $parent)) { New-Item -ItemType Directory -Path $parent -Force | Out-Null }
     Set-Content -Path $marker -Value $Hash
 }
 
 function Run-Stage {
-    param(
-        [string]$Stage,
-        [string]$Description,
-        [scriptblock]$ScriptBlock
-    )
-
+    param([string]$Stage, [string]$Description, [scriptblock]$ScriptBlock)
     if ($DryRun) {
-        Write-Host "  [DRY-RUN] Stage $Stage: $Description" -ForegroundColor Cyan
+        Write-Host "  [DRY-RUN] Stage $Stage - $Description" -ForegroundColor Cyan
         return
     }
-
     Write-Host "`n=== [$Stage] $Description ===" -ForegroundColor Cyan
     & $ScriptBlock
     if ($LASTEXITCODE -ne 0) {
@@ -124,22 +124,11 @@ function Run-Stage {
     Write-Host "  [OK] Stage $Stage completed." -ForegroundColor Green
 }
 
-# ---------------------------------------------------------------------------
-# Resolve paths
-# ---------------------------------------------------------------------------
-$venvPython = Join-Path $RepoRoot ".venv" "Scripts" "python.exe"
-if (-not (Test-Path $venvPython)) { $venvPython = "python" }
-
-$buildScript = Join-Path $RepoRoot $BuildScripts[$CaseStudy]
-$configArg = if ($Config) { "--config", $Config } else { }
-
-# ---------------------------------------------------------------------------
 # Print plan
-# ---------------------------------------------------------------------------
 Write-Host "=== REopt Pipeline: $CaseStudy / $Regime ===" -ForegroundColor Cyan
 Write-Host "Stages:"
 Write-Host "  1. Materialize scenario"
-Write-Host "  2. Solve ($(if ($SkipSolve) { 'skipped' } else { 'Julia' }) )"
+Write-Host "  2. Solve ($(if ($SkipSolve) { 'skipped' } else { 'Julia' }))"
 Write-Host "  3. Financial analysis (equity IRR + DPPA settlement)"
 Write-Host "  4. BESS dispatch analysis"
 Write-Host "  5. Report generation"
@@ -149,64 +138,59 @@ if ($DryRun) {
     exit 0
 }
 
-# ---------------------------------------------------------------------------
 # STAGE 1: Materialize scenario
-# ---------------------------------------------------------------------------
-$stage = "01-materialize"
-$hash = Get-InputHash @($buildScript, (Join-Path $RepoRoot "src" "python" "reopt_pysam_vn" "reopt" "preprocess.py"))
-if (-not (Is-StageCached $stage $hash)) {
-    Run-Stage $stage "Materialize $CaseStudy scenario for $Regime" {
-        & $venvPython $buildScript --regime $Regime @configArg
+$s1 = "01-materialize"
+$h1 = Get-InputHash @($buildScript, (Join-Path (Join-Path (Join-Path (Join-Path $RepoRoot "src") "python") "reopt_pysam_vn") "reopt" | Join-Path -ChildPath "preprocess.py"))
+if (-not (Is-StageCached $s1 $h1 $CacheDir $CaseSlug)) {
+    Run-Stage $s1 "Materialize $CaseStudy scenario for $Regime" {
+        & $PythonExe $buildScript "--regime" $Regime @configArg
     }
-    Write-StageCache $stage $hash
+    Write-StageCache $s1 $h1 $CacheDir $CaseSlug
 } else {
     Write-Host "  [CACHED] Stage 1 already complete." -ForegroundColor Gray
 }
 
-# ---------------------------------------------------------------------------
 # STAGE 2: Solve
-# ---------------------------------------------------------------------------
-$solveScript = Join-Path $RepoRoot "scripts" "run_solve.ps1"
-$generatedScenario = Get-ChildItem -Path (Join-Path $RepoRoot "scenarios" "generated") -Recurse -Filter "*.json" | Select-Object -First 1
-$solveOutputDir = Join-Path $RepoRoot "artifacts" "results" $CaseSlug
+$solveScript = Join-Path (Join-Path $RepoRoot "scripts") "run_solve.ps1"
+$generatedScenario = Get-ChildItem -Path (Join-Path $RepoRoot "scenarios" | Join-Path -ChildPath "generated") -Recurse -Filter "*.json" | Select-Object -First 1
+$solveOutputDir = Join-Path (Join-Path (Join-Path $RepoRoot "artifacts") "results") $CaseSlug
 
-if (-not $SkipSolve) {
-    $stage = "02-solve"
-    $hash = Get-InputHash @($generatedScenario.FullName)
-    if (-not (Is-StageCached $stage $hash) -or $Force) {
-        Run-Stage $stage "Solve $CaseStudy under $Regime" {
+if (-not $SkipSolve -and $generatedScenario) {
+    $s2 = "02-solve"
+    $h2 = Get-InputHash @($generatedScenario.FullName)
+    if (-not (Is-StageCached $s2 $h2 $CacheDir $CaseSlug) -or $Force) {
+        Run-Stage $s2 "Solve $CaseStudy under $Regime" {
             $solveArgs = @("--scenario", $generatedScenario.FullName, "--output-dir", $solveOutputDir)
             if ($Fallback) { $solveArgs += "--fallback" }
             & $solveScript @solveArgs
         }
-        Write-StageCache $stage $hash
+        Write-StageCache $s2 $h2 $CacheDir $CaseSlug
     } else {
         Write-Host "  [CACHED] Stage 2 already complete." -ForegroundColor Gray
     }
+} elseif (-not $SkipSolve -and -not $generatedScenario) {
+    Write-Host "  [SKIP] No generated scenario found." -ForegroundColor Yellow
 } else {
     Write-Host "  [SKIP] --skip-solve flag set." -ForegroundColor Yellow
 }
 
-# ---------------------------------------------------------------------------
 # STAGE 3: Financial analysis
-# ---------------------------------------------------------------------------
-$stage = "03-financial"
 $reoptResults = Join-Path $solveOutputDir "reopt-results.json"
 if (Test-Path $reoptResults) {
-    $hash = Get-InputHash @($reoptResults)
-    if (-not (Is-StageCached $stage $hash)) {
-        Run-Stage $stage "Compute equity IRR + DPPA settlement" {
-            $equityOut = Join-Path $RepoRoot "artifacts" "reports" $CaseSlug "equity-irr.json"
-            & $venvPython (Join-Path $RepoRoot "scripts" "python" "reopt" "equity_irr.py") `
-                --reopt $reoptResults --config $Config `
-                --output $equityOut
-
-            $dppaOut = Join-Path $RepoRoot "artifacts" "reports" $CaseSlug "dppa-settlement.json"
-            & $venvPython (Join-Path $RepoRoot "scripts" "python" "reopt" "dppa_settlement.py") `
-                --reopt $reoptResults --config $Config `
-                --output $dppaOut
+    $s3 = "03-financial"
+    $h3 = Get-InputHash @($reoptResults)
+    if (-not (Is-StageCached $s3 $h3 $CacheDir $CaseSlug)) {
+        Run-Stage $s3 "Compute equity IRR + DPPA settlement" {
+            $reportsDir = Join-Path (Join-Path (Join-Path $RepoRoot "artifacts") "reports") $CaseSlug
+            if (-not (Test-Path $reportsDir)) { New-Item -ItemType Directory -Path $reportsDir -Force | Out-Null }
+            $equityOut = Join-Path $reportsDir "equity-irr.json"
+            & $PythonExe (Join-Path (Join-Path (Join-Path $RepoRoot "scripts") "python") "reopt" | Join-Path -ChildPath "equity_irr.py") `
+                "--reopt" $reoptResults "--config" $Config "--output" $equityOut
+            $dppaOut = Join-Path $reportsDir "dppa-settlement.json"
+            & $PythonExe (Join-Path (Join-Path (Join-Path $RepoRoot "scripts") "python") "reopt" | Join-Path -ChildPath "dppa_settlement.py") `
+                "--reopt" $reoptResults "--config" $Config "--output" $dppaOut
         }
-        Write-StageCache $stage $hash
+        Write-StageCache $s3 $h3 $CacheDir $CaseSlug
     } else {
         Write-Host "  [CACHED] Stage 3 already complete." -ForegroundColor Gray
     }
@@ -214,21 +198,20 @@ if (Test-Path $reoptResults) {
     Write-Host "  [SKIP] No solve results at $reoptResults" -ForegroundColor Yellow
 }
 
-# ---------------------------------------------------------------------------
 # STAGE 4: BESS dispatch analysis
-# ---------------------------------------------------------------------------
-$stage = "04-bess"
-$scenarioInput = if ($generatedScenario) { $generatedScenario.FullName } else { "" }
+$scenarioInput = ""
+if ($generatedScenario) { $scenarioInput = $generatedScenario.FullName }
 if ((Test-Path $reoptResults) -and $scenarioInput) {
-    $hash = Get-InputHash @($reoptResults, $scenarioInput)
-    if (-not (Is-StageCached $stage $hash)) {
-        Run-Stage $stage "BESS dispatch analysis under $Regime" {
-            $bessOut = Join-Path $RepoRoot "artifacts" "reports" $CaseSlug "bess-dispatch.json"
-            & $venvPython (Join-Path $RepoRoot "scripts" "python" "reopt" "bess_dispatch_analysis.py") `
-                --reopt $reoptResults --scenario $scenarioInput `
-                --config $Config --regime $Regime --output $bessOut
+    $s4 = "04-bess"
+    $h4 = Get-InputHash @($reoptResults, $scenarioInput)
+    if (-not (Is-StageCached $s4 $h4 $CacheDir $CaseSlug)) {
+        Run-Stage $s4 "BESS dispatch analysis under $Regime" {
+            $reportsDir = Join-Path (Join-Path (Join-Path $RepoRoot "artifacts") "reports") $CaseSlug
+            $bessOut = Join-Path $reportsDir "bess-dispatch.json"
+            & $PythonExe (Join-Path (Join-Path (Join-Path $RepoRoot "scripts") "python") "reopt" | Join-Path -ChildPath "bess_dispatch_analysis.py") `
+                "--reopt" $reoptResults "--scenario" $scenarioInput "--config" $Config "--regime" $Regime "--output" $bessOut
         }
-        Write-StageCache $stage $hash
+        Write-StageCache $s4 $h4 $CacheDir $CaseSlug
     } else {
         Write-Host "  [CACHED] Stage 4 already complete." -ForegroundColor Gray
     }
@@ -236,15 +219,14 @@ if ((Test-Path $reoptResults) -and $scenarioInput) {
     Write-Host "  [SKIP] Missing solve results or scenario input." -ForegroundColor Yellow
 }
 
-# ---------------------------------------------------------------------------
 # STAGE 5: Report generation
-# ---------------------------------------------------------------------------
-$stage = "05-report"
-$reportsDir = Join-Path $RepoRoot "artifacts" "reports" $CaseSlug
+$reportsDir = Join-Path (Join-Path (Join-Path $RepoRoot "artifacts") "reports") $CaseSlug
 if (Test-Path $reportsDir) {
-    $hash = Get-InputHash @((Get-ChildItem -Path $reportsDir -Filter "*.json" | ForEach-Object { $_.FullName }))
-    if (-not (Is-StageCached $stage $hash)) {
-        Run-Stage $stage "Generate summary report for $CaseStudy" {
+    $s5 = "05-report"
+    $jsonFiles = Get-ChildItem -Path $reportsDir -Filter "*.json" | ForEach-Object { $_.FullName }
+    $h5 = Get-InputHash @($jsonFiles)
+    if (-not (Is-StageCached $s5 $h5 $CacheDir $CaseSlug)) {
+        Run-Stage $s5 "Generate summary report for $CaseStudy" {
             $reportPath = Join-Path $reportsDir "pipeline-summary.json"
             $summary = @{
                 case_study = $CaseStudy
@@ -259,11 +241,11 @@ if (Test-Path $reportsDir) {
                 $summary.stages[$stageName] = "completed"
             }
             $summary.stages["05-report"] = "completed"
-            New-Item -ItemType Directory -Path (Split-Path $reportPath -Parent) -Force | Out-Null
+            if (-not (Test-Path (Split-Path $reportPath -Parent))) { New-Item -ItemType Directory -Path (Split-Path $reportPath -Parent) -Force | Out-Null }
             $summary | ConvertTo-Json -Depth 5 | Set-Content -Path $reportPath -Encoding UTF8
             Write-Host "  Report: $reportPath" -ForegroundColor Green
         }
-        Write-StageCache $stage $hash
+        Write-StageCache $s5 $h5 $CacheDir $CaseSlug
     } else {
         Write-Host "  [CACHED] Stage 5 already complete." -ForegroundColor Gray
     }
