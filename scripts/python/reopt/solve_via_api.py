@@ -106,17 +106,27 @@ def main():
         **kwargs,
     )
 
+    # Normalize API v3 response: results may be wrapped in 'outputs' key
+    normalized = results.get("outputs", results)
+    if normalized is not results:
+        normalized["status"] = results.get("status", "unknown")
+        normalized["api_version"] = results.get("api_version")
+        normalized["_api_raw"] = {
+            "run_uuid": results.get("run_uuid"),
+            "reopt_version": results.get("reopt_version"),
+        }
+
     output_dir.mkdir(parents=True, exist_ok=True)
     out_path = output_dir / "reopt-results.json"
     with open(out_path, "w", encoding="utf-8") as f:
-        json.dump(results, f, indent=2)
+        json.dump(normalized, f, indent=2)
 
     print(f"\nResults saved to: {out_path}")
-    status = results.get("status", "unknown")
+    status = normalized.get("status", "unknown")
     print(f"Status: {status}")
 
-    if hasattr(results, "get"):
-        pv = results.get("PV", {})
+    if hasattr(normalized, "get"):
+        pv = normalized.get("PV", {})
         storage = results.get("ElectricStorage", {})
         fin = results.get("Financial", {})
         if pv:
